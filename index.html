@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MusicFinder</title>
+
+    <style>
+        :root {
+            --accent: #8b5cf6;
+            --accent-soft: rgba(139, 92, 246, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #050507;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: var(--accent-soft);
+            filter: blur(120px);
+            border-radius: 50%;
+            top: -200px;
+            left: -150px;
+            z-index: -1;
+            transition: 0.6s;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            width: 450px;
+            height: 450px;
+            background: var(--accent-soft);
+            filter: blur(130px);
+            border-radius: 50%;
+            bottom: -200px;
+            right: -150px;
+            z-index: -1;
+            transition: 0.6s;
+        }
+
+        header {
+            width: 100%;
+            padding: 28px 7%;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .logo span {
+            color: var(--accent);
+            transition: 0.5s;
+        }
+
+        .hero {
+            width: 86%;
+            max-width: 1200px;
+            margin: 80px auto 50px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: clamp(45px, 7vw, 90px);
+            line-height: 0.95;
+            letter-spacing: -5px;
+            margin-bottom: 25px;
+        }
+
+        .hero h1 span {
+            color: var(--accent);
+            transition: 0.5s;
+        }
+
+        .hero p {
+            color: #8c8c96;
+            font-size: 17px;
+            margin-bottom: 40px;
+        }
+
+        .search-container {
+            width: 100%;
+            max-width: 700px;
+            margin: auto;
+            position: relative;
+        }
+
+        #searchInput {
+            width: 100%;
+            height: 65px;
+            border-radius: 20px;
+            border: 1px solid #24242b;
+            background: rgba(20, 20, 25, 0.85);
+            color: white;
+            padding: 0 25px;
+            font-size: 17px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        #searchInput:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px var(--accent-soft);
+        }
+
+        #searchInput::placeholder {
+            color: #666671;
+        }
+
+        .search-button {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            height: 49px;
+            padding: 0 22px;
+            border: none;
+            border-radius: 15px;
+            background: var(--accent);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .search-button:hover {
+            transform: scale(1.04);
+            filter: brightness(1.15);
+        }
+
+        #results {
+            width: 86%;
+            max-width: 1200px;
+            margin: 50px auto 100px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+            gap: 22px;
+        }
+
+        .card {
+            background: rgba(18, 18, 22, 0.8);
+            border: 1px solid #24242b;
+            border-radius: 20px;
+            padding: 12px;
+            cursor: pointer;
+            transition: 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: var(--accent);
+            box-shadow: 0 15px 40px var(--accent-soft);
+        }
+
+        .card img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 15px;
+            display: block;
+        }
+
+        .card h3 {
+            margin: 14px 4px 6px;
+            font-size: 16px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card p {
+            color: #85858f;
+            margin: 0 4px 8px;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .empty {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #777780;
+            padding: 50px 0;
+        }
+
+        .loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #888894;
+            padding: 50px;
+        }
+
+        /* =========================
+           MODAL
+        ========================= */
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(15px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 440px;
+            background: #111116;
+            border: 1px solid #292932;
+            border-radius: 28px;
+            padding: 25px;
+            position: relative;
+            text-align: center;
+            box-shadow: 0 30px 100px rgba(0, 0, 0, 0.7);
+            animation: modalIn 0.25s ease;
+        }
+
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 18px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .close:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        #modalCover {
+            width: 250px;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 20px;
+            margin: 10px auto 20px;
+            display: block;
+            box-shadow: 0 20px 50px var(--accent-soft);
+        }
+
+        #modalTitle {
+            font-size: 25px;
+            margin-bottom: 8px;
+        }
+
+        #modalArtist {
+            color: var(--accent);
+            font-size: 17px;
+            margin-bottom: 8px;
+            transition: 0.5s;
+        }
+
+        #modalAlbum {
+            color: #777780;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .spotify-button,
+        .download-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-weight: bold;
+            text-align: center;
+            transition: 0.25s;
+        }
+
+        .spotify-button {
+            background: var(--accent);
+            color: white;
+        }
+
+        .spotify-button:hover {
+            filter: brightness(1.15);
+            transform: translateY(-2px);
+        }
+
+        .download-button {
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid #303039;
+            color: white;
+        }
+
+        .download-button:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 600px) {
+
+            header {
+                padding: 22px 5%;
+            }
+
+            .hero {
+                width: 90%;
+                margin-top: 55px;
+            }
+
+            .hero h1 {
+                letter-spacing: -3px;
+            }
+
+            #results {
+                width: 90%;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+
+            .card {
+                border-radius: 16px;
+            }
+
+            .modal-box {
+                max-width: 380px;
+            }
+
+            #modalCover {
+                width: 210px;
+                height: 210px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+
+        <div class="logo">
+            Music<span>Finder</span>
+        </div>
+
+    </header>
+
+
+    <section class="hero">
+
+        <h1>
+            Find your <span>sound.</span>
+        </h1>
+
+        <p>
+            Search for songs, artists and albums.
+        </p>
+
+
+        <div class="search-container">
+
+            <input
+                id="searchInput"
+                type="text"
+                placeholder="Search a song, artist or album..."
+                autocomplete="off"
+            >
+
+            <button
+                class="search-button"
+                onclick="searchMusic()"
+            >
+                Search
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <section id="results">
+
+        <div class="empty">
+            Search for something to get started.
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         SONG MODAL
+    ========================== -->
+
+    <div
+        id="modal"
+        class="modal"
+        onclick="closeModal(event)"
+    >
+
+        <div
+            class="modal-box"
+            onclick="event.stopPropagation()"
+        >
+
+            <button
+                class="close"
+                onclick="closeModal()"
+            >
+                ×
+            </button>
+
+
+            <img
+                id="modalCover"
+                src=""
+                alt="Album cover"
+            >
+
+
+            <h2 id="modalTitle"></h2>
+
+            <p id="modalArtist"></p>
+
+            <p id="modalAlbum"></p>
+
+
+            <div class="action-buttons">
+
+                <a
+                    id="spotifyButton"
+                    class="spotify-button"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Open in Spotify
+                </a>
+
+
+                <a
+                    id="downloadButton"
+                    class="download-button"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Find Download ↓
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        // ==============================
+        // SEARCH MUSIC
+        // ==============================
+
+        async function searchMusic() {
+
+            const input =
+                document.getElementById("searchInput");
+
+            const query =
+                input.value.trim();
+
+
+            if (!query) {
+                return;
+            }
+
+
+            const results =
+                document.getElementById("results");
+
+
+            results.innerHTML =
+                `<div class="loading">
+                    Searching...
+                </div>`;
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `/search?q=${encodeURIComponent(query)}`
+                    );
+
+
+                if (!response.ok) {
+                    throw new Error("Search failed");
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                results.innerHTML = "";
+
+
+                if (
+                    !data.tracks ||
+                    !data.tracks.items ||
+                    data.tracks.items.length === 0
+                ) {
+
+                    results.innerHTML =
+                        `<div class="empty">
+                            No results found.
+                        </div>`;
+
+                    return;
+                }
+
+
+                data.tracks.items.forEach(track => {
+
+                    const image =
+                        track.album &&
+                        track.album.images &&
+                        track.album.images.length
+                            ? track.album.images[0].url
+                            : "";
+
+
+                    const artist =
+                        track.artists
+                            .map(a => a.name)
+                            .join(", ");
+
+
+                    const card =
+                        document.createElement("div");
+
+
+                    card.className = "card";
+
+
+                    card.innerHTML = `
+
+                        <img
+                            src="${image}"
+                            alt="${escapeHTML(track.name)}"
+                        >
+
+                        <h3>
+                            ${escapeHTML(track.name)}
+                        </h3>
+
+                        <p>
+                            ${escapeHTML(artist)}
+                        </p>
+
+                    `;
+
+
+                    card.addEventListener(
+                        "click",
+                        () => openSong(track)
+                    );
+
+
+                    results.appendChild(card);
+
+                });
+
+
+            } catch (error) {
+
+                console.error(error);
+
+
+                results.innerHTML =
+                    `<div class="empty">
+                        Something went wrong.
+                        Make sure the server is running.
+                    </div>`;
+
+            }
+
+        }
+
+
+        // ==============================
+        // OPEN SONG
+        // ==============================
+
+        function openSong(track) {
+
+            const image =
+                track.album &&
+                track.album.images &&
+                track.album.images.length
+                    ? track.album.images[0].url
+                    : "";
+
+
+            const artist =
+                track.artists
+                    .map(a => a.name)
+                    .join(", ");
+
+
+            // COVER
+
+            document.getElementById("modalCover").src =
+                image;
+
+
+            // TITLE
+
+            document.getElementById("modalTitle").textContent =
+                track.name;
+
+
+            // ARTIST
+
+            document.getElementById("modalArtist").textContent =
+                artist;
+
+
+            // ALBUM
+
+            document.getElementById("modalAlbum").textContent =
+                track.album
+                    ? track.album.name
+                    : "";
+
+
+            // ==============================
+            // SPOTIFY BUTTON
+            // ==============================
+
+            document.getElementById("spotifyButton").href =
+                track.external_urls.spotify;
+
+
+            // ==============================
+            // GOOGLE DOWNLOAD SEARCH
+            // ==============================
+
+            const downloadSearch =
+                artist +
+                " " +
+                track.name +
+                " دانلود";
+
+
+            const googleUrl =
+                "https://www.google.com/search?q=" +
+                encodeURIComponent(downloadSearch);
+
+
+            document.getElementById("downloadButton").href =
+                googleUrl;
+
+
+            // ==============================
+            // DYNAMIC COVER COLOR
+            // ==============================
+
+            if (image) {
+                extractColor(image);
+            }
+
+
+            // ==============================
+            // SHOW MODAL
+            // ==============================
+
+            document
+                .getElementById("modal")
+                .classList.add("active");
+
+        }
+
+
+        // ==============================
+        // EXTRACT COLOR FROM COVER
+        // ==============================
+
+        function extractColor(imageUrl) {
+
+            const img =
+                new Image();
+
+
+            img.crossOrigin =
+                "Anonymous";
+
+
+            img.onload = function () {
+
+                try {
+
+                    const canvas =
+                        document.createElement("canvas");
+
+
+                    canvas.width = 1;
+                    canvas.height = 1;
+
+
+                    const ctx =
+                        canvas.getContext("2d");
+
+
+                    ctx.drawImage(
+                        img,
+                        0,
+                        0,
+                        1,
+                        1
+                    );
+
+
+                    const pixel =
+                        ctx.getImageData(
+                            0,
+                            0,
+                            1,
+                            1
+                        ).data;
+
+
+                    const r = pixel[0];
+                    const g = pixel[1];
+                    const b = pixel[2];
+
+
+                    const accent =
+                        `rgb(${r}, ${g}, ${b})`;
+
+
+                    const soft =
+                        `rgba(${r}, ${g}, ${b}, 0.25)`;
+
+
+                    document.documentElement.style
+                        .setProperty(
+                            "--accent",
+                            accent
+                        );
+
+
+                    document.documentElement.style
+                        .setProperty(
+                            "--accent-soft",
+                            soft
+                        );
+
+
+                } catch (error) {
+
+                    console.log(
+                        "Could not extract cover color."
+                    );
+
+                }
+
+            };
+
+
+            img.src = imageUrl;
+
+        }
+
+
+        // ==============================
+        // CLOSE MODAL
+        // ==============================
+
+        function closeModal(event) {
+
+            if (
+                event &&
+                event.target !==
+                document.getElementById("modal")
+            ) {
+                return;
+            }
+
+
+            document
+                .getElementById("modal")
+                .classList.remove("active");
+
+        }
+
+
+        // ==============================
+        // ENTER TO SEARCH
+        // ==============================
+
+        document
+            .getElementById("searchInput")
+            .addEventListener(
+                "keydown",
+                function(event) {
+
+                    if (event.key === "Enter") {
+                        searchMusic();
+                    }
+
+                }
+            );
+
+
+        // ==============================
+        // ESCAPE HTML
+        // ==============================
+
+        function escapeHTML(text) {
+
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+        }
+
+    </script>
+
+</body>
+</html>

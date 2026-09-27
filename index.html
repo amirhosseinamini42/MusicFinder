@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +23,6 @@
     --muted: rgba(255,255,255,0.58);
     --accent: #ffffff;
 
-    /* Dynamic background colors */
     --dynamic-color: rgba(110,90,255,.18);
     --dynamic-color-2: rgba(0,180,255,.12);
     --dynamic-color-3: rgba(255,0,100,.08);
@@ -826,11 +826,6 @@ footer {
 <div id="backgroundArt"></div>
 <div class="backgroundOverlay"></div>
 
-
-<!-- =========================
-     NAVBAR
-========================= -->
-
 <nav class="navbar">
 
     <div class="logo">
@@ -842,11 +837,6 @@ footer {
     </div>
 
 </nav>
-
-
-<!-- =========================
-     MENU
-========================= -->
 
 <div class="menuOverlay" id="menuOverlay" onclick="closeMenu()"></div>
 
@@ -894,12 +884,7 @@ footer {
 
 </aside>
 
-
 <main>
-
-<!-- =========================
-     HERO
-========================= -->
 
 <section class="hero" id="home">
 
@@ -927,11 +912,6 @@ footer {
 
 </section>
 
-
-<!-- =========================
-     SEARCH RESULTS
-========================= -->
-
 <section class="section" id="resultsSection" style="display:none;">
 
     <div class="sectionHeader">
@@ -946,11 +926,6 @@ footer {
     <div id="searchResults"></div>
 
 </section>
-
-
-<!-- =========================
-     FOR YOU
-========================= -->
 
 <section class="section" id="forYou">
 
@@ -968,11 +943,6 @@ footer {
     <div id="forYouContent"></div>
 
 </section>
-
-
-<!-- =========================
-     TASTE
-========================= -->
 
 <section class="section" id="taste">
 
@@ -1013,11 +983,6 @@ footer {
 
 </section>
 
-
-<!-- =========================
-     SEARCH HISTORY
-========================= -->
-
 <section class="section" id="history">
 
     <div class="sectionHeader">
@@ -1043,11 +1008,6 @@ footer {
 
 </section>
 
-
-<!-- =========================
-     ARTISTS
-========================= -->
-
 <section class="section" id="artists">
 
     <div class="sectionHeader">
@@ -1064,11 +1024,6 @@ footer {
     <div class="artistGrid" id="artistGrid"></div>
 
 </section>
-
-
-<!-- =========================
-     ABOUT
-========================= -->
 
 <section class="section" id="about">
 
@@ -1093,17 +1048,11 @@ footer {
 
 </section>
 
-
 <footer>
     MusicFinder · Personal Music Discovery
 </footer>
 
 </main>
-
-
-<!-- =========================
-     MODAL
-========================= -->
 
 <div class="modalOverlay" id="modalOverlay" onclick="closeModal(event)">
 
@@ -1119,15 +1068,16 @@ footer {
 
 </div>
 
-
 <script>
-
-/* =========================
-   STORAGE
-========================= */
 
 const TASTE_KEY = "musicFinderTasteV3";
 const HISTORY_KEY = "musicFinderSearchHistory";
+
+/* =========================
+   API
+========================= */
+
+const API_BASE = "https://musicfinder-api.vercel.app";
 
 
 function getTasteData() {
@@ -1198,10 +1148,6 @@ function saveHistory(history) {
 }
 
 
-/* =========================
-   MENU
-========================= */
-
 function openMenu() {
 
     document
@@ -1245,10 +1191,6 @@ function goTo(id) {
 }
 
 
-/* =========================
-   ESCAPE HTML
-========================= */
-
 function escapeHtml(value) {
 
     if (value === null || value === undefined) {
@@ -1264,10 +1206,6 @@ function escapeHtml(value) {
 
 }
 
-
-/* =========================
-   SEARCH HISTORY
-========================= */
 
 function rememberSearch(query) {
 
@@ -1342,10 +1280,6 @@ function clearHistory() {
 
 }
 
-
-/* =========================
-   TASTE ENGINE
-========================= */
 
 function rememberTrack(track) {
 
@@ -1496,7 +1430,7 @@ async function performSearch() {
     try {
 
         const response = await fetch(
-            `/search?q=${encodeURIComponent(query)}`
+            `${API_BASE}/search?q=${encodeURIComponent(query)}`
         );
 
         if (!response.ok) {
@@ -1530,10 +1464,6 @@ async function performSearch() {
 
 }
 
-
-/* =========================
-   RENDER SEARCH
-========================= */
 
 function renderSearchResults(data, query) {
 
@@ -1634,10 +1564,6 @@ function renderSearchResults(data, query) {
 }
 
 
-/* =========================
-   TRACK CARD
-========================= */
-
 function trackCard(track) {
 
     const image =
@@ -1721,10 +1647,6 @@ function trackCard(track) {
 }
 
 
-/* =========================
-   ARTIST SEARCH CARD
-========================= */
-
 function artistSearchCard(artist) {
 
     const image =
@@ -1793,10 +1715,6 @@ function artistSearchCard(artist) {
 }
 
 
-/* =========================
-   ALBUM CARD
-========================= */
-
 function albumCard(album) {
 
     const image =
@@ -1859,11 +1777,6 @@ function albumCard(album) {
    DYNAMIC BACKGROUND
 ========================= */
 
-/*
-    Loads the cover first, then extracts several colors from it.
-    This keeps the background visually tied to the selected song.
-*/
-
 function setBackground(image) {
 
     if (!image) return;
@@ -1920,14 +1833,6 @@ function setBackground(image) {
 }
 
 
-/*
-    Extract dominant-ish colors from the cover.
-
-    Canvas is used only for color extraction.
-    If the image doesn't allow canvas access,
-    the image background itself still works.
-*/
-
 function extractImageColors(img) {
 
     try {
@@ -1979,17 +1884,7 @@ function extractImageColors(img) {
             const brightness =
                 (r + g + b) / 3;
 
-            /*
-                Ignore almost-black pixels.
-                They make the whole background look dead.
-            */
-
             if (brightness < 18) continue;
-
-            /*
-                Ignore almost-white pixels.
-                They wash out the background.
-            */
 
             if (
                 r > 245 &&
@@ -2015,12 +1910,6 @@ function extractImageColors(img) {
         if (!samples.length) {
             return null;
         }
-
-        /*
-            Sort by saturation.
-            More colorful pixels create a much better
-            music-player style background than plain gray.
-        */
 
         samples.sort((a,b) => {
 
@@ -2060,11 +1949,6 @@ function extractImageColors(img) {
         r = Math.round(r / total);
         g = Math.round(g / total);
         b = Math.round(b / total);
-
-        /*
-            Create a darker secondary version
-            and a brighter tertiary version.
-        */
 
         const secondary = {
             r: Math.min(255, Math.round(r * .72)),
@@ -2221,11 +2105,6 @@ function openTrackFromEncoded(encoded) {
         .getElementById("modalOverlay")
         .classList.add("open");
 
-    /*
-        This is intentionally called after opening
-        the selected track.
-    */
-
     if (image) {
         setBackground(image);
     }
@@ -2257,7 +2136,7 @@ async function openArtist(artist) {
 
         const artistResponse =
             await fetch(
-                `/artist/${artist.id}`
+                `${API_BASE}/artist/${artist.id}`
             );
 
         const artistData =
@@ -2266,7 +2145,7 @@ async function openArtist(artist) {
 
         const albumsResponse =
             await fetch(
-                `/artist/${artist.id}/albums`
+                `${API_BASE}/artist/${artist.id}/albums`
             );
 
         const albumsData =
@@ -2275,7 +2154,7 @@ async function openArtist(artist) {
 
         const bioResponse =
             await fetch(
-                `/artist-bio?name=${encodeURIComponent(artist.name)}`
+                `${API_BASE}/artist-bio?name=${encodeURIComponent(artist.name)}`
             );
 
         const bio =
@@ -2537,10 +2416,6 @@ function openArtistFromEncoded(encoded) {
 }
 
 
-/* =========================
-   ARTISTS LIBRARY
-========================= */
-
 function renderArtists() {
 
     const container =
@@ -2629,10 +2504,6 @@ function renderArtists() {
 
 }
 
-
-/* =========================
-   FOR YOU
-========================= */
 
 function renderForYou() {
 
@@ -2835,10 +2706,6 @@ function renderForYou() {
 }
 
 
-/* =========================
-   TASTE
-========================= */
-
 function renderTaste() {
 
     const data =
@@ -2955,10 +2822,6 @@ function renderTaste() {
 }
 
 
-/* =========================
-   CLEAR TASTE
-========================= */
-
 function clearTaste() {
 
     localStorage.removeItem(TASTE_KEY);
@@ -2969,10 +2832,6 @@ function clearTaste() {
 
 }
 
-
-/* =========================
-   MODAL
-========================= */
 
 function closeModal(event) {
 
@@ -2991,10 +2850,6 @@ function closeModal(event) {
 }
 
 
-/* =========================
-   ENTER KEY
-========================= */
-
 document
     .getElementById("searchInput")
     .addEventListener(
@@ -3009,10 +2864,6 @@ document
     );
 
 
-/* =========================
-   INITIALIZE
-========================= */
-
 renderHistory();
 renderTaste();
 renderArtists();
@@ -3022,3 +2873,4 @@ renderForYou();
 
 </body>
 </html>
+```

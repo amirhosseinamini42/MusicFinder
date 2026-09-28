@@ -411,6 +411,56 @@ main {
     margin-bottom: 18px;
 }
 
+.searchLoading {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 4px;
+}
+
+.searchLoading span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.65);
+
+    animation: searchPulse 1.2s infinite ease-in-out;
+}
+
+.searchLoading span:nth-child(2) {
+    animation-delay: .15s;
+}
+
+.searchLoading span:nth-child(3) {
+    animation-delay: .3s;
+}
+
+@keyframes searchPulse {
+
+    0%, 60%, 100% {
+        opacity: .25;
+        transform: translateY(0);
+    }
+
+    30% {
+        opacity: 1;
+        transform: translateY(-3px);
+    }
+
+}
+.searchLoadingBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 90px;
+}
+
+.searchLoadingBox .loadingText {
+    color: rgba(255,255,255,.58);
+}
+
+
 .resultGroup {
     margin-bottom: 38px;
 }
@@ -1489,13 +1539,33 @@ async function performSearch() {
 
     resultsSection.style.display = "block";
 
-    status.textContent = `Searching for "${query}"...`;
+   
+status.innerHTML = `
+    Searching for "${escapeHtml(query)}"
+    <span class="searchLoading">
+        <span></span>
+        <span></span>
+        <span></span>
+    </span>
+`;
 
-    results.innerHTML = `
-        <div class="empty glass">
-            Searching Spotify...
-        </div>
-    `;
+results.innerHTML = `
+    <div class="empty glass searchLoadingBox">
+
+        <span class="loadingText">
+            Finding your music
+        </span>
+
+        <span class="searchLoading">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+
+    </div>
+`;
+
+
 
     rememberSearch(query);
 

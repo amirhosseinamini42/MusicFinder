@@ -739,13 +739,34 @@ main {
     border: 1px solid var(--border);
     background: rgba(255,255,255,.06);
     color: white;
+
+    transition:
+        transform .25s ease,
+        background .25s ease,
+        border-color .25s ease,
+        box-shadow .25s ease;
 }
 
+.modalButtons a:hover,
+.modalButtons button:hover {
+    transform: translateY(-4px);
+    background: rgba(255,255,255,.14);
+    border-color: rgba(255,255,255,.25);
+    box-shadow: 0 10px 25px rgba(0,0,0,.18);
+}
+
+/* Spotify */
 .modalButtons .primary {
-    background: white;
-    color: black;
+    background: #1DB954;
+    color: white;
+    border-color: #1DB954;
 }
 
+.modalButtons .primary:hover {
+    background: #1DB954;
+    border-color: #1DB954;
+    box-shadow: 0 10px 25px rgba(29,185,84,.25);
+}
 .albumGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill,minmax(130px,1fr));

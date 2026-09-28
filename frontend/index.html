@@ -747,26 +747,46 @@ main {
         box-shadow .25s ease;
 }
 
-.modalButtons a:hover,
-.modalButtons button:hover {
-    transform: translateY(-4px);
-    background: rgba(255,255,255,.14);
-    border-color: rgba(255,255,255,.25);
-    box-shadow: 0 10px 25px rgba(0,0,0,.18);
+/* Desktop / Laptop */
+@media (hover: hover) {
+
+    .modalButtons a:hover,
+    .modalButtons button:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,.18);
+        border-color: rgba(255,255,255,.35);
+        box-shadow: 0 12px 30px rgba(0,0,0,.30);
+    }
+
+    /* Spotify stays green */
+    .modalButtons .primary:hover {
+        transform: translateY(-5px);
+        background: #1DB954;
+        border-color: #1DB954;
+        color: white;
+        box-shadow: 0 12px 30px rgba(29,185,84,.35);
+    }
+
 }
 
-/* Spotify */
-.modalButtons .primary {
+/* Phone / Touch */
+.modalButtons a:active,
+.modalButtons button:active {
+    transform: translateY(-5px);
+    background: rgba(255,255,255,.18);
+    border-color: rgba(255,255,255,.35);
+    box-shadow: 0 12px 30px rgba(0,0,0,.30);
+}
+
+/* Spotify on touch */
+.modalButtons .primary:active {
+    transform: translateY(-5px);
     background: #1DB954;
+    border-color: #1DB954;
     color: white;
-    border-color: #1DB954;
+    box-shadow: 0 12px 30px rgba(29,185,84,.35);
 }
 
-.modalButtons .primary:hover {
-    background: #1DB954;
-    border-color: #1DB954;
-    box-shadow: 0 10px 25px rgba(29,185,84,.25);
-}
 .albumGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill,minmax(130px,1fr));
@@ -774,8 +794,8 @@ main {
     margin-top: 15px;
 }
 
-.albumCard {
-    padding: 10px;
+.albumCard {  
+  padding: 10px;
     border-radius: 16px;
     background: rgba(255,255,255,.045);
 }

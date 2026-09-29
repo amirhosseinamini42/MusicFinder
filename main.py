@@ -100,6 +100,41 @@ def test():
         "message": "MusicFinder backend is working!"
     }
 
+# =========================
+# JAMENDO TEST / SEARCH
+# =========================
+
+JAMENDO_CLIENT_ID = os.getenv(
+    "JAMENDO_CLIENT_ID",
+    "709fa152"
+)
+
+
+@app.get("/jamendo/search")
+def jamendo_search(q: str):
+
+    query = q.strip()
+
+    if not query:
+        return {
+            "results": []
+        }
+
+    response = requests.get(
+        "https://api.jamendo.com/v3.0/tracks/",
+        params={
+            "client_id": JAMENDO_CLIENT_ID,
+            "format": "json",
+            "limit": 5,
+            "namesearch": query,
+            "audioformat": "mp32"
+        },
+        timeout=15
+    )
+
+    response.raise_for_status()
+
+    return response.json()
 
 # =========================
 # SEARCH

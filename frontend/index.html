@@ -979,13 +979,7 @@ footer {
     color: rgba(255,255,255,.5);
 }
 
-.musicPlayer iframe {
-    width: 1px;
-    height: 1px;
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-}
+
 
 .musicPlayer button {
     width: 42px;
@@ -1018,6 +1012,209 @@ footer {
 
 }
 
+/* =========================
+   Music Player
+========================= */
+
+.musicPlayer {
+    position: fixed;
+    left: 20px;
+    right: 20px;
+    bottom: 18px;
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    padding: 14px 18px;
+    border-radius: 22px;
+
+    background: rgba(18, 18, 22, .72);
+    border: 1px solid rgba(255,255,255,.12);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+
+    box-shadow: 0 15px 45px rgba(0,0,0,.35);
+
+    transform: translateY(120%);
+    opacity: 0;
+
+    transition:
+        transform .35s ease,
+        opacity .35s ease;
+}
+
+.musicPlayer.active {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.playerCover {
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.playerInfo {
+    min-width: 150px;
+    max-width: 220px;
+}
+
+.playerTitle {
+    font-size: 14px;
+    font-weight: 650;
+    color: white;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.playerArtist {
+    margin-top: 4px;
+    font-size: 12px;
+    color: rgba(255,255,255,.5);
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.playerControls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.playerButton {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+    border-radius: 50%;
+
+    background: rgba(255,255,255,.08);
+    color: white;
+
+    cursor: pointer;
+
+    transition:
+        transform .2s ease,
+        background .2s ease;
+}
+
+.playerButton:hover {
+    transform: scale(1.08);
+    background: rgba(255,255,255,.16);
+}
+
+.playerPlay {
+    width: 44px;
+    height: 44px;
+    background: white;
+    color: #111;
+}
+
+.playerPlay:hover {
+    background: white;
+}
+
+.playerTimeline {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 120px;
+}
+
+.playerTime {
+    font-size: 11px;
+    color: rgba(255,255,255,.45);
+    min-width: 32px;
+}
+
+.playerProgress {
+    flex: 1;
+    height: 4px;
+    appearance: none;
+    -webkit-appearance: none;
+
+    border-radius: 999px;
+    background: rgba(255,255,255,.16);
+
+    cursor: pointer;
+}
+
+.playerProgress::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+
+    width: 11px;
+    height: 11px;
+
+    border-radius: 50%;
+    background: white;
+
+    cursor: pointer;
+}
+
+.playerProgress::-moz-range-thumb {
+    width: 11px;
+    height: 11px;
+
+    border: 0;
+    border-radius: 50%;
+    background: white;
+
+    cursor: pointer;
+}
+
+.playerVolume {
+    width: 85px;
+}
+
+@media (max-width: 700px) {
+
+    .musicPlayer {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+
+        padding: 11px;
+        gap: 10px;
+
+        border-radius: 18px;
+    }
+
+    .playerCover {
+        width: 48px;
+        height: 48px;
+    }
+
+    .playerInfo {
+        min-width: 0;
+        max-width: 120px;
+    }
+
+    .playerTimeline {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 5px;
+    }
+
+    .playerVolume {
+        display: none;
+    }
+}
+
 </style>
 
 </head>
@@ -1027,6 +1224,97 @@ footer {
 <div id="backgroundArt"></div>
 <div class="backgroundOverlay"></div>
 
+<!-- Music Player -->
+
+<div class="musicPlayer" id="musicPlayer">
+
+    <img
+        class="playerCover"
+        id="playerCover"
+        src=""
+        alt="Album cover"
+    >
+
+    <div class="playerInfo">
+
+        <div class="playerTitle" id="playerTitle">
+            No song playing
+        </div>
+
+        <div class="playerArtist" id="playerArtist">
+            MusicFinder
+        </div>
+
+    </div>
+
+    <div class="playerControls">
+
+        <button
+            class="playerButton"
+            id="playerPrevious"
+            type="button"
+        >
+            ⏮
+        </button>
+
+        <button
+            class="playerButton playerPlay"
+            id="playerPlay"
+            type="button"
+        >
+            ▶
+        </button>
+
+        <button
+            class="playerButton"
+            id="playerNext"
+            type="button"
+        >
+            ⏭
+        </button>
+
+    </div>
+
+    <div class="playerTimeline">
+
+        <span
+            class="playerTime"
+            id="playerCurrentTime"
+        >
+            0:00
+        </span>
+
+        <input
+            class="playerProgress"
+            id="playerProgress"
+            type="range"
+            min="0"
+            max="100"
+            value="0"
+        >
+
+        <span
+            class="playerTime"
+            id="playerDuration"
+        >
+            0:00
+        </span>
+
+    </div>
+
+    <input
+        class="playerVolume"
+        id="playerVolume"
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value="1"
+    >
+
+    <audio id="musicAudio"></audio>
+
+</div>
 
 <div class="developerCredit">
     Created by <strong>Amirhossein Amini</strong>
@@ -3232,8 +3520,264 @@ renderTaste();
 renderArtists();
 renderForYou();
 
+/* =========================
+   Music Player
+========================= */
+
+const musicAudio = document.getElementById("musicAudio");
+const musicPlayer = document.getElementById("musicPlayer");
+
+const playerCover = document.getElementById("playerCover");
+const playerTitle = document.getElementById("playerTitle");
+const playerArtist = document.getElementById("playerArtist");
+
+const playerPlay = document.getElementById("playerPlay");
+const playerPrevious = document.getElementById("playerPrevious");
+const playerNext = document.getElementById("playerNext");
+
+const playerProgress = document.getElementById("playerProgress");
+const playerCurrentTime = document.getElementById("playerCurrentTime");
+const playerDuration = document.getElementById("playerDuration");
+
+const playerVolume = document.getElementById("playerVolume");
+
+let currentPlayerIndex = -1;
+let playerQueue = [];
+
+
+/* Format time */
+
+function formatPlayerTime(seconds) {
+
+    if (!Number.isFinite(seconds)) {
+        return "0:00";
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+
+    return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+
+/* Load a song */
+
+function loadPlayerSong(song, autoPlay = false) {
+
+    if (!song || !song.preview_url) {
+        return;
+    }
+
+    playerTitle.textContent =
+        song.name || "Unknown Song";
+
+    playerArtist.textContent =
+        song.artists?.map(artist => artist.name).join(", ")
+        || "Unknown Artist";
+
+    playerCover.src =
+        song.album?.images?.[0]?.url || "";
+
+    musicAudio.src = song.preview_url;
+
+    musicPlayer.classList.add("active");
+
+    if (autoPlay) {
+
+        musicAudio.play()
+            .then(() => {
+                playerPlay.textContent = "❚❚";
+            })
+            .catch(() => {
+                playerPlay.textContent = "▶";
+            });
+
+    } else {
+
+        playerPlay.textContent = "▶";
+
+    }
+}
+
+
+/* Play / Pause */
+
+playerPlay.addEventListener("click", () => {
+
+    if (!musicAudio.src) {
+        return;
+    }
+
+    if (musicAudio.paused) {
+
+        musicAudio.play();
+
+        playerPlay.textContent = "❚❚";
+
+    } else {
+
+        musicAudio.pause();
+
+        playerPlay.textContent = "▶";
+
+    }
+
+});
+
+
+/* Progress */
+
+musicAudio.addEventListener("timeupdate", () => {
+
+    if (!musicAudio.duration) {
+        return;
+    }
+
+    const progress =
+        (musicAudio.currentTime / musicAudio.duration) * 100;
+
+    playerProgress.value = progress;
+
+    playerCurrentTime.textContent =
+        formatPlayerTime(musicAudio.currentTime);
+
+});
+
+
+/* Duration */
+
+musicAudio.addEventListener("loadedmetadata", () => {
+
+    playerDuration.textContent =
+        formatPlayerTime(musicAudio.duration);
+
+});
+
+
+/* Seek */
+
+playerProgress.addEventListener("input", () => {
+
+    if (!musicAudio.duration) {
+        return;
+    }
+
+    musicAudio.currentTime =
+        (playerProgress.value / 100) * musicAudio.duration;
+
+});
+
+
+/* Volume */
+
+playerVolume.addEventListener("input", () => {
+
+    musicAudio.volume =
+        Number(playerVolume.value);
+
+});
+
+
+/* Reset when song ends */
+
+musicAudio.addEventListener("ended", () => {
+
+    playerPlay.textContent = "▶";
+
+    playerProgress.value = 0;
+
+    playerCurrentTime.textContent = "0:00";
+
+});
+
+
+/* Previous */
+
+playerPrevious.addEventListener("click", () => {
+
+    if (!playerQueue.length) {
+        return;
+    }
+
+    currentPlayerIndex--;
+
+    if (currentPlayerIndex < 0) {
+        currentPlayerIndex = playerQueue.length - 1;
+    }
+
+    loadPlayerSong(
+        playerQueue[currentPlayerIndex],
+        true
+    );
+
+});
+
+
+/* Next */
+
+playerNext.addEventListener("click", () => {
+
+    if (!playerQueue.length) {
+        return;
+    }
+
+    currentPlayerIndex++;
+
+    if (currentPlayerIndex >= playerQueue.length) {
+        currentPlayerIndex = 0;
+    }
+
+    loadPlayerSong(
+        playerQueue[currentPlayerIndex],
+        true
+    );
+
+});
+
+
+/* Make a song available to the player */
+
+window.playMusicFinderSong = function(song, queue = []) {
+
+    playerQueue = queue.length
+        ? queue
+        : [song];
+
+    currentPlayerIndex =
+        playerQueue.findIndex(
+            item => item.id === song.id
+        );
+
+    if (currentPlayerIndex < 0) {
+        currentPlayerIndex = 0;
+    }
+
+    loadPlayerSong(song, true);
+
+};
+
+window.playMusicFinderSong = function(song, queue = []) {
+
+    playerQueue = queue.length
+        ? queue
+        : [song];
+
+    currentPlayerIndex =
+        playerQueue.findIndex(
+            item => item.id === song.id
+        );
+
+    if (currentPlayerIndex < 0) {
+        currentPlayerIndex = 0;
+    }
+
+    loadPlayerSong(song, true);
+
+};
+
 </script>
 
 </body>
 </html>
-```
+
+

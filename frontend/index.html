@@ -3541,6 +3541,7 @@ const playerDuration = document.getElementById("playerDuration");
 
 const playerVolume = document.getElementById("playerVolume");
 
+
 let currentPlayerIndex = -1;
 let playerQueue = [];
 
@@ -3756,24 +3757,6 @@ window.playMusicFinderSong = function(song, queue = []) {
 
 };
 
-window.playMusicFinderSong = function(song, queue = []) {
-
-    playerQueue = queue.length
-        ? queue
-        : [song];
-
-    currentPlayerIndex =
-        playerQueue.findIndex(
-            item => item.id === song.id
-        );
-
-    if (currentPlayerIndex < 0) {
-        currentPlayerIndex = 0;
-    }
-
-    loadPlayerSong(song, true);
-
-};
 
 </script>
 

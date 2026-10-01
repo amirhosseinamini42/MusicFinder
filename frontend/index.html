@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1320,28 +1319,6 @@ footer {
     Created by <strong>Amirhossein Amini</strong>
 </div>
 
-<div class="musicPlayer">
-
-    <div class="musicPlayerInfo">
-
-        <div class="musicPlayerTitle">
-            I Wanna Be Yours
-        </div>
-
-        <div class="musicPlayerArtist">
-            Arctic Monkeys
-        </div>
-
-    </div>
-
-    <div id="youtubePlayer"></div>
-
-    <button id="musicPlayButton" onclick="toggleMusicPlayer()">
-        ▶
-    </button>
-
-</div>
-
 <nav class="navbar">
 
     <div class="logo">
@@ -2009,6 +1986,8 @@ function renderSearchResults(data, query) {
     const tracks =
         data.tracks?.items || [];
 
+    window.currentTracks = tracks;
+
     const artists =
         data.artists?.items || [];
 
@@ -2157,6 +2136,13 @@ function trackCard(track) {
 
                 <button
                     class="smallBtn primary"
+                    onclick="event.stopPropagation(); playMusicFinderSong(window.currentTracks.find(t => t.id === '${track.id}'), window.currentTracks)"
+                >
+                    ▶ Play
+                </button>
+
+                <button
+                    class="smallBtn"
                     onclick="openTrackFromEncoded('${serialized}')"
                 >
                     Details
@@ -3434,6 +3420,7 @@ renderForYou();
    Music Player
 ========================= */
 
+const musicPlayer = document.getElementById("musicPlayer");
 const musicAudio = document.getElementById("musicAudio");
 
 const playerCover = document.getElementById("playerCover");
@@ -3472,40 +3459,49 @@ function formatPlayerTime(seconds) {
 
 /* Load a song */
 
-function loadPlayerSong(song, autoPlay = false) {
+async function getPreviewUrl(song) {
+    if (song.preview_url) return song.preview_url;
 
-    if (!song || !song.preview_url) {
+    const artist = song.artists?.[0]?.name || "";
+    const term = encodeURIComponent(`${song.name} ${artist}`);
+
+    try {
+        const res = await fetch(
+            `https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=5`
+        );
+        const data = await res.json();
+        const match = data.results.find(r => r.previewUrl);
+        return match ? match.previewUrl : null;
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
+
+async function loadPlayerSong(song, autoPlay = false) {
+    if (!song) return;
+
+    const url = await getPreviewUrl(song);
+
+    if (!url) {
+        alert("No preview available for this song");
         return;
     }
 
-    playerTitle.textContent =
-        song.name || "Unknown Song";
-
+    playerTitle.textContent = song.name || "Unknown Song";
     playerArtist.textContent =
-        song.artists?.map(artist => artist.name).join(", ")
-        || "Unknown Artist";
+        song.artists?.map(a => a.name).join(", ") || "Unknown Artist";
+    playerCover.src = song.album?.images?.[0]?.url || "";
 
-    playerCover.src =
-        song.album?.images?.[0]?.url || "";
-
-    musicAudio.src = song.preview_url;
-
+    musicAudio.src = url;
     musicPlayer.classList.add("active");
 
     if (autoPlay) {
-
         musicAudio.play()
-            .then(() => {
-                playerPlay.textContent = "❚❚";
-            })
-            .catch(() => {
-                playerPlay.textContent = "▶";
-            });
-
+            .then(() => { playerPlay.textContent = "❚❚"; })
+            .catch(() => { playerPlay.textContent = "▶"; });
     } else {
-
         playerPlay.textContent = "▶";
-
     }
 }
 
@@ -3601,6 +3597,15 @@ musicAudio.addEventListener("ended", () => {
 });
 
 
+/* Auto-play next song */
+
+musicAudio.addEventListener("ended", () => {
+    if (playerQueue.length > 1) {
+        playerNext.click();
+    }
+});
+
+
 /* Previous */
 
 playerPrevious.addEventListener("click", () => {
@@ -3671,5 +3676,3 @@ window.playMusicFinderSong = function(song, queue = []) {
 
 </body>
 </html>
-
-

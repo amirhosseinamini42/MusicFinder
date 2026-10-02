@@ -836,6 +836,42 @@ main {
     box-shadow: 0 12px 30px rgba(29,185,84,.35);
 }
 
+/* Play button inside the Details modal */
+
+.modalButtons .playBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    background: linear-gradient(135deg, #7c5cff, #00b4ff);
+    border-color: transparent;
+    color: white;
+    font-weight: 700;
+
+    box-shadow: 0 8px 24px rgba(124,92,255,.35);
+}
+
+@media (hover: hover) {
+
+    .modalButtons .playBtn:hover {
+        transform: translateY(-6px);
+        background: linear-gradient(135deg, #8d70ff, #22c1ff);
+        border-color: transparent;
+        color: white;
+        box-shadow: 0 16px 36px rgba(124,92,255,.55);
+    }
+
+}
+
+/* Phone / Touch */
+.modalButtons .playBtn:active {
+    transform: translateY(-6px);
+    background: linear-gradient(135deg, #8d70ff, #22c1ff);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 16px 36px rgba(124,92,255,.55);
+}
+
 .albumGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill,minmax(130px,1fr));
@@ -2462,6 +2498,24 @@ function extractImageColors(img) {
    TRACK MODAL
 ========================= */
 
+let currentModalTrack = null;
+
+function playFromModal() {
+
+    if (!currentModalTrack) return;
+
+    const inResults = (window.currentTracks || [])
+        .some(t => t.id === currentModalTrack.id);
+
+    const queue = inResults
+        ? window.currentTracks
+        : [currentModalTrack];
+
+    playMusicFinderSong(currentModalTrack, queue);
+
+}
+
+
 function openTrackFromEncoded(encoded) {
 
     const track =
@@ -2470,6 +2524,8 @@ function openTrackFromEncoded(encoded) {
         );
 
     registerTrackClick(track);
+
+    currentModalTrack = track;
 
     const image =
         track.album?.images?.[0]?.url ||
@@ -2527,6 +2583,13 @@ function openTrackFromEncoded(encoded) {
 
 
         <div class="modalButtons">
+
+            <button class="playBtn" type="button" onclick="playFromModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+                Play
+            </button>
 
             <a class="primary" href="${spotify}" target="_blank">
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:middle;margin-right:6px;">
@@ -3419,24 +3482,128 @@ function formatPlayerTime(seconds) {
 
 /* Load a song */
 
+/* =========================
+   Preview lookup (iTunes)
+========================= */
+
+let lastPreviewError = null;   // "network" | "nomatch" | null
+
+function cleanTitle(name) {
+    return (name || "")
+        .replace(/\(.*?\)|\[.*?\]/g, " ")   // (feat. X), (Remastered 2011)
+        .replace(/\s-\s.*$/, " ")           // - Remastered, - Radio Edit
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function normalizeText(text) {
+    return (text || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^\p{L}\p{N} ]/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+async function itunesSearch(term, country, limit = 25) {
+    const url =
+        `https://itunes.apple.com/search?term=${encodeURIComponent(term)}` +
+        `&media=music&entity=song&limit=${limit}&country=${country}`;
+
+    const res = await fetch(url);
+
+    if (!res.ok) {
+        throw new Error("iTunes HTTP " + res.status);
+    }
+
+    const data = await res.json();
+    return data.results || [];
+}
+
+function pickBestPreview(results, title, artistNames) {
+
+    const wantedTitle = normalizeText(cleanTitle(title));
+    const wantedArtists = artistNames.map(normalizeText).filter(Boolean);
+
+    const candidates = results.filter(r => r.previewUrl);
+
+    const sameArtist = r => {
+        const artist = normalizeText(r.artistName);
+        return wantedArtists.some(w => artist.includes(w) || w.includes(artist));
+    };
+
+    const sameTitle = r => {
+        const track = normalizeText(cleanTitle(r.trackName));
+        return track && wantedTitle &&
+            (track.includes(wantedTitle) || wantedTitle.includes(track));
+    };
+
+    return (
+        candidates.find(r => sameArtist(r) && sameTitle(r)) ||
+        candidates.find(sameArtist) ||
+        null
+    );
+}
+
 async function getPreviewUrl(song) {
+
+    lastPreviewError = null;
+
     if (song.preview_url) return song.preview_url;
 
-    const artist = song.artists?.[0]?.name || "";
-    const term = encodeURIComponent(`${song.name} ${artist}`);
+    const cacheKey = "mfPreview_" + (song.id || song.name);
 
     try {
-        const res = await fetch(
-            `https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=5`
-        );
-        const data = await res.json();
-        const match = data.results.find(r => r.previewUrl);
-        return match ? match.previewUrl : null;
-    } catch (e) {
-        console.error(e);
-        return null;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) return cached;
+    } catch {}
+
+    const title = cleanTitle(song.name);
+    const artistNames = (song.artists || []).map(a => a.name).filter(Boolean);
+    const mainArtist = artistNames[0] || "";
+
+    const attempts = [
+        { term: `${title} ${mainArtist}`, country: "US" },
+        { term: `${title} ${mainArtist}`, country: "GB" },
+        { term: mainArtist,               country: "US" }
+    ];
+
+    let failedRequests = 0;
+
+    for (const attempt of attempts) {
+
+        if (!attempt.term.trim()) continue;
+
+        try {
+
+            const results = await itunesSearch(attempt.term, attempt.country);
+            const best = pickBestPreview(results, song.name, artistNames);
+
+            if (best) {
+
+                try {
+                    localStorage.setItem(cacheKey, best.previewUrl);
+                } catch {}
+
+                return best.previewUrl;
+            }
+
+        } catch (error) {
+
+            console.warn("Preview lookup failed:", error);
+            failedRequests++;
+
+        }
+
     }
+
+    lastPreviewError =
+        failedRequests === attempts.length ? "network" : "nomatch";
+
+    return null;
 }
+
 
 /* Silent audio used to unlock playback on iOS Safari */
 
@@ -3476,7 +3643,11 @@ async function loadPlayerSong(song, autoPlay = false) {
     if (!url) {
         musicAudio.pause();
         setPlayerPlaying(false);
-        alert("No preview available for this song");
+        alert(
+            lastPreviewError === "network"
+                ? "Couldn't reach the preview service. Please try again in a minute."
+                : "No preview available for this song"
+        );
         return;
     }
 

@@ -515,12 +515,14 @@ main {
 
 .cardActions {
     display: flex;
+    flex-wrap: wrap;
     gap: 7px;
     margin-top: 13px;
 }
 
 .smallBtn {
     flex: 1;
+    text-align: center;
     padding: 10px 7px;
     border-radius: 12px;
     border: 1px solid var(--border);
@@ -870,6 +872,259 @@ main {
     border-color: transparent;
     color: white;
     box-shadow: 0 16px 36px rgba(124,92,255,.55);
+}
+
+/* Search result cards: Play Preview gets its own row */
+
+.smallBtn.full {
+    flex: 1 1 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* Top result (first song of a search) */
+
+.topResult {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 22px;
+    align-items: center;
+    padding: 20px;
+    margin-bottom: 34px;
+    border-radius: 26px;
+}
+
+.topResultCover {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 20px;
+    background: rgba(255,255,255,.06);
+}
+
+.topResultInfo h3 {
+    margin: 6px 0;
+    font-size: clamp(22px, 4vw, 32px);
+    letter-spacing: -.6px;
+}
+
+.topResultInfo p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.topResultActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.topResultActions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.07);
+    color: white;
+    font-weight: 650;
+
+    transition:
+        transform .25s ease,
+        background .25s ease,
+        box-shadow .25s ease;
+}
+
+.topResultActions .topPlayBtn {
+    background: linear-gradient(135deg, #7c5cff, #00b4ff);
+    border-color: transparent;
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgba(124,92,255,.35);
+}
+
+@media (hover: hover) {
+
+    .topResultActions button:hover {
+        transform: translateY(-5px);
+        background: rgba(255,255,255,.16);
+    }
+
+    .topResultActions .topPlayBtn:hover {
+        background: linear-gradient(135deg, #8d70ff, #22c1ff);
+        box-shadow: 0 16px 36px rgba(124,92,255,.55);
+    }
+
+}
+
+.topResultActions button:active {
+    transform: translateY(-5px);
+}
+
+@media (max-width: 700px) {
+
+    .topResult {
+        grid-template-columns: 1fr;
+    }
+
+    .topResultCover {
+        width: 130px;
+        height: 130px;
+    }
+
+}
+
+/* Details modal: Play Preview */
+
+.modalButtons .previewBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-color: rgba(124,92,255,.65);
+    background: rgba(124,92,255,.14);
+    color: white;
+    font-weight: 650;
+}
+
+@media (hover: hover) {
+
+    .modalButtons .previewBtn:hover {
+        transform: translateY(-6px);
+        background: rgba(124,92,255,.30);
+        border-color: rgba(160,140,255,.9);
+        color: white;
+        box-shadow: 0 14px 32px rgba(124,92,255,.35);
+    }
+
+}
+
+.modalButtons .previewBtn:active {
+    transform: translateY(-6px);
+    background: rgba(124,92,255,.30);
+    border-color: rgba(160,140,255,.9);
+    color: white;
+    box-shadow: 0 14px 32px rgba(124,92,255,.35);
+}
+
+/* Full song player panel */
+
+.fullPlayer {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 1100;
+
+    width: min(440px, calc(100% - 24px));
+    padding: 12px;
+    border-radius: 22px;
+
+    background: rgba(18,18,22,.92);
+    border: 1px solid rgba(255,255,255,.12);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    box-shadow: 0 15px 45px rgba(0,0,0,.4);
+
+    transform: translateY(130%);
+    opacity: 0;
+    pointer-events: none;
+
+    transition:
+        transform .35s ease,
+        opacity .35s ease;
+}
+
+.fullPlayer.active {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.fullPlayerTop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.fullPlayerInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.fullPlayerTitle {
+    font-size: 14px;
+    font-weight: 650;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fullPlayerArtist {
+    margin-top: 3px;
+    font-size: 12px;
+    color: rgba(255,255,255,.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fullPlayerClose {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,.1);
+    color: white;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.fullPlayerClose:hover {
+    background: rgba(255,255,255,.18);
+}
+
+.fullPlayerBody iframe {
+    display: block;
+    width: 100%;
+    border: 0;
+    border-radius: 14px;
+}
+
+.fullPlayerBody .ytFrame {
+    aspect-ratio: 16 / 9;
+}
+
+.fullPlayerLoading {
+    padding: 28px 10px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.fullPlayerNote {
+    margin-top: 8px;
+    font-size: 11px;
+    line-height: 1.5;
+    color: rgba(255,255,255,.45);
+}
+
+.fullPlayerNote:empty {
+    display: none;
+}
+
+@media (max-width: 700px) {
+
+    .fullPlayer {
+        right: 12px;
+        left: 12px;
+        width: auto;
+        bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+
 }
 
 .albumGrid {
@@ -1295,6 +1550,34 @@ footer {
 
 </div>
 
+<!-- Full song player -->
+
+<div class="fullPlayer" id="fullPlayer">
+
+    <div class="fullPlayerTop">
+
+        <div class="fullPlayerInfo">
+            <div class="fullPlayerTitle" id="fullPlayerTitle">Loading...</div>
+            <div class="fullPlayerArtist" id="fullPlayerArtist"></div>
+        </div>
+
+        <button
+            class="fullPlayerClose"
+            type="button"
+            onclick="closeFullPlayer()"
+            aria-label="Close"
+        >
+            ×
+        </button>
+
+    </div>
+
+    <div class="fullPlayerBody" id="fullPlayerBody"></div>
+
+    <div class="fullPlayerNote" id="fullPlayerNote"></div>
+
+</div>
+
 <div class="developerCredit">
     Created by <strong>Amirhossein Amini</strong>
 </div>
@@ -1551,6 +1834,11 @@ const HISTORY_KEY = "musicFinderSearchHistory";
 ========================= */
 
 const API_BASE = "https://musicfinder-api.vercel.app";
+
+/* encodeURIComponent leaves ' untouched, which breaks inline onclick="f('...')" */
+function encodeSafe(text) {
+    return encodeURIComponent(text).replace(/'/g, "%27");
+}
 
 
 function getTasteData() {
@@ -1981,6 +2269,10 @@ function renderSearchResults(data, query) {
     let html = "";
 
     if (tracks.length) {
+        html += topResultCard(tracks[0]);
+    }
+
+    if (tracks.length) {
 
         html += `
             <div class="resultGroup">
@@ -2079,8 +2371,7 @@ function trackCard(track) {
         );
 
     const serialized =
-        encodeURIComponent(
-            JSON.stringify(track)
+        encodeSafe(JSON.stringify(track)
         );
 
     return `
@@ -2115,10 +2406,10 @@ function trackCard(track) {
             <div class="cardActions">
 
                 <button
-                    class="smallBtn primary"
+                    class="smallBtn primary full"
                     onclick="event.stopPropagation(); playMusicFinderSong(window.currentTracks.find(t => t.id === '${track.id}'), window.currentTracks)"
                 >
-                    ▶ Play
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg> Play Preview
                 </button>
 
                 <button
@@ -2152,6 +2443,92 @@ function trackCard(track) {
 }
 
 
+function openTrackByIndex(index) {
+
+    const track = (window.currentTracks || [])[index];
+
+    if (track) {
+        openTrackFromEncoded(encodeSafe(JSON.stringify(track)));
+    }
+
+}
+
+
+function topResultCard(track) {
+
+    const image =
+        track.album?.images?.[0]?.url ||
+        "";
+
+    const artist =
+        track.artists?.map(a => a.name).join(", ") ||
+        "Unknown artist";
+
+    const album =
+        track.album?.name
+        ? " · " + escapeHtml(track.album.name)
+        : "";
+
+    return `
+
+        <div
+            class="topResult glass"
+            onclick="setBackground('${image}')"
+        >
+
+            ${
+                image
+                ? `<img class="topResultCover" src="${image}" alt="">`
+                : `<div class="topResultCover"></div>`
+            }
+
+            <div class="topResultInfo">
+
+                <div class="modalMuted">
+                    TOP RESULT
+                </div>
+
+                <h3>${escapeHtml(track.name)}</h3>
+
+                <p>${escapeHtml(artist)}${album}</p>
+
+                <div class="topResultActions">
+
+                    <button
+                        class="topPlayBtn"
+                        type="button"
+                        onclick="event.stopPropagation(); playFullSong(window.currentTracks[0])"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                        Play
+                    </button>
+
+                    <button
+                        type="button"
+                        onclick="event.stopPropagation(); playMusicFinderSong(window.currentTracks[0], window.currentTracks)"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                        Play Preview
+                    </button>
+
+                    <button
+                        type="button"
+                        onclick="event.stopPropagation(); openTrackByIndex(0)"
+                    >
+                        Details
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
 function artistSearchCard(artist) {
 
     const image =
@@ -2163,8 +2540,7 @@ function artistSearchCard(artist) {
         "#";
 
     const serialized =
-        encodeURIComponent(
-            JSON.stringify({
+        encodeSafe(JSON.stringify({
                 id: artist.id,
                 name: artist.name,
                 image: image,
@@ -2500,6 +2876,15 @@ function extractImageColors(img) {
 
 let currentModalTrack = null;
 
+function playFullFromModal() {
+
+    if (!currentModalTrack) return;
+
+    playFullSong(currentModalTrack);
+
+}
+
+
 function playFromModal() {
 
     if (!currentModalTrack) return;
@@ -2584,11 +2969,14 @@ function openTrackFromEncoded(encoded) {
 
         <div class="modalButtons">
 
-            <button class="playBtn" type="button" onclick="playFromModal()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                    <path d="M8 5v14l11-7z"/>
-                </svg>
+            <button class="playBtn" type="button" onclick="playFullFromModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
                 Play
+            </button>
+
+            <button class="previewBtn" type="button" onclick="playFromModal()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                Play Preview
             </button>
 
             <a class="primary" href="${spotify}" target="_blank">
@@ -3007,8 +3395,7 @@ function renderArtists() {
                 artist.image || "";
 
             const encoded =
-                encodeURIComponent(
-                    JSON.stringify({
+                encodeSafe(JSON.stringify({
                         id: artist.id,
                         name: artist.name,
                         image: artist.image,
@@ -3107,8 +3494,7 @@ function renderForYou() {
         const artist = artists[0];
 
         const encoded =
-            encodeURIComponent(
-                JSON.stringify({
+            encodeSafe(JSON.stringify({
                     id: artist.id,
                     name: artist.name,
                     image: artist.image,
@@ -3181,8 +3567,7 @@ function renderForYou() {
                             .map(track => {
 
                                 const encoded =
-                                    encodeURIComponent(
-                                        JSON.stringify({
+                                    encodeSafe(JSON.stringify({
                                             id: track.id,
                                             name: track.name,
                                             artist: track.artist,
@@ -3343,7 +3728,7 @@ function renderTaste() {
 
                     <div
                         class="tasteRow"
-                        onclick="openArtistFromEncoded('${encodeURIComponent(JSON.stringify({
+                        onclick="openArtistFromEncoded('${encodeSafe(JSON.stringify({
                             id: artist.id,
                             name: artist.name,
                             image: artist.image,
@@ -3910,6 +4295,10 @@ playerNext.addEventListener("click", () => {
 
 window.playMusicFinderSong = function(song, queue = []) {
 
+    if (!song) return;
+
+    closeFullPlayer();
+
     playerQueue = queue.length
         ? queue
         : [song];
@@ -3927,6 +4316,138 @@ window.playMusicFinderSong = function(song, queue = []) {
 
 };
 
+
+
+
+/* =========================
+   Full song player
+========================= */
+
+let fullPlayerToken = 0;
+
+async function getYouTubeVideoId(song) {
+
+    const artist = song.artists?.[0]?.name || "";
+    const cacheKey = "mfYouTube_" + (song.id || `${song.name}-${artist}`);
+
+    try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) return cached;
+    } catch {}
+
+    try {
+
+        const response = await fetch(
+            `/api/youtube?title=${encodeURIComponent(song.name || "")}` +
+            `&artist=${encodeURIComponent(artist)}`
+        );
+
+        const data = await response.json();
+
+        if (data.videoId) {
+
+            try {
+                localStorage.setItem(cacheKey, data.videoId);
+            } catch {}
+
+            return data.videoId;
+        }
+
+        console.warn("YouTube lookup:", data.error || "no result");
+
+    } catch (error) {
+
+        console.warn("YouTube lookup failed:", error);
+
+    }
+
+    return null;
+}
+
+
+async function playFullSong(song) {
+
+    if (!song) return;
+
+    // One player at a time: stop and hide the preview player
+    musicAudio.pause();
+    musicPlayer.classList.remove("active");
+
+    const panel = document.getElementById("fullPlayer");
+    const body = document.getElementById("fullPlayerBody");
+    const note = document.getElementById("fullPlayerNote");
+
+    document.getElementById("fullPlayerTitle").textContent =
+        song.name || "Unknown Song";
+
+    document.getElementById("fullPlayerArtist").textContent =
+        song.artists?.map(a => a.name).join(", ") || "";
+
+    note.textContent = "";
+
+    body.innerHTML =
+        '<div class="fullPlayerLoading">Finding the full song…</div>';
+
+    panel.classList.add("active");
+
+    const token = ++fullPlayerToken;
+
+    const videoId = await getYouTubeVideoId(song);
+
+    // Closed, or another song was chosen while searching
+    if (token !== fullPlayerToken) return;
+
+    if (videoId) {
+
+        body.innerHTML = `
+            <iframe
+                class="ytFrame"
+                src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&playsinline=1&rel=0"
+                title="${escapeHtml(song.name || "Song")}"
+                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+                allowfullscreen
+            ></iframe>
+        `;
+
+        note.textContent =
+            "Full song via YouTube. If it doesn't start, tap the play button on the video.";
+
+        return;
+    }
+
+    if (song.id) {
+
+        body.innerHTML = `
+            <iframe
+                src="https://open.spotify.com/embed/track/${encodeURIComponent(song.id)}?utm_source=generator"
+                height="152"
+                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                loading="lazy"
+            ></iframe>
+        `;
+
+        note.textContent =
+            "Spotify player. Log in to Spotify (desktop browser) to hear the full song, otherwise you'll hear a 30-second preview.";
+
+        return;
+    }
+
+    body.innerHTML =
+        '<div class="fullPlayerLoading">Sorry, the full song could not be found.</div>';
+
+}
+
+
+function closeFullPlayer() {
+
+    fullPlayerToken++;
+
+    document.getElementById("fullPlayer").classList.remove("active");
+
+    // Removing the iframe stops its audio
+    document.getElementById("fullPlayerBody").innerHTML = "";
+
+}
 
 </script>
 

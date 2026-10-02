@@ -3546,18 +3546,35 @@ function pickBestPreview(results, title, artistNames) {
     );
 }
 
-async function getPreviewUrl(song) {
+/* Preview sources: our own server first, direct iTunes as backup */
 
-    lastPreviewError = null;
+const previewSourcesCache = new Map();
+const PREVIEW_CACHE_MS = 10 * 60 * 1000;   // preview links expire, keep short
 
-    if (song.preview_url) return song.preview_url;
+let currentPreviewSources = [];
+let currentPreviewIndex = 0;
 
-    const cacheKey = "mfPreview_" + (song.id || song.name);
+async function getPreviewFromServer(song) {
 
-    try {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) return cached;
-    } catch {}
+    const artist = song.artists?.[0]?.name || "";
+
+    const response = await fetch(
+        `/api/preview?title=${encodeURIComponent(song.name || "")}` +
+        `&artist=${encodeURIComponent(artist)}`
+    );
+
+    if (!response.ok) {
+        throw new Error("Preview API HTTP " + response.status);
+    }
+
+    const data = await response.json();
+
+    return (data.sources || [])
+        .map(source => source.url)
+        .filter(Boolean);
+}
+
+async function getPreviewFromItunes(song) {
 
     const title = cleanTitle(song.name);
     const artistNames = (song.artists || []).map(a => a.name).filter(Boolean);
@@ -3570,38 +3587,82 @@ async function getPreviewUrl(song) {
     ];
 
     let failedRequests = 0;
+    let madeRequests = 0;
 
     for (const attempt of attempts) {
 
         if (!attempt.term.trim()) continue;
+
+        madeRequests++;
 
         try {
 
             const results = await itunesSearch(attempt.term, attempt.country);
             const best = pickBestPreview(results, song.name, artistNames);
 
-            if (best) {
-
-                try {
-                    localStorage.setItem(cacheKey, best.previewUrl);
-                } catch {}
-
-                return best.previewUrl;
-            }
+            if (best) return [best.previewUrl];
 
         } catch (error) {
 
-            console.warn("Preview lookup failed:", error);
+            console.warn("iTunes lookup failed:", error);
             failedRequests++;
 
         }
 
     }
 
-    lastPreviewError =
-        failedRequests === attempts.length ? "network" : "nomatch";
+    if (madeRequests && failedRequests === madeRequests) {
+        throw new Error("iTunes unreachable");
+    }
 
-    return null;
+    return [];
+}
+
+async function getPreviewSources(song) {
+
+    lastPreviewError = null;
+
+    const key = song.id || song.name;
+    const cached = previewSourcesCache.get(key);
+
+    if (cached && Date.now() - cached.time < PREVIEW_CACHE_MS) {
+        return cached.sources;
+    }
+
+    const urls = [];
+
+    if (song.preview_url) urls.push(song.preview_url);
+
+    let attempts = 0;
+    let failures = 0;
+
+    try {
+        attempts++;
+        urls.push(...await getPreviewFromServer(song));
+    } catch (error) {
+        failures++;
+        console.warn("Server preview lookup failed:", error);
+    }
+
+    if (!urls.length) {
+        try {
+            attempts++;
+            urls.push(...await getPreviewFromItunes(song));
+        } catch (error) {
+            failures++;
+            console.warn("Direct iTunes lookup failed:", error);
+        }
+    }
+
+    const sources = [...new Set(urls)];
+
+    if (sources.length) {
+        previewSourcesCache.set(key, { sources, time: Date.now() });
+    } else {
+        lastPreviewError = failures === attempts ? "network" : "nomatch";
+    }
+
+    return sources;
 }
 
 
@@ -3635,12 +3696,12 @@ async function loadPlayerSong(song, autoPlay = false) {
     playerCover.src = song.album?.images?.[0]?.url || "";
     musicPlayer.classList.add("active");
 
-    const url = await getPreviewUrl(song);
+    const sources = await getPreviewSources(song);
 
     // A newer song was selected while this one was loading
     if (loadId !== playerLoadId) return;
 
-    if (!url) {
+    if (!sources.length) {
         musicAudio.pause();
         setPlayerPlaying(false);
         alert(
@@ -3651,7 +3712,10 @@ async function loadPlayerSong(song, autoPlay = false) {
         return;
     }
 
-    musicAudio.src = url;
+    currentPreviewSources = sources;
+    currentPreviewIndex = 0;
+
+    musicAudio.src = sources[0];
     musicAudio.load();
 
     if (autoPlay) {
@@ -3689,6 +3753,31 @@ musicAudio.addEventListener("play", () => {
 
 musicAudio.addEventListener("pause", () => {
     if (!isUnlockSound()) setPlayerPlaying(false);
+});
+
+
+/* If a preview fails to load, try the next source */
+
+musicAudio.addEventListener("error", () => {
+
+    if (isUnlockSound()) return;
+
+    if (currentPreviewIndex < currentPreviewSources.length - 1) {
+
+        currentPreviewIndex++;
+
+        musicAudio.src = currentPreviewSources[currentPreviewIndex];
+        musicAudio.load();
+        musicAudio.play().catch(error => console.error("Playback failed:", error));
+
+        return;
+    }
+
+    console.error("Audio failed to load:", musicAudio.error);
+
+    setPlayerPlaying(false);
+    playerArtist.textContent = "Couldn't play this preview";
+
 });
 
 

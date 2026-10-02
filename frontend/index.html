@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <title>MusicFinder</title>
 
@@ -873,7 +873,7 @@ main {
 ========================= */
 
 footer {
-    padding: 70px 0 40px;
+    padding: 70px 0 140px;
     text-align: center;
     color: rgba(255,255,255,.35);
     font-size: 13px;
@@ -931,82 +931,6 @@ footer {
     .modalHero img {
         width: 150px;
         height: 150px;
-    }
-
-}
-
-/* =========================
-   MUSIC PLAYER
-========================= */
-
-.musicPlayer {
-    position: fixed;
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
-    z-index: 200;
-
-    padding: 14px 18px;
-    border-radius: 20px;
-
-    background: rgba(18,18,18,.88);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-
-    border: 1px solid rgba(255,255,255,.12);
-    box-shadow: 0 15px 45px rgba(0,0,0,.4);
-
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-.musicPlayerInfo {
-    flex: 1;
-    min-width: 0;
-}
-
-.musicPlayerTitle {
-    font-size: 14px;
-    font-weight: 650;
-    color: white;
-}
-
-.musicPlayerArtist {
-    margin-top: 3px;
-    font-size: 12px;
-    color: rgba(255,255,255,.5);
-}
-
-
-
-.musicPlayer button {
-    width: 42px;
-    height: 42px;
-
-    border: 0;
-    border-radius: 50%;
-
-    background: white;
-    color: black;
-
-    cursor: pointer;
-
-    font-size: 16px;
-    transition: transform .2s ease;
-}
-
-.musicPlayer button:hover {
-    transform: scale(1.08);
-}
-
-@media (max-width: 600px) {
-
-    .musicPlayer {
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
-        padding: 12px 14px;
     }
 
 }
@@ -1109,6 +1033,10 @@ footer {
         background .2s ease;
 }
 
+.playerButton svg {
+    display: block;
+}
+
 .playerButton:hover {
     transform: scale(1.08);
     background: rgba(255,255,255,.16);
@@ -1184,29 +1112,45 @@ footer {
     .musicPlayer {
         left: 10px;
         right: 10px;
-        bottom: 10px;
+        bottom: calc(10px + env(safe-area-inset-bottom));
 
-        padding: 11px;
-        gap: 10px;
+        padding: 12px;
+        gap: 10px 12px;
+        flex-wrap: wrap;
 
         border-radius: 18px;
     }
 
     .playerCover {
-        width: 48px;
-        height: 48px;
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
     }
 
     .playerInfo {
+        flex: 1;
         min-width: 0;
-        max-width: 120px;
+        max-width: none;
+    }
+
+    .playerControls {
+        gap: 6px;
+    }
+
+    .playerButton {
+        width: 36px;
+        height: 36px;
+    }
+
+    .playerPlay {
+        width: 42px;
+        height: 42px;
     }
 
     .playerTimeline {
-        position: absolute;
-        left: 12px;
-        right: 12px;
-        bottom: 5px;
+        order: 3;
+        flex: 1 1 100%;
+        min-width: 0;
     }
 
     .playerVolume {
@@ -1253,7 +1197,7 @@ footer {
             id="playerPrevious"
             type="button"
         >
-            ⏮
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M6 6h2v12H6zM9.5 12l8.5 6V6z"/></svg>
         </button>
 
         <button
@@ -1261,7 +1205,7 @@ footer {
             id="playerPlay"
             type="button"
         >
-            ▶
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
         </button>
 
         <button
@@ -1269,7 +1213,7 @@ footer {
             id="playerNext"
             type="button"
         >
-            ⏭
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg>
         </button>
 
     </div>
@@ -3438,6 +3382,22 @@ const playerDuration = document.getElementById("playerDuration");
 const playerVolume = document.getElementById("playerVolume");
 
 
+/* Play / pause icons (SVG, same look on every device) */
+
+const ICON_PLAY = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>';
+
+function setPlayerPlaying(isPlaying) {
+    playerPlay.innerHTML = isPlaying ? ICON_PAUSE : ICON_PLAY;
+    playerPlay.setAttribute("aria-label", isPlaying ? "Pause" : "Play");
+}
+
+function isUnlockSound() {
+    return musicAudio.currentSrc.startsWith("data:");
+}
+
+
+
 let currentPlayerIndex = -1;
 let playerQueue = [];
 
@@ -3515,7 +3475,7 @@ async function loadPlayerSong(song, autoPlay = false) {
 
     if (!url) {
         musicAudio.pause();
-        playerPlay.textContent = "▶";
+        setPlayerPlaying(false);
         alert("No preview available for this song");
         return;
     }
@@ -3525,13 +3485,13 @@ async function loadPlayerSong(song, autoPlay = false) {
 
     if (autoPlay) {
         musicAudio.play()
-            .then(() => { playerPlay.textContent = "❚❚"; })
+            .then(() => { setPlayerPlaying(true); })
             .catch(error => {
                 console.error("Playback failed:", error);
-                playerPlay.textContent = "▶";
+                setPlayerPlaying(false);
             });
     } else {
-        playerPlay.textContent = "▶";
+        setPlayerPlaying(false);
     }
 }
 
@@ -3540,24 +3500,24 @@ async function loadPlayerSong(song, autoPlay = false) {
 
 playerPlay.addEventListener("click", () => {
 
-    if (!musicAudio.src) {
+    if (!musicAudio.src || isUnlockSound()) {
         return;
     }
 
     if (musicAudio.paused) {
-
-        musicAudio.play();
-
-        playerPlay.textContent = "❚❚";
-
+        musicAudio.play().catch(error => console.error("Playback failed:", error));
     } else {
-
         musicAudio.pause();
-
-        playerPlay.textContent = "▶";
-
     }
 
+});
+
+musicAudio.addEventListener("play", () => {
+    if (!isUnlockSound()) setPlayerPlaying(true);
+});
+
+musicAudio.addEventListener("pause", () => {
+    if (!isUnlockSound()) setPlayerPlaying(false);
 });
 
 
@@ -3618,7 +3578,7 @@ playerVolume.addEventListener("input", () => {
 
 musicAudio.addEventListener("ended", () => {
 
-    playerPlay.textContent = "▶";
+    setPlayerPlaying(false);
 
     playerProgress.value = 0;
 

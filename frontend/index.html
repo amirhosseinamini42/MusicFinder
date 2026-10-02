@@ -1127,6 +1127,62 @@ main {
 
 }
 
+/* Account (Sign in with Google) */
+
+.authArea {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+}
+
+.authUser {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.authAvatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.08);
+}
+
+.authName {
+    max-width: 120px;
+    font-size: 13px;
+    font-weight: 650;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.authSignOut {
+    padding: 9px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--glass);
+    color: white;
+    font-size: 12px;
+    transition: .2s;
+}
+
+.authSignOut:hover {
+    background: var(--glass-strong);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 700px) {
+
+    .authName {
+        display: none;
+    }
+
+}
+
 .albumGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill,minmax(130px,1fr));
@@ -1451,6 +1507,8 @@ footer {
 
 </style>
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 </head>
 
 <body>
@@ -1589,6 +1647,7 @@ footer {
     </div>
 
     <div class="navRight">
+        <div class="authArea" id="authArea"></div>
         <button class="menuButton" onclick="openMenu()">☰</button>
     </div>
 
@@ -1826,8 +1885,28 @@ footer {
 
 
 
-const TASTE_KEY = "musicFinderTasteV3";
-const HISTORY_KEY = "musicFinderSearchHistory";
+const BASE_TASTE_KEY = "musicFinderTasteV3";
+const BASE_HISTORY_KEY = "musicFinderSearchHistory";
+const USER_KEY = "musicFinderUser";
+
+/* Paste your Google OAuth Client ID here to turn on "Sign in with Google" */
+const GOOGLE_CLIENT_ID = "PASTE_YOUR_GOOGLE_CLIENT_ID_HERE";
+
+let TASTE_KEY = BASE_TASTE_KEY;
+let HISTORY_KEY = BASE_HISTORY_KEY;
+let currentUser = null;
+
+try {
+    currentUser = JSON.parse(localStorage.getItem(USER_KEY) || "null");
+} catch {
+    currentUser = null;
+}
+
+/* Each signed-in account keeps its own taste and history */
+if (currentUser && currentUser.sub) {
+    TASTE_KEY = `${BASE_TASTE_KEY}_${currentUser.sub}`;
+    HISTORY_KEY = `${BASE_HISTORY_KEY}_${currentUser.sub}`;
+}
 
 /* =========================
    API
@@ -4448,6 +4527,211 @@ function closeFullPlayer() {
     document.getElementById("fullPlayerBody").innerHTML = "";
 
 }
+
+
+
+/* =========================
+   Account (Sign in with Google)
+========================= */
+
+let googleInitDone = false;
+
+function googleLoginEnabled() {
+    return Boolean(GOOGLE_CLIENT_ID) && !GOOGLE_CLIENT_ID.startsWith("PASTE_");
+}
+
+function decodeJwtPayload(token) {
+
+    const base64 = token
+        .split(".")[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+    const json = decodeURIComponent(
+        atob(base64)
+            .split("")
+            .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+    );
+
+    return JSON.parse(json);
+}
+
+function refreshAccountData() {
+    renderHistory();
+    renderTaste();
+    renderArtists();
+    renderForYou();
+}
+
+function handleGoogleCredential(response) {
+
+    try {
+
+        const info = decodeJwtPayload(response.credential);
+
+        if (!info.sub) return;
+
+        signInUser({
+            sub: info.sub,
+            name: info.name || info.email || "User",
+            email: info.email || "",
+            picture: info.picture || ""
+        });
+
+    } catch (error) {
+
+        console.error("Google sign-in failed:", error);
+
+    }
+
+}
+
+function signInUser(user) {
+
+    const accountTaste = `${BASE_TASTE_KEY}_${user.sub}`;
+    const accountHistory = `${BASE_HISTORY_KEY}_${user.sub}`;
+
+    try {
+
+        // First sign-in on this device: keep what the guest already collected
+        if (!localStorage.getItem(accountTaste) && localStorage.getItem(BASE_TASTE_KEY)) {
+            localStorage.setItem(accountTaste, localStorage.getItem(BASE_TASTE_KEY));
+        }
+
+        if (!localStorage.getItem(accountHistory) && localStorage.getItem(BASE_HISTORY_KEY)) {
+            localStorage.setItem(accountHistory, localStorage.getItem(BASE_HISTORY_KEY));
+        }
+
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+
+    } catch {}
+
+    currentUser = user;
+    TASTE_KEY = accountTaste;
+    HISTORY_KEY = accountHistory;
+
+    renderAuth();
+    refreshAccountData();
+
+}
+
+function signOutUser() {
+
+    try {
+        localStorage.removeItem(USER_KEY);
+    } catch {}
+
+    try {
+        window.google?.accounts?.id?.disableAutoSelect();
+    } catch {}
+
+    currentUser = null;
+    TASTE_KEY = BASE_TASTE_KEY;
+    HISTORY_KEY = BASE_HISTORY_KEY;
+
+    renderAuth();
+    refreshAccountData();
+
+}
+
+function renderGoogleButton() {
+
+    const area = document.getElementById("authArea");
+
+    if (!area || currentUser || !window.google?.accounts?.id) return;
+
+    const small = window.innerWidth < 700;
+
+    area.innerHTML = "";
+
+    google.accounts.id.renderButton(area, {
+        type: small ? "icon" : "standard",
+        theme: "filled_black",
+        size: "large",
+        shape: small ? "circle" : "pill",
+        text: "signin_with"
+    });
+
+}
+
+function initGoogleLogin(attempt = 0) {
+
+    if (!googleLoginEnabled() || currentUser) return;
+
+    // The Google library loads asynchronously, so wait for it
+    if (!window.google?.accounts?.id) {
+
+        if (attempt < 20) {
+            setTimeout(() => initGoogleLogin(attempt + 1), 300);
+        }
+
+        return;
+    }
+
+    if (!googleInitDone) {
+
+        google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleCredential
+        });
+
+        googleInitDone = true;
+    }
+
+    renderGoogleButton();
+
+}
+
+function renderAuth() {
+
+    const area = document.getElementById("authArea");
+
+    if (!area) return;
+
+    if (currentUser) {
+
+        const firstName = (currentUser.name || "").split(" ")[0];
+
+        area.innerHTML = `
+            <div class="authUser">
+
+                ${
+                    currentUser.picture
+                    ? `<img
+                            class="authAvatar"
+                            src="${escapeHtml(currentUser.picture)}"
+                            alt=""
+                            referrerpolicy="no-referrer"
+                       >`
+                    : ""
+                }
+
+                <span class="authName">${escapeHtml(firstName)}</span>
+
+            </div>
+
+            <button
+                class="authSignOut"
+                type="button"
+                onclick="signOutUser()"
+            >
+                Sign out
+            </button>
+        `;
+
+        return;
+    }
+
+    area.innerHTML = "";
+
+    initGoogleLogin();
+
+}
+
+renderAuth();
+
+window.addEventListener("load", () => initGoogleLogin());
 
 </script>
 

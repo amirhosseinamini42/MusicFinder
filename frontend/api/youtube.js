@@ -57,6 +57,39 @@ function chooseVideo(items, title, artist) {
     return scored[0]?.item || null;
 }
 
+async function searchYouTube(apiKey, query, extraParams) {
+
+    const params = new URLSearchParams({
+        part: "snippet",
+        type: "video",
+        maxResults: "5",
+        q: query,
+        key: apiKey,
+        ...extraParams
+    });
+
+    const response = await fetch(
+        "https://www.googleapis.com/youtube/v3/search?" + params.toString(),
+        { signal: AbortSignal.timeout(6000) }
+    );
+
+    const data = await response.json();
+
+    return { ok: response.ok, status: response.status, data };
+}
+
+function describeError(result) {
+
+    const error = result.data?.error || {};
+    const reason = error.errors?.[0]?.reason || result.status;
+
+    return `YouTube API error (${reason}): ${error.message || "unknown error"}`;
+}
+
+function isInvalidKey(result) {
+    return /api key not valid|keyInvalid|API_KEY_INVALID/i.test(JSON.stringify(result.data || {}));
+}
+
 module.exports = async function handler(req, res) {
 
     const title = String(req.query.title || "").slice(0, 200).trim();
@@ -69,7 +102,11 @@ module.exports = async function handler(req, res) {
         return;
     }
 
-    const apiKey = process.env.YOUTUBE_API_KEY;
+    /* Remove accidental spaces, line breaks or quotes pasted with the key */
+    const apiKey = (process.env.YOUTUBE_API_KEY || "")
+        .trim()
+        .replace(/^["']+|["']+$/g, "")
+        .trim();
 
     if (!apiKey) {
         res.status(200).json({ videoId: null, error: "YOUTUBE_API_KEY is not set in Vercel" });
@@ -78,28 +115,41 @@ module.exports = async function handler(req, res) {
 
     const query = `${artist} - ${cleanTitle(title)} official audio`.trim();
 
-    const url =
-        "https://www.googleapis.com/youtube/v3/search" +
-        "?part=snippet&type=video&videoCategoryId=10" +
-        "&videoEmbeddable=true&videoSyndicated=true&maxResults=5" +
-        `&q=${encodeURIComponent(query)}` +
-        `&key=${encodeURIComponent(apiKey)}`;
+    /* Try strict filters first, then simpler ones if YouTube rejects them */
+    const attempts = [
+        { videoCategoryId: "10", videoEmbeddable: "true", videoSyndicated: "true" },
+        { videoEmbeddable: "true" },
+        {}
+    ];
 
     try {
 
-        const response = await fetch(url, { signal: AbortSignal.timeout(6000) });
-        const data = await response.json();
+        let result = null;
 
-        if (!response.ok) {
-            const reason = data.error?.errors?.[0]?.reason || response.status;
-            res.status(200).json({
-                videoId: null,
-                error: `YouTube API error: ${reason}`
-            });
+        for (const extra of attempts) {
+
+            result = await searchYouTube(apiKey, query, extra);
+
+            if (result.ok) break;
+
+            if (isInvalidKey(result)) {
+                res.status(200).json({
+                    videoId: null,
+                    error: "The API key is not valid. Copy the key again into YOUTUBE_API_KEY in Vercel (it starts with AIza, no spaces or quotes), then Redeploy."
+                });
+                return;
+            }
+
+            // Only parameter problems (400) are worth retrying with fewer filters
+            if (result.status !== 400) break;
+        }
+
+        if (!result.ok) {
+            res.status(200).json({ videoId: null, error: describeError(result) });
             return;
         }
 
-        const best = chooseVideo(data.items || [], title, artist);
+        const best = chooseVideo(result.data.items || [], title, artist);
 
         if (!best) {
             res.status(200).json({ videoId: null, error: "no video found" });
@@ -116,7 +166,7 @@ module.exports = async function handler(req, res) {
 
     } catch (error) {
 
-        res.status(200).json({ videoId: null, error: "lookup failed" });
+        res.status(200).json({ videoId: null, error: "lookup failed: " + (error.message || "unknown") });
 
     }
 };

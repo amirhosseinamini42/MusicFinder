@@ -3478,28 +3478,58 @@ async function getPreviewUrl(song) {
     }
 }
 
+/* Silent audio used to unlock playback on iOS Safari */
+
+const SILENT_AUDIO =
+    "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+
+let playerLoadId = 0;
+
 async function loadPlayerSong(song, autoPlay = false) {
     if (!song) return;
 
-    const url = await getPreviewUrl(song);
+    const loadId = ++playerLoadId;
 
-    if (!url) {
-        alert("No preview available for this song");
-        return;
+    /*
+       iOS Safari only allows audio.play() when it is called
+       directly inside a tap. Since we fetch the preview URL
+       first (async), we "unlock" the audio element right now,
+       synchronously, and set the real song afterwards.
+    */
+    if (autoPlay) {
+        musicAudio.src = SILENT_AUDIO;
+        const unlock = musicAudio.play();
+        if (unlock) unlock.catch(() => {});
     }
 
     playerTitle.textContent = song.name || "Unknown Song";
     playerArtist.textContent =
         song.artists?.map(a => a.name).join(", ") || "Unknown Artist";
     playerCover.src = song.album?.images?.[0]?.url || "";
+    musicPlayer.classList.add("active");
+
+    const url = await getPreviewUrl(song);
+
+    // A newer song was selected while this one was loading
+    if (loadId !== playerLoadId) return;
+
+    if (!url) {
+        musicAudio.pause();
+        playerPlay.textContent = "▶";
+        alert("No preview available for this song");
+        return;
+    }
 
     musicAudio.src = url;
-    musicPlayer.classList.add("active");
+    musicAudio.load();
 
     if (autoPlay) {
         musicAudio.play()
             .then(() => { playerPlay.textContent = "❚❚"; })
-            .catch(() => { playerPlay.textContent = "▶"; });
+            .catch(error => {
+                console.error("Playback failed:", error);
+                playerPlay.textContent = "▶";
+            });
     } else {
         playerPlay.textContent = "▶";
     }

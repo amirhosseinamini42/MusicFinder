@@ -1183,34 +1183,40 @@ main {
 
 }
 
-/* Free music section */
+/* Download Search button under the Spotify player */
 
-.freeSearch {
-    margin: 0 0 28px;
-}
-
-.fullPlayerAlt {
-    display: block;
-    width: 100%;
+.fullPlayerDownload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     margin-top: 10px;
-    padding: 9px 12px;
-    border-radius: 12px;
+    padding: 11px 14px;
+    border-radius: 13px;
     border: 1px solid var(--border);
     background: rgba(255,255,255,.06);
     color: white;
-    font-size: 12px;
-    transition: .2s;
+    font-size: 13px;
+
+    transition:
+        transform .25s ease,
+        background .25s ease,
+        box-shadow .25s ease;
 }
 
-.fullPlayerAlt:hover {
-    background: rgba(255,255,255,.13);
+@media (hover: hover) {
+
+    .fullPlayerDownload:hover {
+        transform: translateY(-4px);
+        background: rgba(255,255,255,.16);
+        box-shadow: 0 10px 26px rgba(0,0,0,.3);
+    }
+
 }
 
-.freeNote {
-    margin: 0 0 18px;
-    font-size: 12px;
-    line-height: 1.6;
-    color: rgba(255,255,255,.45);
+.fullPlayerDownload:active {
+    transform: translateY(-4px);
+    background: rgba(255,255,255,.16);
 }
 
 .albumGrid {
@@ -1664,14 +1670,6 @@ footer {
 
     <div class="fullPlayerNote" id="fullPlayerNote"></div>
 
-    <button
-        class="fullPlayerAlt"
-        type="button"
-        onclick="searchFreeFromPlayer()"
-    >
-        Can't play it? Browse free music
-    </button>
-
 </div>
 
 <div class="developerCredit">
@@ -1713,10 +1711,6 @@ footer {
 
     <button class="menuItem" onclick="goTo('searchSection')">
         🔎 Search
-    </button>
-
-    <button class="menuItem" onclick="goTo('freeMusic')">
-        🎁 Free Music
     </button>
 
     <button class="menuItem" onclick="goTo('forYou')">
@@ -1781,45 +1775,6 @@ footer {
     </div>
 
     <div id="searchResults"></div>
-
-</section>
-
-<section class="section" id="freeMusic">
-
-    <div class="sectionHeader">
-
-        <div>
-            <h2 class="sectionTitle">Free Music</h2>
-            <p class="sectionSubtitle">
-                Full songs you can listen to and download for free,
-                shared by the artists themselves.
-            </p>
-        </div>
-
-    </div>
-
-    <div class="searchBox freeSearch">
-
-        <input
-            id="freeSearchInput"
-            type="text"
-            placeholder="Search free music (e.g. piano, chill, rock)..."
-            autocomplete="off"
-        >
-
-        <button class="searchBtn" onclick="searchFreeMusic()">
-            Search
-        </button>
-
-    </div>
-
-    <div id="freeResults">
-
-        <div class="empty glass">
-            Search above to find free songs.
-        </div>
-
-    </div>
 
 </section>
 
@@ -4167,10 +4122,6 @@ async function getPreviewSources(song) {
 
     lastPreviewError = null;
 
-    // Free-music tracks already come with their own playable addresses
-    if (song.directUrls && song.directUrls.length) {
-        return song.directUrls;
-    }
 
     const key = song.id || song.name;
     const cached = previewSourcesCache.get(key);
@@ -4485,57 +4436,12 @@ window.playMusicFinderSong = function(song, queue = []) {
 
 
 /* =========================
-   Full song player
+   Full song player (Spotify)
 ========================= */
 
-let fullPlayerToken = 0;
-let currentFullSong = null;
-
-async function getYouTubeVideoId(song) {
-
-    const artist = song.artists?.[0]?.name || "";
-    const cacheKey = "mfYouTube_" + (song.id || `${song.name}-${artist}`);
-
-    try {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) return cached;
-    } catch {}
-
-    try {
-
-        const response = await fetch(
-            `/api/youtube?title=${encodeURIComponent(song.name || "")}` +
-            `&artist=${encodeURIComponent(artist)}`
-        );
-
-        const data = await response.json();
-
-        if (data.videoId) {
-
-            try {
-                localStorage.setItem(cacheKey, data.videoId);
-            } catch {}
-
-            return data.videoId;
-        }
-
-        console.warn("YouTube lookup:", data.error || "no result");
-
-    } catch (error) {
-
-        console.warn("YouTube lookup failed:", error);
-
-    }
-
-    return null;
-}
-
-
-async function playFullSong(song) {
+function playFullSong(song) {
 
     if (!song) return;
-
-    currentFullSong = song;
 
     // One player at a time: stop and hide the preview player
     musicAudio.pause();
@@ -4545,43 +4451,29 @@ async function playFullSong(song) {
     const body = document.getElementById("fullPlayerBody");
     const note = document.getElementById("fullPlayerNote");
 
+    const artists = song.artists?.map(a => a.name).filter(Boolean) || [];
+
     document.getElementById("fullPlayerTitle").textContent =
         song.name || "Unknown Song";
 
     document.getElementById("fullPlayerArtist").textContent =
-        song.artists?.map(a => a.name).join(", ") || "";
+        artists.join(", ");
 
-    note.textContent = "";
+    // Google search: song name + artist + the Persian word for "download"
+    const searchText =
+        `${song.name || ""} ${artists.join(" ")} دانلود`.trim();
 
-    body.innerHTML =
-        '<div class="fullPlayerLoading">Finding the full song…</div>';
-
-    panel.classList.add("active");
-
-    const token = ++fullPlayerToken;
-
-    const videoId = await getYouTubeVideoId(song);
-
-    // Closed, or another song was chosen while searching
-    if (token !== fullPlayerToken) return;
-
-    if (videoId) {
-
-        body.innerHTML = `
-            <iframe
-                class="ytFrame"
-                src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?autoplay=1&playsinline=1&rel=0"
-                title="${escapeHtml(song.name || "Song")}"
-                allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-                allowfullscreen
-            ></iframe>
-        `;
-
-        note.textContent =
-            "Full song via YouTube. If it doesn't start, tap the play button on the video.";
-
-        return;
-    }
+    const downloadLink = `
+        <a
+            class="fullPlayerDownload"
+            href="https://www.google.com/search?q=${encodeURIComponent(searchText)}"
+            target="_blank"
+            rel="noopener"
+        >
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Download Search
+        </a>
+    `;
 
     if (song.id) {
 
@@ -4592,23 +4484,31 @@ async function playFullSong(song) {
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                 loading="lazy"
             ></iframe>
+            ${downloadLink}
         `;
 
         note.textContent =
-            "Spotify player. Log in to Spotify (desktop browser) to hear the full song, otherwise you'll hear a 30-second preview.";
+            "Press play on the Spotify player. The full song plays if you're logged in to Spotify (desktop browser), otherwise you'll hear a 30-second preview.";
 
-        return;
+    } else {
+
+        body.innerHTML = `
+            <div class="fullPlayerLoading">
+                Sorry, this song can't be played here.
+            </div>
+            ${downloadLink}
+        `;
+
+        note.textContent = "";
+
     }
 
-    body.innerHTML =
-        '<div class="fullPlayerLoading">Sorry, the full song could not be found.</div>';
+    panel.classList.add("active");
 
 }
 
 
 function closeFullPlayer() {
-
-    fullPlayerToken++;
 
     document.getElementById("fullPlayer").classList.remove("active");
 
@@ -4821,244 +4721,6 @@ function renderAuth() {
 renderAuth();
 
 window.addEventListener("load", () => initGoogleLogin());
-
-
-
-/* =========================
-   Free music (legal downloads)
-========================= */
-
-window.freeTracks = [];
-
-function formatFreeDuration(seconds) {
-
-    if (!Number.isFinite(seconds) || seconds <= 0) return "";
-
-    const minutes = Math.floor(seconds / 60);
-    const rest = Math.floor(seconds % 60);
-
-    return `${minutes}:${String(rest).padStart(2, "0")}`;
-}
-
-/* Playing and downloading go through our own server, so they also work
-   when the original music host is blocked on the visitor's network */
-
-function freePlayUrl(track) {
-    return `/api/download?play=1&url=${encodeURIComponent(track.streamUrl)}`;
-}
-
-function freeDownloadUrl(track) {
-
-    return `/api/download?url=${encodeURIComponent(track.downloadUrl)}` +
-        `&name=${encodeURIComponent(`${track.artist} - ${track.title}`)}` +
-        `&ext=${encodeURIComponent(track.extension || "mp3")}`;
-
-}
-
-function freeTrackCard(track, index) {
-
-    const duration = formatFreeDuration(track.duration);
-
-    const meta = [track.source, track.license, duration]
-        .filter(Boolean)
-        .map(escapeHtml)
-        .join(" · ");
-
-    return `
-
-        <div class="resultCard glass">
-
-            ${
-                track.image
-                ? `<img
-                        class="cover"
-                        src="${escapeHtml(track.image)}"
-                        alt=""
-                        loading="lazy"
-                        referrerpolicy="no-referrer"
-                   >`
-                : `<div class="cover"></div>`
-            }
-
-            <div class="cardTitle">
-                ${escapeHtml(track.title)}
-            </div>
-
-            <div class="cardArtist">
-                ${escapeHtml(track.artist)}
-            </div>
-
-            <div class="cardMeta">
-                ${meta}
-            </div>
-
-            <div class="cardActions">
-
-                <button
-                    class="smallBtn primary full"
-                    type="button"
-                    onclick="playFreeTrack(${index})"
-                >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg> Play
-                </button>
-
-                <a
-                    class="smallBtn"
-                    href="${escapeHtml(freeDownloadUrl(track))}"
-                    download
-                >
-                    Download
-                </a>
-
-                <a
-                    class="smallBtn"
-                    href="${escapeHtml(track.pageUrl)}"
-                    target="_blank"
-                    rel="noopener"
-                >
-                    Source
-                </a>
-
-            </div>
-
-        </div>
-
-    `;
-
-}
-
-function renderFreeResults(query, data) {
-
-    const container = document.getElementById("freeResults");
-    const tracks = window.freeTracks;
-
-    if (!tracks.length) {
-
-        const failed = Object.values(data.status || {})
-            .some(text => String(text).startsWith("error"));
-
-        container.innerHTML = `
-            <div class="empty glass">
-                ${
-                    failed
-                    ? "Couldn't reach the free-music sources right now. Please try again in a minute."
-                    : `No free songs found for <strong>${escapeHtml(query)}</strong>. Try another word.`
-                }
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML = `
-
-        <p class="freeNote">
-            Free to listen and download, shared by the artists.
-            Please respect each song's license (credit the artist when it asks for it).
-        </p>
-
-        <div class="resultGrid">
-            ${tracks.map(freeTrackCard).join("")}
-        </div>
-
-    `;
-
-}
-
-async function searchFreeMusic() {
-
-    const input = document.getElementById("freeSearchInput");
-    const query = input.value.trim();
-
-    if (!query) return;
-
-    const container = document.getElementById("freeResults");
-
-    container.innerHTML = `
-        <div class="empty glass searchLoadingBox">
-
-            <span class="loadingText">
-                Finding free music
-            </span>
-
-            <span class="searchLoading">
-                <span></span>
-                <span></span>
-                <span></span>
-            </span>
-
-        </div>
-    `;
-
-    try {
-
-        const response = await fetch(`/api/free?q=${encodeURIComponent(query)}`);
-
-        if (!response.ok) {
-            throw new Error("HTTP " + response.status);
-        }
-
-        const data = await response.json();
-
-        window.freeTracks = (data.tracks || []).map(track => ({
-            ...track,
-            name: track.title,
-            artists: [{ name: track.artist }],
-            album: { images: track.image ? [{ url: track.image }] : [] },
-            directUrls: [freePlayUrl(track), track.streamUrl]
-        }));
-
-        renderFreeResults(query, data);
-
-    } catch (error) {
-
-        console.error(error);
-
-        container.innerHTML = `
-            <div class="empty glass">
-                Something went wrong while searching free music.
-            </div>
-        `;
-
-    }
-
-}
-
-function playFreeTrack(index) {
-
-    const track = window.freeTracks[index];
-
-    if (track) {
-        playMusicFinderSong(track, window.freeTracks);
-    }
-
-}
-
-function searchFreeFromPlayer() {
-
-    const song = currentFullSong;
-
-    closeFullPlayer();
-
-    if (!song) return;
-
-    document.getElementById("freeSearchInput").value =
-        cleanTitle(song.name) || song.name || "";
-
-    goTo("freeMusic");
-    searchFreeMusic();
-
-}
-
-document
-    .getElementById("freeSearchInput")
-    .addEventListener("keydown", event => {
-
-        if (event.key === "Enter") {
-            searchFreeMusic();
-        }
-
-    });
 
 </script>
 

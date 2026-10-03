@@ -1183,6 +1183,36 @@ main {
 
 }
 
+/* Free music section */
+
+.freeSearch {
+    margin: 0 0 28px;
+}
+
+.fullPlayerAlt {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.06);
+    color: white;
+    font-size: 12px;
+    transition: .2s;
+}
+
+.fullPlayerAlt:hover {
+    background: rgba(255,255,255,.13);
+}
+
+.freeNote {
+    margin: 0 0 18px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: rgba(255,255,255,.45);
+}
+
 .albumGrid {
     display: grid;
     grid-template-columns: repeat(auto-fill,minmax(130px,1fr));
@@ -1634,6 +1664,14 @@ footer {
 
     <div class="fullPlayerNote" id="fullPlayerNote"></div>
 
+    <button
+        class="fullPlayerAlt"
+        type="button"
+        onclick="searchFreeFromPlayer()"
+    >
+        Can't play it? Browse free music
+    </button>
+
 </div>
 
 <div class="developerCredit">
@@ -1675,6 +1713,10 @@ footer {
 
     <button class="menuItem" onclick="goTo('searchSection')">
         🔎 Search
+    </button>
+
+    <button class="menuItem" onclick="goTo('freeMusic')">
+        🎁 Free Music
     </button>
 
     <button class="menuItem" onclick="goTo('forYou')">
@@ -1739,6 +1781,45 @@ footer {
     </div>
 
     <div id="searchResults"></div>
+
+</section>
+
+<section class="section" id="freeMusic">
+
+    <div class="sectionHeader">
+
+        <div>
+            <h2 class="sectionTitle">Free Music</h2>
+            <p class="sectionSubtitle">
+                Full songs you can listen to and download for free,
+                shared by the artists themselves.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="searchBox freeSearch">
+
+        <input
+            id="freeSearchInput"
+            type="text"
+            placeholder="Search free music (e.g. piano, chill, rock)..."
+            autocomplete="off"
+        >
+
+        <button class="searchBtn" onclick="searchFreeMusic()">
+            Search
+        </button>
+
+    </div>
+
+    <div id="freeResults">
+
+        <div class="empty glass">
+            Search above to find free songs.
+        </div>
+
+    </div>
 
 </section>
 
@@ -4086,6 +4167,11 @@ async function getPreviewSources(song) {
 
     lastPreviewError = null;
 
+    // Free-music tracks already come with their own playable addresses
+    if (song.directUrls && song.directUrls.length) {
+        return song.directUrls;
+    }
+
     const key = song.id || song.name;
     const cached = previewSourcesCache.get(key);
 
@@ -4403,6 +4489,7 @@ window.playMusicFinderSong = function(song, queue = []) {
 ========================= */
 
 let fullPlayerToken = 0;
+let currentFullSong = null;
 
 async function getYouTubeVideoId(song) {
 
@@ -4447,6 +4534,8 @@ async function getYouTubeVideoId(song) {
 async function playFullSong(song) {
 
     if (!song) return;
+
+    currentFullSong = song;
 
     // One player at a time: stop and hide the preview player
     musicAudio.pause();
@@ -4732,6 +4821,244 @@ function renderAuth() {
 renderAuth();
 
 window.addEventListener("load", () => initGoogleLogin());
+
+
+
+/* =========================
+   Free music (legal downloads)
+========================= */
+
+window.freeTracks = [];
+
+function formatFreeDuration(seconds) {
+
+    if (!Number.isFinite(seconds) || seconds <= 0) return "";
+
+    const minutes = Math.floor(seconds / 60);
+    const rest = Math.floor(seconds % 60);
+
+    return `${minutes}:${String(rest).padStart(2, "0")}`;
+}
+
+/* Playing and downloading go through our own server, so they also work
+   when the original music host is blocked on the visitor's network */
+
+function freePlayUrl(track) {
+    return `/api/download?play=1&url=${encodeURIComponent(track.streamUrl)}`;
+}
+
+function freeDownloadUrl(track) {
+
+    return `/api/download?url=${encodeURIComponent(track.downloadUrl)}` +
+        `&name=${encodeURIComponent(`${track.artist} - ${track.title}`)}` +
+        `&ext=${encodeURIComponent(track.extension || "mp3")}`;
+
+}
+
+function freeTrackCard(track, index) {
+
+    const duration = formatFreeDuration(track.duration);
+
+    const meta = [track.source, track.license, duration]
+        .filter(Boolean)
+        .map(escapeHtml)
+        .join(" · ");
+
+    return `
+
+        <div class="resultCard glass">
+
+            ${
+                track.image
+                ? `<img
+                        class="cover"
+                        src="${escapeHtml(track.image)}"
+                        alt=""
+                        loading="lazy"
+                        referrerpolicy="no-referrer"
+                   >`
+                : `<div class="cover"></div>`
+            }
+
+            <div class="cardTitle">
+                ${escapeHtml(track.title)}
+            </div>
+
+            <div class="cardArtist">
+                ${escapeHtml(track.artist)}
+            </div>
+
+            <div class="cardMeta">
+                ${meta}
+            </div>
+
+            <div class="cardActions">
+
+                <button
+                    class="smallBtn primary full"
+                    type="button"
+                    onclick="playFreeTrack(${index})"
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg> Play
+                </button>
+
+                <a
+                    class="smallBtn"
+                    href="${escapeHtml(freeDownloadUrl(track))}"
+                    download
+                >
+                    Download
+                </a>
+
+                <a
+                    class="smallBtn"
+                    href="${escapeHtml(track.pageUrl)}"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    Source
+                </a>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+function renderFreeResults(query, data) {
+
+    const container = document.getElementById("freeResults");
+    const tracks = window.freeTracks;
+
+    if (!tracks.length) {
+
+        const failed = Object.values(data.status || {})
+            .some(text => String(text).startsWith("error"));
+
+        container.innerHTML = `
+            <div class="empty glass">
+                ${
+                    failed
+                    ? "Couldn't reach the free-music sources right now. Please try again in a minute."
+                    : `No free songs found for <strong>${escapeHtml(query)}</strong>. Try another word.`
+                }
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = `
+
+        <p class="freeNote">
+            Free to listen and download, shared by the artists.
+            Please respect each song's license (credit the artist when it asks for it).
+        </p>
+
+        <div class="resultGrid">
+            ${tracks.map(freeTrackCard).join("")}
+        </div>
+
+    `;
+
+}
+
+async function searchFreeMusic() {
+
+    const input = document.getElementById("freeSearchInput");
+    const query = input.value.trim();
+
+    if (!query) return;
+
+    const container = document.getElementById("freeResults");
+
+    container.innerHTML = `
+        <div class="empty glass searchLoadingBox">
+
+            <span class="loadingText">
+                Finding free music
+            </span>
+
+            <span class="searchLoading">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+
+        </div>
+    `;
+
+    try {
+
+        const response = await fetch(`/api/free?q=${encodeURIComponent(query)}`);
+
+        if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+        }
+
+        const data = await response.json();
+
+        window.freeTracks = (data.tracks || []).map(track => ({
+            ...track,
+            name: track.title,
+            artists: [{ name: track.artist }],
+            album: { images: track.image ? [{ url: track.image }] : [] },
+            directUrls: [freePlayUrl(track), track.streamUrl]
+        }));
+
+        renderFreeResults(query, data);
+
+    } catch (error) {
+
+        console.error(error);
+
+        container.innerHTML = `
+            <div class="empty glass">
+                Something went wrong while searching free music.
+            </div>
+        `;
+
+    }
+
+}
+
+function playFreeTrack(index) {
+
+    const track = window.freeTracks[index];
+
+    if (track) {
+        playMusicFinderSong(track, window.freeTracks);
+    }
+
+}
+
+function searchFreeFromPlayer() {
+
+    const song = currentFullSong;
+
+    closeFullPlayer();
+
+    if (!song) return;
+
+    document.getElementById("freeSearchInput").value =
+        cleanTitle(song.name) || song.name || "";
+
+    goTo("freeMusic");
+    searchFreeMusic();
+
+}
+
+document
+    .getElementById("freeSearchInput")
+    .addEventListener("keydown", event => {
+
+        if (event.key === "Enter") {
+            searchFreeMusic();
+        }
+
+    });
 
 </script>
 

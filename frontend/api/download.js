@@ -6,17 +6,25 @@
    Only addresses from approved free-music hosts are accepted.
 
    GET /api/download?url=<file url>&name=<artist - title>&ext=mp3
+   GET /api/download?play=1&url=<file url>      (streams for the player; supports seeking)
+
+   Going through our own server also helps visitors whose network blocks
+   the original music host.
 */
 
 const { Readable } = require("stream");
 const { isAllowedUrl, cleanFileName } = require("./_shared.js");
 
-function openUpstream(url) {
+function openUpstream(url, range, long) {
+
+    const headers = { "User-Agent": "MusicFinder/1.0" };
+
+    if (range) headers.Range = range;
 
     return fetch(url, {
         redirect: "follow",
-        headers: { "User-Agent": "MusicFinder/1.0" },
-        signal: AbortSignal.timeout(25000)
+        headers,
+        signal: AbortSignal.timeout(long ? 55000 : 25000)
     });
 
 }
@@ -24,6 +32,8 @@ function openUpstream(url) {
 module.exports = async function handler(req, res) {
 
     const url = String(req.query.url || "");
+    const play = String(req.query.play || "") === "1";
+    const range = play ? (req.headers?.range || "") : "";
     const baseName = cleanFileName(req.query.name, "song");
     const extension = String(req.query.ext || "mp3").replace(/[^a-z0-9]/gi, "").slice(0, 5) || "mp3";
 
@@ -34,11 +44,11 @@ module.exports = async function handler(req, res) {
 
     try {
 
-        let upstream = await openUpstream(url);
+        let upstream = await openUpstream(url, range, play);
 
         // Audius: if /download is refused, the artist-enabled stream is the same track
         if (!upstream.ok && /api\.audius\.co\/v1\/tracks\/[^/]+\/download/.test(url)) {
-            upstream = await openUpstream(url.replace("/download", "/stream"));
+            upstream = await openUpstream(url.replace("/download", "/stream"), range, play);
         }
 
         if (!upstream.ok || !upstream.body) {
@@ -63,11 +73,26 @@ module.exports = async function handler(req, res) {
             .replace(/['()*]/g, char => "%" + char.charCodeAt(0).toString(16).toUpperCase());
 
         res.setHeader("Content-Type", type);
-        res.setHeader(
-            "Content-Disposition",
-            `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`
-        );
-        res.setHeader("Cache-Control", "private, no-store");
+
+        if (play) {
+
+            res.setHeader("Content-Disposition", "inline");
+            res.setHeader("Cache-Control", "private, max-age=3600");
+            res.setHeader("Accept-Ranges", "bytes");
+
+            const contentRange = upstream.headers.get("content-range");
+
+            if (contentRange) res.setHeader("Content-Range", contentRange);
+
+        } else {
+
+            res.setHeader(
+                "Content-Disposition",
+                `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`
+            );
+            res.setHeader("Cache-Control", "private, no-store");
+
+        }
 
         const length = upstream.headers.get("content-length");
 
@@ -75,7 +100,7 @@ module.exports = async function handler(req, res) {
             res.setHeader("Content-Length", length);
         }
 
-        res.status(200);
+        res.status(play && upstream.status === 206 ? 206 : 200);
 
         Readable.fromWeb(upstream.body).pipe(res);
 

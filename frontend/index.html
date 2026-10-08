@@ -4931,16 +4931,16 @@ window.addEventListener("load", () => initGoogleLogin());
    picks Saved Messages, sees the bot's results for the song, taps the right one and presses Send.
    No bot token or Telegram API is used. */
 /* Change ONLY this line to switch the download bot (username without @) */
-const TG_BOT_USERNAME = "RegaSpotify_Bot";
+const TG_BOT_USERNAME = "fmusbot";
 const TG_BOT_URL = "https://t.me/" + TG_BOT_USERNAME;
 
 /* The exact draft: "@RegaSpotify_Bot Title - Artist" */
 function tgQuery(title, artist) {
     const t = (title || "").trim(), a = (artist || "").trim();
-    return `@${TG_BOT_USERNAME} ${t}${a ? " - " + a : ""}`;
+    return `${t}${a ? " - " + a : ""}`;
 }
 function tgShareUrl(query) {
-    return "https://t.me/share/url?url=" + encodeURIComponent(query);
+    return "https://t.me/share/url?url=%20&text=" + encodeURIComponent(query);
 }
 
 function tgDownloadAttrs(title, artist, spotifyUrl) {
@@ -4967,14 +4967,15 @@ function showTelegramPanel(query, copied) {
         document.body.appendChild(panel);
     }
     panel.innerHTML = `
-        <h4>Download via @RegaSpotify_bot</h4>
-        <p id="tgNote">Telegram opened with this draft ready. Choose <b>Saved Messages</b>, wait for the bot's results,
-           tap the right song and press Send.
+        <h4>Download via @${TG_BOT_USERNAME}</h4>
+        <p id="tgNote">Telegram should open @${TG_BOT_USERNAME} with the song name ready — press Send. If the text did not appear, tap <b>Open Telegram</b> below instead.<br><br>Fallback: Telegram opened with this message ready. Choose <b>Saved Messages</b> and press Send,
+           then forward that message to <b>@${TG_BOT_USERNAME}</b> — the bot gives you the song directly.
            ${copied ? "The text is also copied, in case you need to paste it." : ""}
-           (A website can't open Saved Messages for you — Telegram only lets you pick the chat.)</p>
+           (Telegram doesn't let websites send messages for you — you only pick the chat.)</p>
         <div class="tgText" id="tgText">${escapeHtml(query)}</div>
         <div class="tgButtons">
             <a class="smallBtn primary" href="${escapeHtml(tgShareUrl(query))}" target="_blank" rel="noopener">Open Telegram</a>
+            <a class="smallBtn" href="${TG_BOT_URL}" target="_blank" rel="noopener">Open bot</a>
             <button class="smallBtn" type="button" id="tgCopy">Copy</button>
             <button class="smallBtn" type="button" id="tgClose">Close</button>
         </div>`;
@@ -5007,7 +5008,7 @@ function showTelegramConfirm(query) {
         close();
         // open Telegram with the draft (inside the click, so popup blockers allow it)
         const opener = document.createElement("a");
-        opener.href = tgShareUrl(query); opener.target = "_blank"; opener.rel = "noopener";
+        opener.href = TG_BOT_URL + "?text=" + encodeURIComponent(query); opener.target = "_blank"; opener.rel = "noopener";
         document.body.appendChild(opener); opener.click(); opener.remove();
         showTelegramPanel(query, false);
         if (await copyText(query)) showTelegramPanel(query, true);

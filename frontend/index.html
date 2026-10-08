@@ -4903,14 +4903,25 @@ window.addEventListener("load", () => initGoogleLogin());
 
 <script>
 /* Download -> @RegaSpotify_Bot.
-   A website can't send a message to a Telegram bot on the user's behalf (that needs the user's own
-   Telegram login, and t.me links can't prefill a bot chat). So: open the bot, copy the exact text to
-   send, and show it on screen so the user can paste it. No bot token or Telegram API is used. */
+   Telegram gives websites no way to open a *specific bot's* chat with a message already typed
+   (a ?start= link only sends "/start <payload>" and only works if the bot itself implements it,
+   which can't be assumed). The official way to hand a ready-made message to Telegram is the
+   share link: it opens Telegram with the message pre-filled, the user picks @RegaSpotify_Bot
+   and presses Send. The text is also copied, and a direct link to the bot chat is offered.
+   No bot token or Telegram API is used. */
 const TG_BOT_URL = "https://t.me/RegaSpotify_Bot";
+
+/* The exact query sent to the bot: "Artist - Title" */
+function tgQuery(title, artist) {
+    return `${(artist || "").trim()} - ${(title || "").trim()}`.replace(/^ - | - $/g, "");
+}
+function tgShareUrl(query) {
+    return "https://t.me/share/url?url=" + encodeURIComponent(query);
+}
 
 function tgDownloadAttrs(title, artist, spotifyUrl) {
     const url = /^https?:\/\//.test(spotifyUrl || "") ? spotifyUrl : "";
-    return `href="${TG_BOT_URL}" target="_blank" rel="noopener" data-tg-title="${escapeHtml(title || "")}" data-tg-artist="${escapeHtml(artist || "")}" data-tg-url="${escapeHtml(url)}"`;
+    return `href="${escapeHtml(tgShareUrl(tgQuery(title, artist)))}" target="_blank" rel="noopener" data-tg-title="${escapeHtml(title || "")}" data-tg-artist="${escapeHtml(artist || "")}" data-tg-url="${escapeHtml(url)}"`;
 }
 
 async function copyText(text) {
@@ -4924,7 +4935,7 @@ async function copyText(text) {
     } catch { return false; }
 }
 
-function showTelegramPanel(text, copied) {
+function showTelegramPanel(query, copied) {
     let panel = document.getElementById("tgPanel");
     if (!panel) {
         panel = document.createElement("div");
@@ -4932,29 +4943,29 @@ function showTelegramPanel(text, copied) {
         document.body.appendChild(panel);
     }
     panel.innerHTML = `
-        <h4>Download with @RegaSpotify_Bot</h4>
-        <p id="tgNote">${copied ? "Copied. In the bot chat, paste it and send it." : "Copy this text, then send it to the bot in Telegram."}
-           Telegram doesn't let websites message a bot for you, so this last step is yours.</p>
-        <div class="tgText" id="tgText">${escapeHtml(text)}</div>
+        <h4>Send to @RegaSpotify_Bot</h4>
+        <p id="tgNote">Telegram opened with this message ready. Choose <b>@RegaSpotify_Bot</b> and press Send.
+           ${copied ? "It's also copied, in case you open the bot chat directly." : ""}
+           (Telegram doesn't let a website pick the bot chat for you.)</p>
+        <div class="tgText" id="tgText">${escapeHtml(query)}</div>
         <div class="tgButtons">
-            <button class="smallBtn primary" type="button" id="tgCopy">Copy</button>
-            <a class="smallBtn" href="${TG_BOT_URL}" target="_blank" rel="noopener">Open bot</a>
+            <a class="smallBtn primary" href="${escapeHtml(tgShareUrl(query))}" target="_blank" rel="noopener">Open Telegram</a>
+            <a class="smallBtn" href="${TG_BOT_URL}" target="_blank" rel="noopener">Open bot chat</a>
+            <button class="smallBtn" type="button" id="tgCopy">Copy</button>
             <button class="smallBtn" type="button" id="tgClose">Close</button>
         </div>`;
-    document.getElementById("tgCopy").onclick = async e => { e.target.textContent = (await copyText(text)) ? "Copied ✓" : "Select the text above"; };
+    document.getElementById("tgCopy").onclick = async e => { e.target.textContent = (await copyText(query)) ? "Copied ✓" : "Select the text above"; };
     document.getElementById("tgClose").onclick = () => panel.classList.remove("open");
     requestAnimationFrame(() => panel.classList.add("open"));
 }
 
-/* The link itself opens the bot (new tab / Telegram app); we only add the copy + instructions. */
+/* The link itself opens Telegram with the message pre-filled; we add the backup copy + instructions. */
 document.addEventListener("click", async event => {
     const link = event.target.closest("a[data-tg-title]");
     if (!link) return;
-    const { tgTitle, tgArtist, tgUrl } = link.dataset;
-    const text = tgUrl || `${tgTitle} - ${tgArtist}`.trim();
-    showTelegramPanel(text, false);
-    const copied = await copyText(text);
-    if (copied) showTelegramPanel(text, true);
+    const query = tgQuery(link.dataset.tgTitle, link.dataset.tgArtist);
+    showTelegramPanel(query, false);
+    if (await copyText(query)) showTelegramPanel(query, true);
 });
 </script>
 </body>

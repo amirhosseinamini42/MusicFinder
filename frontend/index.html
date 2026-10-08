@@ -2022,6 +2022,10 @@ html::after {
             Music metadata and artwork are provided through Spotify.
         </p>
 
+        <p class="modalMuted">
+            Contact: <a href="mailto:musicfinder.web@gmail.com" style="text-decoration:underline;">musicfinder.web@gmail.com</a>
+        </p>
+
     </div>
 
 </section>
@@ -4926,12 +4930,14 @@ window.addEventListener("load", () => initGoogleLogin());
    starts with "@RegaSpotify_bot", which is how Telegram triggers an inline bot's results, so the user
    picks Saved Messages, sees the bot's results for the song, taps the right one and presses Send.
    No bot token or Telegram API is used. */
-const TG_BOT_URL = "https://t.me/RegaSpotify_Bot";
+/* Change ONLY this line to switch the download bot (username without @) */
+const TG_BOT_USERNAME = "RegaSpotify_Bot";
+const TG_BOT_URL = "https://t.me/" + TG_BOT_USERNAME;
 
 /* The exact draft: "@RegaSpotify_Bot Title - Artist" */
 function tgQuery(title, artist) {
     const t = (title || "").trim(), a = (artist || "").trim();
-    return `@RegaSpotify_Bot ${t}${a ? " - " + a : ""}`;
+    return `@${TG_BOT_USERNAME} ${t}${a ? " - " + a : ""}`;
 }
 function tgShareUrl(query) {
     return "https://t.me/share/url?url=" + encodeURIComponent(query);

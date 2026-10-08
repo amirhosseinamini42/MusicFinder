@@ -4945,7 +4945,7 @@ function tgShareUrl(query) {
 
 function tgDownloadAttrs(title, artist, spotifyUrl) {
     const url = /^https?:\/\//.test(spotifyUrl || "") ? spotifyUrl : "";
-    return `href="${escapeHtml(tgShareUrl(tgQuery(title, artist)))}" target="_blank" rel="noopener" data-tg-title="${escapeHtml(title || "")}" data-tg-artist="${escapeHtml(artist || "")}" data-tg-url="${escapeHtml(url)}"`;
+    return `href="${escapeHtml(TG_BOT_URL + "?text=" + encodeURIComponent(tgQuery(title, artist)))}" target="_blank" rel="noopener" data-tg-title="${escapeHtml(title || "")}" data-tg-artist="${escapeHtml(artist || "")}" data-tg-url="${escapeHtml(url)}"`;
 }
 
 async function copyText(text) {
@@ -4968,10 +4968,7 @@ function showTelegramPanel(query, copied) {
     }
     panel.innerHTML = `
         <h4>Download via @${TG_BOT_USERNAME}</h4>
-        <p id="tgNote">Telegram should open @${TG_BOT_USERNAME} with the song name ready — press Send. If the text did not appear, tap <b>Open bot</b> below.<br><br>Fallback: Telegram opened with this message ready. Choose <b>Saved Messages</b> and press Send,
-           then forward that message to <b>@${TG_BOT_USERNAME}</b> — the bot gives you the song directly.
-           ${copied ? "The text is also copied, in case you need to paste it." : ""}
-           (Telegram doesn't let websites send messages for you — you only pick the chat.)</p>
+        <p id="tgNote">Telegram should open @${TG_BOT_USERNAME} with the song name ready — press Send. If it did not open or the text is missing, tap <b>Open bot</b> below.</p>
         <div class="tgText" id="tgText">${escapeHtml(query)}</div>
         <div class="tgButtons">
             <a class="smallBtn primary" style="font-weight:800;" href="${escapeHtml(TG_BOT_URL + "?text=" + encodeURIComponent(query))}" target="_blank" rel="noopener"><b>Open bot</b></a>
@@ -4983,45 +4980,7 @@ function showTelegramPanel(query, copied) {
     requestAnimationFrame(() => panel.classList.add("open"));
 }
 
-/* Step 1: a short instruction popup. Step 2 (after Continue): the existing Telegram flow. */
-function showTelegramConfirm(query) {
-    document.getElementById("tgConfirm")?.remove();
-    const overlay = document.createElement("div");
-    overlay.id = "tgConfirm"; overlay.className = "tgConfirm";
-    overlay.innerHTML = `
-        <div class="tgConfirmBox" role="dialog" aria-modal="true" aria-labelledby="tgConfirmEn">
-            <p id="tgConfirmEn">When Telegram opens, forward the message to your Saved Messages.</p>
-            <p dir="rtl" lang="fa">وقتی تلگرام باز شد، پیام را به Saved Messages (پیام‌های ذخیره‌شده) فوروارد کنید.</p>
-            <div class="tgButtons">
-                <button class="smallBtn primary" type="button" id="tgContinue">Continue / ادامه</button>
-                <button class="smallBtn" type="button" id="tgCancel">Cancel</button>
-            </div>
-        </div>`;
-    document.body.appendChild(overlay);
-    const close = () => { overlay.remove(); document.removeEventListener("keydown", onKey); };
-    const onKey = e => { if (e.key === "Escape") close(); };
-    document.addEventListener("keydown", onKey);
-    overlay.addEventListener("mousedown", e => { if (e.target === overlay) close(); });
-    document.getElementById("tgCancel").onclick = close;
-    document.getElementById("tgContinue").onclick = async () => {
-        close();
-        // open Telegram with the draft (inside the click, so popup blockers allow it)
-        const opener = document.createElement("a");
-        opener.href = TG_BOT_URL + "?text=" + encodeURIComponent(query); opener.target = "_blank"; opener.rel = "noopener";
-        document.body.appendChild(opener); opener.click(); opener.remove();
-        showTelegramPanel(query, false);
-        if (await copyText(query)) showTelegramPanel(query, true);
-    };
-    document.getElementById("tgContinue").focus();
-}
-
-/* Download buttons: confirm first, then open Telegram. */
-document.addEventListener("click", event => {
-    const link = event.target.closest("a[data-tg-title]");
-    if (!link) return;
-    event.preventDefault();
-    showTelegramConfirm(tgQuery(link.dataset.tgTitle, link.dataset.tgArtist));
-});
+/* Download buttons are plain links to the bot chat (t.me/fmusbot?text=...), so Telegram opens natively on desktop and Android. */
 </script>
 </body>
 </html>

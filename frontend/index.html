@@ -4968,14 +4968,13 @@ function showTelegramPanel(query, copied) {
     }
     panel.innerHTML = `
         <h4>Download via @${TG_BOT_USERNAME}</h4>
-        <p id="tgNote">Telegram should open @${TG_BOT_USERNAME} with the song name ready — press Send. If the text did not appear, tap <b>Open Telegram</b> below instead.<br><br>Fallback: Telegram opened with this message ready. Choose <b>Saved Messages</b> and press Send,
+        <p id="tgNote">Telegram should open @${TG_BOT_USERNAME} with the song name ready — press Send. If the text did not appear, tap <b>Open bot</b> below.<br><br>Fallback: Telegram opened with this message ready. Choose <b>Saved Messages</b> and press Send,
            then forward that message to <b>@${TG_BOT_USERNAME}</b> — the bot gives you the song directly.
            ${copied ? "The text is also copied, in case you need to paste it." : ""}
            (Telegram doesn't let websites send messages for you — you only pick the chat.)</p>
         <div class="tgText" id="tgText">${escapeHtml(query)}</div>
         <div class="tgButtons">
-            <a class="smallBtn primary" href="${escapeHtml(tgShareUrl(query))}" target="_blank" rel="noopener">Open Telegram</a>
-            <a class="smallBtn" href="${TG_BOT_URL}" target="_blank" rel="noopener">Open bot</a>
+            <a class="smallBtn primary" style="font-weight:800;" href="${escapeHtml(TG_BOT_URL + "?text=" + encodeURIComponent(query))}" target="_blank" rel="noopener"><b>Open bot</b></a>
             <button class="smallBtn" type="button" id="tgCopy">Copy</button>
             <button class="smallBtn" type="button" id="tgClose">Close</button>
         </div>`;

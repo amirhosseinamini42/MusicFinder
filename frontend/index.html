@@ -7,6 +7,9 @@
 
 <title>MusicFinder</title>
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <style>
 
 * {
@@ -127,35 +130,6 @@ a {
         background .8s ease;
 }
 /* =========================
-   DEVELOPER CREDIT
-========================= */
-
-.developerCredit {
-    position: fixed;
-    top: 92px;
-    left: 28px;
-    z-index: 90;
-
-    font-size: 12px;
-    color: rgba(255,255,255,.42);
-
-    letter-spacing: .2px;
-    pointer-events: none;
-}
-
-.developerCredit strong {
-    color: rgba(255,255,255,.72);
-    font-weight: 650;
-}
-
-@media (max-width: 600px) {
-    .developerCredit {
-        top: 78px;
-        left: 16px;
-        font-size: 10px;
-    }
-}
-/* =========================
    NAVBAR
 ========================= */
 
@@ -169,9 +143,20 @@ a {
     justify-content: space-between;
     padding: 0 28px;
 
+}
+
+/* Header backdrop fades out at its bottom edge instead of ending in a hard line */
+.navbar::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 -28px 0;
+    z-index: -1;
+    pointer-events: none;
     background: rgba(10,11,17,.60);
     backdrop-filter: blur(25px);
-    border-bottom: 1px solid var(--border);
+    -webkit-backdrop-filter: blur(25px);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
 }
 
 .logo {
@@ -1255,6 +1240,15 @@ main {
    FOOTER
 ========================= */
 
+/* About: trim the extra bottom spacing so the section ends cleanly */
+#about {
+    margin-bottom: 0;
+}
+
+#about .glass > :last-child {
+    margin-bottom: 0;
+}
+
 footer {
     padding: 70px 0 140px;
     text-align: center;
@@ -1541,6 +1535,88 @@ footer {
     }
 }
 
+
+/* =========================
+   AUTUMN · COFFEE · RAINY-EVENING ATMOSPHERE
+   (visual layer only: colours, glow, grain, shadows)
+========================= */
+
+:root {
+    --bg: #110b08;
+    --glass: rgba(255,226,190,0.07);
+    --glass-strong: rgba(255,226,190,0.12);
+    --border: rgba(255,220,180,0.14);
+    --text: #f4e8d4;
+    --muted: rgba(244,232,212,0.58);
+    --accent: #f4e8d4;
+
+    /* default light: amber lamp, burgundy dusk, rainy blue-gray (artwork colours still override these) */
+    --dynamic-color: rgba(214,138,58,.24);
+    --dynamic-color-2: rgba(96,120,140,.16);
+    --dynamic-color-3: rgba(140,52,64,.20);
+}
+
+.navbar::before { background: rgba(24,14,9,.62); }
+
+.glass {
+    background: linear-gradient(160deg, rgba(255,226,190,.085), rgba(255,226,190,.04));
+    box-shadow: 0 25px 70px rgba(10,4,2,.35), inset 0 1px 0 rgba(255,236,210,.06);
+}
+
+/* warm lamp glow + faint rain streaks + film grain + vignette, fixed behind the UI */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse 70% 55% at 14% -8%, rgba(236,148,56,.38), transparent 72%),
+        radial-gradient(ellipse 45% 40% at 85% 20%, rgba(110,134,156,.16), transparent 70%),
+        radial-gradient(ellipse 60% 45% at 92% 108%, rgba(160,56,56,.30), transparent 72%),
+        repeating-linear-gradient(102deg, transparent 0 46px, rgba(190,210,230,.028) 46px 47px),
+        radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0,0,0,.4) 100%);
+    animation: lampBreathe 14s ease-in-out infinite;
+}
+
+body::selection, ::selection { background: rgba(214,138,58,.4); }
+
+@keyframes lampBreathe {
+    0%, 100% { opacity: .85; }
+    50% { opacity: 1; }
+}
+
+/* film grain (static, very light) */
+html::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: .07;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .9  0 0 0 0 .75  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* editorial, dreamy headline */
+.hero h1 {
+    font-family: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -2px;
+    text-shadow: 0 0 60px rgba(232,150,60,.28), 0 4px 30px rgba(0,0,0,.4);
+}
+
+.sectionTitle {
+    font-family: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.logo span { color: #e0a45a; opacity: .75; }
+
+@media (prefers-reduced-motion: reduce) {
+    body::after { animation: none; }
+}
+
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1670,10 +1746,6 @@ footer {
 
     <div class="fullPlayerNote" id="fullPlayerNote"></div>
 
-</div>
-
-<div class="developerCredit">
-    Created by <strong>Amirhossein Amini</strong>
 </div>
 
 <nav class="navbar">

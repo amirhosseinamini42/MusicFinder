@@ -1657,6 +1657,23 @@ html::after {
 }
 .tgButtons { display: flex; gap: 8px; flex-wrap: wrap; }
 .tgButtons .smallBtn { cursor: pointer; }
+
+.tgConfirm {
+    position: fixed; inset: 0; z-index: 500;
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+    background: rgba(8,4,2,.65);
+}
+.tgConfirmBox {
+    width: min(440px, 100%);
+    padding: 22px;
+    border-radius: 22px;
+    background: rgba(24,14,9,.97);
+    border: 1px solid var(--border);
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+}
+.tgConfirmBox p { margin: 0 0 12px; font-size: 15px; line-height: 1.7; }
+.tgConfirmBox p[dir="rtl"] { color: var(--muted); }
+.tgConfirmBox .tgButtons { margin-top: 16px; }
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -4902,18 +4919,19 @@ window.addEventListener("load", () => initGoogleLogin());
 </script>
 
 <script>
-/* Download -> @RegaSpotify_Bot.
-   Telegram gives websites no way to open a *specific bot's* chat with a message already typed
-   (a ?start= link only sends "/start <payload>" and only works if the bot itself implements it,
-   which can't be assumed). The official way to hand a ready-made message to Telegram is the
-   share link: it opens Telegram with the message pre-filled, the user picks @RegaSpotify_Bot
-   and presses Send. The text is also copied, and a direct link to the bot chat is offered.
+/* Download -> @RegaSpotify_bot (inline bot).
+   Telegram has no official link that opens "Saved Messages" with text inserted (Saved Messages has
+   no username), and a website can't type into the Telegram app. The official mechanism is the
+   share link: it opens Telegram with a ready-made draft and lets the user pick the chat. The draft
+   starts with "@RegaSpotify_bot", which is how Telegram triggers an inline bot's results, so the user
+   picks Saved Messages, sees the bot's results for the song, taps the right one and presses Send.
    No bot token or Telegram API is used. */
 const TG_BOT_URL = "https://t.me/RegaSpotify_Bot";
 
-/* The exact query sent to the bot: "Artist - Title" */
+/* The exact draft: "@RegaSpotify_Bot Title - Artist" */
 function tgQuery(title, artist) {
-    return `${(artist || "").trim()} - ${(title || "").trim()}`.replace(/^ - | - $/g, "");
+    const t = (title || "").trim(), a = (artist || "").trim();
+    return `@RegaSpotify_Bot ${t}${a ? " - " + a : ""}`;
 }
 function tgShareUrl(query) {
     return "https://t.me/share/url?url=" + encodeURIComponent(query);
@@ -4943,14 +4961,14 @@ function showTelegramPanel(query, copied) {
         document.body.appendChild(panel);
     }
     panel.innerHTML = `
-        <h4>Send to @RegaSpotify_Bot</h4>
-        <p id="tgNote">Telegram opened with this message ready. Choose <b>@RegaSpotify_Bot</b> and press Send.
-           ${copied ? "It's also copied, in case you open the bot chat directly." : ""}
-           (Telegram doesn't let a website pick the bot chat for you.)</p>
+        <h4>Download via @RegaSpotify_bot</h4>
+        <p id="tgNote">Telegram opened with this draft ready. Choose <b>Saved Messages</b>, wait for the bot's results,
+           tap the right song and press Send.
+           ${copied ? "The text is also copied, in case you need to paste it." : ""}
+           (A website can't open Saved Messages for you — Telegram only lets you pick the chat.)</p>
         <div class="tgText" id="tgText">${escapeHtml(query)}</div>
         <div class="tgButtons">
             <a class="smallBtn primary" href="${escapeHtml(tgShareUrl(query))}" target="_blank" rel="noopener">Open Telegram</a>
-            <a class="smallBtn" href="${TG_BOT_URL}" target="_blank" rel="noopener">Open bot chat</a>
             <button class="smallBtn" type="button" id="tgCopy">Copy</button>
             <button class="smallBtn" type="button" id="tgClose">Close</button>
         </div>`;
@@ -4959,13 +4977,44 @@ function showTelegramPanel(query, copied) {
     requestAnimationFrame(() => panel.classList.add("open"));
 }
 
-/* The link itself opens Telegram with the message pre-filled; we add the backup copy + instructions. */
-document.addEventListener("click", async event => {
+/* Step 1: a short instruction popup. Step 2 (after Continue): the existing Telegram flow. */
+function showTelegramConfirm(query) {
+    document.getElementById("tgConfirm")?.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "tgConfirm"; overlay.className = "tgConfirm";
+    overlay.innerHTML = `
+        <div class="tgConfirmBox" role="dialog" aria-modal="true" aria-labelledby="tgConfirmEn">
+            <p id="tgConfirmEn">When Telegram opens, forward the message to your Saved Messages.</p>
+            <p dir="rtl" lang="fa">وقتی تلگرام باز شد، پیام را به Saved Messages (پیام‌های ذخیره‌شده) فوروارد کنید.</p>
+            <div class="tgButtons">
+                <button class="smallBtn primary" type="button" id="tgContinue">Continue / ادامه</button>
+                <button class="smallBtn" type="button" id="tgCancel">Cancel</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    const close = () => { overlay.remove(); document.removeEventListener("keydown", onKey); };
+    const onKey = e => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", onKey);
+    overlay.addEventListener("mousedown", e => { if (e.target === overlay) close(); });
+    document.getElementById("tgCancel").onclick = close;
+    document.getElementById("tgContinue").onclick = async () => {
+        close();
+        // open Telegram with the draft (inside the click, so popup blockers allow it)
+        const opener = document.createElement("a");
+        opener.href = tgShareUrl(query); opener.target = "_blank"; opener.rel = "noopener";
+        document.body.appendChild(opener); opener.click(); opener.remove();
+        showTelegramPanel(query, false);
+        if (await copyText(query)) showTelegramPanel(query, true);
+    };
+    document.getElementById("tgContinue").focus();
+}
+
+/* Download buttons: confirm first, then open Telegram. */
+document.addEventListener("click", event => {
     const link = event.target.closest("a[data-tg-title]");
     if (!link) return;
-    const query = tgQuery(link.dataset.tgTitle, link.dataset.tgArtist);
-    showTelegramPanel(query, false);
-    if (await copyText(query)) showTelegramPanel(query, true);
+    event.preventDefault();
+    showTelegramConfirm(tgQuery(link.dataset.tgTitle, link.dataset.tgArtist));
 });
 </script>
 </body>

@@ -1626,6 +1626,37 @@ html::after {
     z-index: -1;
     pointer-events: none;
 }
+
+/* Telegram download hand-off panel */
+.tgPanel {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    z-index: 400;
+    width: min(460px, calc(100% - 24px));
+    transform: translate(-50%, 140%);
+    transition: transform .4s cubic-bezier(.22,.7,.2,1);
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(24,14,9,.96);
+    border: 1px solid var(--border);
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+}
+.tgPanel.open { transform: translate(-50%, 0); }
+.tgPanel h4 { margin: 0 0 6px; font-size: 16px; }
+.tgPanel p { margin: 0 0 10px; font-size: 13px; line-height: 1.55; color: var(--muted); }
+.tgText {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid var(--border);
+    font-size: 13.5px;
+    word-break: break-all;
+    user-select: all;
+    margin-bottom: 12px;
+}
+.tgButtons { display: flex; gap: 8px; flex-wrap: wrap; }
+.tgButtons .smallBtn { cursor: pointer; }
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -2625,8 +2656,7 @@ function trackCard(track) {
 
                 <a
                     class="smallBtn"
-                    href="https://www.google.com/search?q=${search}+download"
-                    target="_blank"
+                    ${tgDownloadAttrs(track.name, artist, track.external_urls?.spotify)}
                 >
                     Download
                 </a>
@@ -3191,7 +3221,7 @@ function openTrackFromEncoded(encoded) {
     </svg>
     SoundCloud
 </a>
-            <a href="https://www.google.com/search?q=${downloadQuery}+download" target="_blank">
+            <a ${tgDownloadAttrs(track.name, artist, track.external_urls?.spotify)}>
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:middle;margin-right:6px;">
         <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"
               fill="none"
@@ -3200,7 +3230,7 @@ function openTrackFromEncoded(encoded) {
               stroke-linecap="round"
               stroke-linejoin="round"/>
     </svg>
-    Download Search
+    Download via Telegram
 </a>
 
         </div>
@@ -4547,12 +4577,10 @@ function playFullSong(song) {
     const downloadLink = `
         <a
             class="fullPlayerDownload"
-            href="https://www.google.com/search?q=${encodeURIComponent(searchText)}"
-            target="_blank"
-            rel="noopener"
+            ${tgDownloadAttrs(song.name, artists.join(", "), song.external_urls?.spotify || (song.id ? "https://open.spotify.com/track/" + song.id : ""))}
         >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Download Search
+            Download via Telegram
         </a>
     `;
 
@@ -4871,6 +4899,63 @@ window.addEventListener("load", () => initGoogleLogin());
     document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());   // no work in background tabs
     resize(); start();
 })();
+</script>
+
+<script>
+/* Download -> @RegaSpotify_Bot.
+   A website can't send a message to a Telegram bot on the user's behalf (that needs the user's own
+   Telegram login, and t.me links can't prefill a bot chat). So: open the bot, copy the exact text to
+   send, and show it on screen so the user can paste it. No bot token or Telegram API is used. */
+const TG_BOT_URL = "https://t.me/RegaSpotify_Bot";
+
+function tgDownloadAttrs(title, artist, spotifyUrl) {
+    const url = /^https?:\/\//.test(spotifyUrl || "") ? spotifyUrl : "";
+    return `href="${TG_BOT_URL}" target="_blank" rel="noopener" data-tg-title="${escapeHtml(title || "")}" data-tg-artist="${escapeHtml(artist || "")}" data-tg-url="${escapeHtml(url)}"`;
+}
+
+async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch {}
+    try {
+        const ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove(); return ok;
+    } catch { return false; }
+}
+
+function showTelegramPanel(text, copied) {
+    let panel = document.getElementById("tgPanel");
+    if (!panel) {
+        panel = document.createElement("div");
+        panel.id = "tgPanel"; panel.className = "tgPanel"; panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", "Download with Telegram");
+        document.body.appendChild(panel);
+    }
+    panel.innerHTML = `
+        <h4>Download with @RegaSpotify_Bot</h4>
+        <p id="tgNote">${copied ? "Copied. In the bot chat, paste it and send it." : "Copy this text, then send it to the bot in Telegram."}
+           Telegram doesn't let websites message a bot for you, so this last step is yours.</p>
+        <div class="tgText" id="tgText">${escapeHtml(text)}</div>
+        <div class="tgButtons">
+            <button class="smallBtn primary" type="button" id="tgCopy">Copy</button>
+            <a class="smallBtn" href="${TG_BOT_URL}" target="_blank" rel="noopener">Open bot</a>
+            <button class="smallBtn" type="button" id="tgClose">Close</button>
+        </div>`;
+    document.getElementById("tgCopy").onclick = async e => { e.target.textContent = (await copyText(text)) ? "Copied ✓" : "Select the text above"; };
+    document.getElementById("tgClose").onclick = () => panel.classList.remove("open");
+    requestAnimationFrame(() => panel.classList.add("open"));
+}
+
+/* The link itself opens the bot (new tab / Telegram app); we only add the copy + instructions. */
+document.addEventListener("click", async event => {
+    const link = event.target.closest("a[data-tg-title]");
+    if (!link) return;
+    const { tgTitle, tgArtist, tgUrl } = link.dataset;
+    const text = tgUrl || `${tgTitle} - ${tgArtist}`.trim();
+    showTelegramPanel(text, false);
+    const copied = await copyText(text);
+    if (copied) showTelegramPanel(text, true);
+});
 </script>
 </body>
 </html>

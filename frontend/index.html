@@ -1881,6 +1881,208 @@ html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Responsive refinements preserve the existing palette, surfaces, and motion timings. */
+html {
+    overflow-x: clip;
+    scroll-padding-block-start: calc(78px + env(safe-area-inset-top));
+}
+
+body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overscroll-behavior-x: none;
+}
+
+@media (max-width: 700px) {
+    .navbar {
+        height: calc(78px + env(safe-area-inset-top));
+        padding: env(safe-area-inset-top) calc(14px + env(safe-area-inset-right)) 0 calc(14px + env(safe-area-inset-left));
+    }
+
+    main {
+        width: calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right));
+        max-width: 1250px;
+    }
+
+    .hero {
+        min-height: clamp(280px, 52svh, 350px);
+        padding-block: 12px 22px;
+    }
+
+    .searchBox {
+        max-width: 100%;
+        gap: 6px;
+    }
+
+    .searchBox input {
+        min-height: 48px;
+        font-size: 16px;
+    }
+
+    .searchBtn,
+    .menuButton,
+    .closeMenu,
+    .modalClose {
+        min-height: 44px;
+    }
+
+    .menuDrawer {
+        height: 100vh;
+        height: 100dvh;
+        padding: calc(28px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .section {
+        margin-block: 56px;
+        scroll-margin-top: calc(88px + env(safe-area-inset-top));
+    }
+
+    .sectionHeader {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .resultGrid,
+    .artistGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .resultCard,
+    .artistCard {
+        min-width: 0;
+        padding: 12px;
+    }
+
+    .cardTitle,
+    .cardArtist,
+    .artistName,
+    .artistSummary {
+        overflow-wrap: anywhere;
+    }
+
+    .cardActions {
+        gap: 6px;
+    }
+
+    .smallBtn {
+        min-width: 0;
+        min-height: 44px;
+        padding-inline: 5px;
+        font-size: 11px;
+        overflow-wrap: anywhere;
+    }
+
+    .featureArtist {
+        gap: 16px;
+        padding: 20px;
+    }
+
+    .tasteBox {
+        min-width: 0;
+        padding: 18px;
+    }
+
+    .historyItem,
+    .topResultActions button,
+    .modalButtons a,
+    .modalButtons button {
+        min-height: 44px;
+    }
+
+    .modalOverlay {
+        padding: calc(12px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+    }
+
+    .modal {
+        width: 100%;
+        max-height: calc(100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        padding: 20px 16px;
+        border-radius: 24px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modalHero {
+        min-width: 0;
+        gap: 16px;
+    }
+
+    .modalHero h2 {
+        font-size: clamp(25px, 7vw, 35px);
+        overflow-wrap: anywhere;
+    }
+
+    .modalButtons {
+        gap: 8px;
+    }
+
+    .musicPlayer {
+        left: calc(10px + env(safe-area-inset-left));
+        right: calc(10px + env(safe-area-inset-right));
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        padding: 12px;
+    }
+
+    .playerInfo {
+        flex: 1;
+    }
+
+    .playerControls {
+        gap: 6px;
+    }
+
+    .playerButton {
+        width: 44px;
+        height: 44px;
+    }
+
+    .playerPlay {
+        width: 46px;
+        height: 46px;
+    }
+
+    .fullPlayer {
+        right: calc(12px + env(safe-area-inset-right));
+        left: calc(12px + env(safe-area-inset-left));
+        bottom: calc(12px + env(safe-area-inset-bottom));
+        width: auto;
+        max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tgPanel {
+        bottom: calc(18px + env(safe-area-inset-bottom));
+    }
+
+    footer {
+        padding-bottom: calc(140px + env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-width: 359px) {
+    .resultGrid,
+    .artistGrid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .resultCard,
+    .artistCard {
+        padding: 14px;
+    }
+
+    .navbar {
+        padding-inline: calc(10px + env(safe-area-inset-left)) calc(10px + env(safe-area-inset-right));
+    }
+}
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -4984,16 +5186,13 @@ function renderGoogleButton() {
 
     if (!area || currentUser || !window.google?.accounts?.id) return;
 
-    const small = window.innerWidth < 700;
-
     area.innerHTML = "";
 
     google.accounts.id.renderButton(area, {
-        type: small ? "icon" : "standard",
+        type: "icon",
         theme: "filled_black",
         size: "large",
-        shape: small ? "circle" : "pill",
-        text: "signin_with"
+        shape: "circle"
     });
 
 }

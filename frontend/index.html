@@ -1961,6 +1961,90 @@ footer { color: rgba(226,226,224,.38); }
     .visualWave { gap: 2px; }
 }
 html[dir="rtl"] .hero { text-align: right; }
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes musicfinder-intro {
+        from { opacity: 0; transform: translate3d(0, 16px, 0) scale(.99); }
+        to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    }
+
+    .hero .heroCopy > * {
+        animation: musicfinder-intro .78s cubic-bezier(.22, 1, .36, 1) both;
+    }
+    .hero .heroCopy > *:nth-child(2) { animation-delay: 70ms; }
+    .hero .heroCopy > *:nth-child(3) { animation-delay: 130ms; }
+    .hero .heroCopy > *:nth-child(4) { animation-delay: 190ms; }
+    .hero .heroVisual {
+        animation: musicfinder-intro .95s cubic-bezier(.22, 1, .36, 1) 100ms both;
+    }
+
+    html.motion-ready .motion-reveal {
+        opacity: 0;
+        transform: translate3d(0, 20px, 0) scale(.99);
+        transition:
+            opacity 700ms cubic-bezier(.22, 1, .36, 1) var(--motion-reveal-delay, 0ms),
+            transform 850ms cubic-bezier(.22, 1, .36, 1) var(--motion-reveal-delay, 0ms);
+    }
+    html.motion-ready .motion-reveal.is-visible,
+    html.motion-ready .motion-reveal:focus-within {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+.menuOverlay {
+    transition: opacity 460ms cubic-bezier(.22, 1, .36, 1);
+}
+.menuDrawer {
+    right: 0;
+    transition: transform 560ms cubic-bezier(.22, 1, .36, 1);
+}
+.menuDrawer:not(.open) { transform: translate3d(100%, 0, 0); }
+.menuDrawer.open { transform: translate3d(0, 0, 0); }
+html[dir="rtl"] .menuDrawer {
+    right: auto;
+    left: 0;
+    transition: transform 560ms cubic-bezier(.22, 1, .36, 1);
+}
+html[dir="rtl"] .menuDrawer:not(.open) { transform: translate3d(-100%, 0, 0); }
+html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
+
+.modalOverlay {
+    display: flex;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        opacity 420ms cubic-bezier(.22, 1, .36, 1),
+        visibility 0s linear 420ms;
+}
+.modalOverlay.open {
+    display: flex;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transition-delay: 0s, 0s;
+}
+.modal {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(.99);
+    transition:
+        opacity 360ms cubic-bezier(.22, 1, .36, 1),
+        transform 620ms cubic-bezier(.22, 1, .36, 1);
+}
+.modalOverlay.open .modal {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+}
+
+.musicPlayer, .fullPlayer {
+    transition:
+        transform 560ms cubic-bezier(.22, 1, .36, 1),
+        opacity 420ms cubic-bezier(.22, 1, .36, 1);
+}
+:where(button, a, [role="button"], .resultCard, .artistCard, .historyItem) {
+    transition-timing-function: cubic-bezier(.22, 1, .36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
@@ -5471,6 +5555,62 @@ function showTelegramPanel(query, copied) {
     mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS });
     let saved = "en"; try { saved = localStorage.getItem(KEY) || "en"; } catch (e) {}
     setLang(saved, false);
+})();
+</script>
+
+<script>
+(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reducedMotion.matches || !("IntersectionObserver" in window)) return;
+
+    const selector = ".sectionHeader, #about > .glass, .tasteBox, .historyItem, .artistCard, .resultCard, .topResult, .featureArtist";
+    const root = document.documentElement;
+    root.classList.add("motion-ready");
+
+    const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add("is-visible");
+            revealObserver.unobserve(entry.target);
+        });
+    }, {
+        threshold: 0.12,
+        rootMargin: "0px 0px -8% 0px"
+    });
+
+    function observeReveals(scope) {
+        const targets = [];
+        if (scope instanceof Element && scope.matches(selector)) targets.push(scope);
+        if (scope.querySelectorAll) targets.push(...scope.querySelectorAll(selector));
+
+        targets.forEach(element => {
+            if (element.classList.contains("motion-reveal")) return;
+            const siblings = Array.from(element.parentElement?.children || [])
+                .filter(sibling => sibling.matches(selector));
+            const index = Math.max(0, siblings.indexOf(element));
+            element.style.setProperty("--motion-reveal-delay", `${Math.min(index, 4) * 65}ms`);
+            element.classList.add("motion-reveal");
+            revealObserver.observe(element);
+        });
+    }
+
+    observeReveals(document);
+
+    const contentObserver = new MutationObserver(records => {
+        records.forEach(record => {
+            record.addedNodes.forEach(node => {
+                if (node instanceof Element) observeReveals(node);
+            });
+        });
+    });
+    contentObserver.observe(document.querySelector("main"), { childList: true, subtree: true });
+
+    document.addEventListener("focusin", event => {
+        const reveal = event.target.closest?.(".motion-reveal");
+        if (!reveal) return;
+        reveal.classList.add("is-visible");
+        revealObserver.unobserve(reveal);
+    });
 })();
 </script>
 

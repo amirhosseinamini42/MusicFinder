@@ -1777,6 +1777,26 @@ div.artistImage, .artistImage.imgPlaceholder {
 @keyframes skelShine { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
 @media (max-width: 640px) { .hero h1 { font-size: clamp(40px, 12.5vw, 64px); } .searchBox { border-radius: 28px; } }
+
+/* ---------- Language switcher + RTL ---------- */
+.langSwitch { display: flex; gap: 6px; padding: 4px; margin: -8px 0 18px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid var(--border); }
+.langSwitch button { flex: 1; padding: 9px 10px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .2s, color .2s; }
+.langSwitch button:hover { color: var(--text); }
+.langSwitch button.active { background: linear-gradient(135deg, #e6b06a, #c47f35); color: #1e1208; }
+html[lang="fa"] body, html[lang="fa"] button, html[lang="fa"] input { font-family: "Vazirmatn", Tahoma, "Segoe UI", system-ui, sans-serif; }
+html[lang="fa"] *:not(h1) { letter-spacing: 0 !important; }
+html[lang="fa"] .hero p, html[lang="fa"] .sectionSubtitle, html[lang="fa"] .modalText { line-height: 1.9; }
+html[lang="fa"] .hero h1, html[lang="fa"] .logo, html[lang="fa"] .menuTitle { font-family: var(--head, "Archivo"), sans-serif; }
+html[dir="rtl"] .menuDrawer { right: auto; left: -390px; border-left: 0; border-right: 1px solid var(--border); }
+html[dir="rtl"] .menuDrawer.open { left: 0; right: auto; }
+html[dir="rtl"] .menuItem { text-align: start; }
+html[dir="rtl"] .menuItem:hover { transform: translateX(3px); }
+html[dir="rtl"] .modalClose { float: left; }
+html[dir="rtl"] .fullPlayer { right: auto; left: 20px; }
+html[dir="rtl"] .musicPlayer, html[dir="rtl"] .playerControls, html[dir="rtl"] .playerTimeline { direction: ltr; }
+html[dir="rtl"] .playerInfo, html[dir="rtl"] .playerTitle, html[dir="rtl"] .playerArtist { direction: rtl; text-align: start; unicode-bidi: plaintext; }
+html[dir="rtl"] .searchBox input { text-align: start; }
+html[dir="rtl"] .cardTitle, html[dir="rtl"] .cardArtist, html[dir="rtl"] .artistName, html[dir="rtl"] .albumName { unicode-bidi: plaintext; text-align: start; }
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1935,6 +1955,11 @@ div.artistImage, .artistImage.imgPlaceholder {
             ×
         </button>
 
+    </div>
+
+    <div class="langSwitch" role="group" aria-label="Language" data-no-i18n>
+        <button type="button" data-lang="en" onclick="setLanguage('en')" aria-pressed="true">🇬🇧 English</button>
+        <button type="button" data-lang="fa" onclick="setLanguage('fa')" aria-pressed="false">🇮🇷 فارسی</button>
     </div>
 
     <button class="menuItem" onclick="goTo('home')">
@@ -2122,9 +2147,6 @@ div.artistImage, .artistImage.imgPlaceholder {
             Music metadata and artwork are provided through Spotify.
         </p>
 
-        <p class="modalMuted">
-            Contact: <a href="mailto:musicfinder.web@gmail.com" style="text-decoration:underline;">musicfinder.web@gmail.com</a>
-        </p>
 
     </div>
 
@@ -5100,5 +5122,146 @@ function showTelegramPanel(query, copied) {
 
 /* Download buttons are plain links to the bot chat (t.me/fmusbot?text=...), so Telegram opens natively on desktop and Android. */
 </script>
+<script>
+/* =========================
+   LANGUAGE SWITCHER (English / فارسی) - local translations, no external service
+========================= */
+(function () {
+    const KEY = "musicFinderLang";
+    const FA = {
+        "Home":"خانه","Search":"جستجو","For You":"برای شما","Your Music Taste":"سلیقه موسیقی شما",
+        "Search History":"تاریخچه جستجو","Artists":"هنرمندان","About MusicFinder":"درباره MusicFinder",
+        "Discover songs, artists and albums.":"آهنگ‌ها، هنرمندان و آلبوم‌ها را کشف کنید.",
+        "Search for a song, artist or album...":"جستجوی آهنگ، هنرمند یا آلبوم...",
+        "Search Results":"نتایج جستجو",
+        "Based on the music you explore on MusicFinder.":"بر اساس موسیقی‌ای که در MusicFinder کاوش می‌کنید.",
+        "MusicFinder remembers what you interact with.":"MusicFinder به یاد می‌سپارد با چه چیزی تعامل داشته‌اید.",
+        "Clear Taste":"پاک کردن سلیقه","Clear":"پاک کردن",
+        "🎵 Most Explored Songs":"🎵 پربازدیدترین آهنگ‌ها","👤 Most Explored Artists":"👤 پربازدیدترین هنرمندان",
+        "Your recent searches on MusicFinder.":"جستجوهای اخیر شما در MusicFinder.",
+        "Artists you've discovered through MusicFinder.":"هنرمندانی که در MusicFinder کشف کرده‌اید.",
+        "MusicFinder is a personal music discovery project, created by Amirhossein Amini.":"MusicFinder یک پروژه شخصی برای کشف موسیقی است که توسط امیرحسین امینی ساخته شده است.",
+        "Music metadata and artwork are provided through Spotify.":"اطلاعات و تصاویر موسیقی از طریق Spotify تأمین می‌شود.",
+        "MusicFinder · Personal Music Discovery":"MusicFinder · کشف شخصی موسیقی",
+        "About this song":"درباره این آهنگ","ARTIST":"هنرمند","SONG":"آهنگ","Artist":"هنرمند",
+        "Check that the MusicFinder server is running.":"بررسی کنید که سرور MusicFinder در حال اجراست.",
+        "Close":"بستن","Copy":"کپی","Could not load artist information.":"اطلاعات هنرمند بارگذاری نشد.",
+        "Details":"جزئیات","Discography":"آثار و آلبوم‌ها","Download":"دانلود","Download Search":"جستجوی دانلود",
+        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق تلگرام",
+        "Explore":"کاوش","Explore Artist":"کاوش هنرمند",
+        "Loading artist information...":"در حال بارگذاری اطلاعات هنرمند...","Loading...":"در حال بارگذاری...",
+        "Loading results":"در حال بارگذاری نتایج","Album cover":"جلد آلبوم",
+        "MusicFinder Artist Library":"کتابخانه هنرمندان MusicFinder","No albums found.":"آلبومی پیدا نشد.",
+        "No artists yet.":"هنوز هنرمندی نیست.","No results found for":"نتیجه‌ای پیدا نشد برای",
+        "No searches yet.":"هنوز جستجویی انجام نشده.","No song playing":"آهنگی پخش نمی‌شود",
+        "No songs yet.":"هنوز آهنگی نیست.","Open Spotify":"باز کردن Spotify","Open bot":"باز کردن ربات",
+        "Open in Spotify":"باز کردن در Spotify","Play":"پخش","Play Preview":"پخش پیش‌نمایش",
+        "Sign out":"خروج","Something went wrong while searching.":"هنگام جستجو مشکلی پیش آمد.",
+        "Search failed.":"جستجو ناموفق بود.","Sorry, this song can't be played here.":"متأسفیم، این آهنگ اینجا قابل پخش نیست.",
+        "Couldn't play this preview":"پخش این پیش‌نمایش ممکن نشد",
+        "Press play on the Spotify player. The full song plays if you're logged in to Spotify (desktop browser), otherwise you'll hear a 30-second preview.":"روی دکمه پخش Spotify بزنید. اگر در Spotify وارد شده باشید (مرورگر دسکتاپ) آهنگ کامل پخش می‌شود، در غیر این صورت پیش‌نمایش ۳۰ ثانیه‌ای را می‌شنوید.",
+        "Start searching for music and MusicFinder will learn what you explore.":"جستجوی موسیقی را شروع کنید تا MusicFinder سلیقه شما را یاد بگیرد.",
+        "Search for artists or songs to start building your artist library.":"برای ساختن کتابخانه هنرمندان، هنرمند یا آهنگ جستجو کنید.",
+        "TOP RESULT":"نتیجه برتر","YOUR MOST EXPLORED ARTIST":"پربازدیدترین هنرمند شما",
+        "🎵 Songs":"🎵 آهنگ‌ها","🎵 Songs you've explored the most":"🎵 آهنگ‌هایی که بیشتر کاوش کرده‌اید",
+        "👤 Artists":"👤 هنرمندان","💿 Albums":"💿 آلبوم‌ها","below.":"پایین.","Finding your music":"در حال یافتن موسیقی شما"
+    };
+    const dig = n => String(n).replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]);
+    const PAT = [
+        [/^(\d+) songs · (\d+) artists · (\d+) albums$/, (m,a,b,c) => `${dig(a)} آهنگ · ${dig(b)} هنرمند · ${dig(c)} آلبوم`],
+        [/^Searching for "(.*)"$/, (m,q) => `در حال جستجوی «${q}»`],
+        [/^You've explored this artist (\d+) times?\.$/, (m,n) => `شما این هنرمند را ${dig(n)} بار کاوش کرده‌اید.`],
+        [/^Explored (\d+) times?$/, (m,n) => `${dig(n)} بار کاوش شده`],
+        [/^You've interacted with (.+) more than any other artist in your MusicFinder history\.$/, (m,a) => `در تاریخچه MusicFinder، بیشتر از هر هنرمند دیگری با ${a} تعامل داشته‌اید.`],
+        [/^About (.+)$/, (m,a) => `درباره ${a}`],
+        [/^Download via @(.+)$/, (m,b) => `دانلود از طریق @${b}`],
+        [/^Telegram should open (@\S+) with the song name ready — press Send\. If it did not open or the text is missing, tap$/, (m,b) => `تلگرام باید ${b} را با نام آهنگ آماده باز کند — Send را بزنید. اگر باز نشد یا متن نبود، روی`]
+    ];
+    const SKIP = ".cardTitle,.cardArtist,.cardMeta,.artistName,.albumName,.albumDate,.historyItem,.tasteName,.tasteCount,.playerTitle,.playerArtist,.fullPlayerTitle,.fullPlayerArtist,.modalHero h2,.topResultInfo h3,.featureArtist h3,.tgText,[data-no-i18n],script,style,textarea";
+    const ATTRS = ["placeholder", "aria-label", "title", "alt"];
+    const origText = new WeakMap(), origAttr = new WeakMap(), setBy = new WeakMap();
+    let lang = "en", applying = false;
+
+    function tr(str) {
+        const norm = str.replace(/\s+/g, " ").trim();
+        if (!norm) return null;
+        let out = FA[norm];
+        if (out === undefined) for (const [re, fn] of PAT) { const m = norm.match(re); if (m) { out = fn(...m); break; } }
+        if (out === undefined) return null;
+        return str.match(/^\s*/)[0] + out + str.match(/\s*$/)[0];
+    }
+    const ALWAYS = new Set(["No song playing", "Loading...", "Artist"]);   // fixed UI labels, even inside name fields
+    const skipped = (el, norm) => el && el.closest && el.closest(SKIP) && !ALWAYS.has(norm);
+
+    function textNode(n) {
+        if (setBy.get(n) === n.data) return;                      // our own write
+        const el = n.parentElement; const norm = n.data.replace(/\s+/g, " ").trim();
+        if (!norm || skipped(el, norm)) return;
+        origText.set(n, n.data);
+        const out = tr(n.data);
+        if (out !== null) { n.data = out; setBy.set(n, out); }
+    }
+    function attrs(el) {
+        for (const a of ATTRS) {
+            if (!el.hasAttribute || !el.hasAttribute(a)) continue;
+            const v = el.getAttribute(a); const store = origAttr.get(el) || {};
+            if (store[a] && store[a].fa === v) continue;
+            if (el.closest(SKIP) && !el.matches(".menuItem,.closeMenu,.modalClose,button")) {}
+            const out = tr(v); store[a] = { en: v, fa: out };
+            origAttr.set(el, store);
+            if (out !== null) el.setAttribute(a, out);
+        }
+    }
+    function walk(root) {
+        if (root.nodeType === 3) { textNode(root); return; }
+        if (root.nodeType !== 1 || root.closest("[data-no-i18n]")) return;
+        attrs(root);
+        const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+        let n; while ((n = w.nextNode())) { n.nodeType === 3 ? textNode(n) : attrs(n); }
+    }
+    function restore(root) {
+        const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+        let n; while ((n = w.nextNode())) {
+            if (n.nodeType === 3) { if (origText.has(n) && setBy.get(n) === n.data) n.data = origText.get(n); origText.delete(n); setBy.delete(n); }
+            else { const st = origAttr.get(n); if (st) { for (const a in st) if (n.getAttribute(a) === st[a].fa && st[a].fa !== null) n.setAttribute(a, st[a].en); origAttr.delete(n); } }
+        }
+    }
+    function run(fn) { applying = true; try { fn(); } finally { applying = false; mo.takeRecords(); } }
+
+    const mo = new MutationObserver(list => {
+        if (applying || lang !== "fa") return;
+        run(() => { for (const r of list) {
+            if (r.type === "childList") r.addedNodes.forEach(walk);
+            else if (r.type === "characterData") textNode(r.target);
+            else if (r.type === "attributes") attrs(r.target);
+        } });
+    });
+
+    function loadFont() {
+        if (document.getElementById("faFont")) return;
+        const l = document.createElement("link"); l.id = "faFont"; l.rel = "stylesheet";
+        l.href = "https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap";
+        document.head.appendChild(l);
+    }
+    function setLang(next, save) {
+        lang = next === "fa" ? "fa" : "en";
+        const root = document.documentElement;
+        root.lang = lang; root.dir = lang === "fa" ? "rtl" : "ltr";
+        if (save) { try { localStorage.setItem(KEY, lang); } catch (e) {} }
+        document.querySelectorAll(".langSwitch button").forEach(b => {
+            const on = b.dataset.lang === lang; b.classList.toggle("active", on); b.setAttribute("aria-pressed", String(on));
+        });
+        if (lang === "fa") { loadFont(); run(() => walk(document.body)); }
+        else run(() => restore(document.body));
+    }
+    window.setLanguage = l => setLang(l, true);
+
+    document.addEventListener("DOMContentLoaded", () => {}, { once: true });
+    mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ATTRS });
+    let saved = "en"; try { saved = localStorage.getItem(KEY) || "en"; } catch (e) {}
+    setLang(saved, false);
+})();
+</script>
+
 </body>
 </html>

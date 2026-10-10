@@ -10,9 +10,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
-<meta name="theme-color" content="#2a2e2f">
 
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <style>
 
 * {
@@ -146,9 +148,20 @@ a {
     justify-content: space-between;
     padding: 0 28px;
 
+}
+
+/* Header backdrop fades out at its bottom edge instead of ending in a hard line */
+.navbar::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 -28px 0;
+    z-index: -1;
+    pointer-events: none;
     background: rgba(10,11,17,.60);
     backdrop-filter: blur(25px);
-    border-bottom: 1px solid var(--border);
+    -webkit-backdrop-filter: blur(25px);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
 }
 
 .logo {
@@ -1232,6 +1245,15 @@ main {
    FOOTER
 ========================= */
 
+/* About: trim the extra bottom spacing so the section ends cleanly */
+#about {
+    margin-bottom: 0;
+}
+
+#about .glass > :last-child {
+    margin-bottom: 0;
+}
+
 footer {
     padding: 70px 0 140px;
     text-align: center;
@@ -1518,455 +1540,243 @@ footer {
     }
 }
 
-</style>
 
-<style id="vibe">
-/* =====================================================================
-   COFFEE · AUTUMN · LANA — warm atmosphere layer
-   (overrides the base look; every feature and layout keeps working)
-===================================================================== */
-
-@property --dynamic-color   { syntax: '<color>'; inherits: true; initial-value: rgba(168,92,56,.22); }
-@property --dynamic-color-2 { syntax: '<color>'; inherits: true; initial-value: rgba(92,112,128,.20); }
-@property --dynamic-color-3 { syntax: '<color>'; inherits: true; initial-value: rgba(122,40,52,.20); }
+/* =========================
+   AUTUMN · COFFEE · RAINY-EVENING ATMOSPHERE
+   (visual layer only: colours, glow, grain, shadows)
+========================= */
 
 :root {
-    --bg: #14100d; --bg2: #1e1612; --bg3: #0c0908;
-    --ink: #f3e8d6;
-    --text: #f3e8d6;
-    --muted: rgba(243,232,214,.64);
-    --accent: #d9a066; --accent2: #a8505a; --accent-ink: #24150b;
-    --border: rgba(243,232,214,.14);
-    --glass: rgba(36,26,21,.64);
-    --glass-strong: rgba(52,38,31,.82);
-    --dynamic-color: rgba(168,92,56,.22);
-    --dynamic-color-2: rgba(92,112,128,.20);
-    --dynamic-color-3: rgba(122,40,52,.20);
-    --lamp: 233,168,92; --rose: 196,120,128; --rain: 190,205,220;
-    --fx: 1;
-    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Source Serif Pro", Georgia, "Times New Roman", serif;
-    --ease: cubic-bezier(.2,.8,.2,1);
-    transition: --dynamic-color 1.6s ease, --dynamic-color-2 1.6s ease, --dynamic-color-3 1.6s ease;
+    --bg: #110b08;
+    --glass: rgba(255,226,190,0.07);
+    --glass-strong: rgba(255,226,190,0.12);
+    --border: rgba(255,220,180,0.14);
+    --text: #f4e8d4;
+    --muted: rgba(244,232,212,0.58);
+    --accent: #f4e8d4;
+
+    /* default light: amber lamp, burgundy dusk, rainy blue-gray (artwork colours still override these) */
+    --dynamic-color: rgba(214,138,58,.24);
+    --dynamic-color-2: rgba(96,120,140,.16);
+    --dynamic-color-3: rgba(140,52,64,.20);
 }
 
-html { color-scheme: dark; }
+.navbar::before { background: rgba(24,14,9,.62); }
 
-body {
-    color: var(--ink);
+.glass {
+    background: linear-gradient(160deg, rgba(255,226,190,.085), rgba(255,226,190,.04));
+    box-shadow: 0 25px 70px rgba(10,4,2,.35), inset 0 1px 0 rgba(255,236,210,.06);
+}
+
+/* warm lamp glow + faint rain streaks + film grain + vignette, fixed behind the UI */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
     background:
-        radial-gradient(1100px 720px at 10% 6%, var(--dynamic-color), transparent 62%),
-        radial-gradient(900px 640px at 92% 16%, var(--dynamic-color-2), transparent 62%),
-        radial-gradient(1000px 700px at 50% 110%, var(--dynamic-color-3), transparent 64%),
-        linear-gradient(180deg, var(--bg2) 0%, var(--bg) 55%, var(--bg3) 100%);
-    background-attachment: fixed;
+        radial-gradient(ellipse 70% 55% at 14% -8%, rgba(236,148,56,.38), transparent 72%),
+        radial-gradient(ellipse 45% 40% at 85% 20%, rgba(110,134,156,.16), transparent 70%),
+        radial-gradient(ellipse 60% 45% at 92% 108%, rgba(160,56,56,.30), transparent 72%),
+        radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0,0,0,.4) 100%);
+    animation: lampBreathe 14s ease-in-out infinite;
 }
-body::before { display: none; }
 
-::selection { background: rgba(var(--lamp), .35); color: #fff; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+body::selection, ::selection { background: rgba(214,138,58,.4); }
 
-/* ---------- Atmosphere: lamps, fog, rain, grain, vignette (never block clicks) ---------- */
-
-#backgroundArt { opacity: .26; filter: blur(90px) sepia(.4) saturate(.85); }
-.backgroundOverlay { background: linear-gradient(180deg, rgba(10,7,6,.55), rgba(10,7,6,.82)); }
-
-.atmosphere { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
-.atmosphere .bokeh { position: absolute; border-radius: 50%; filter: blur(26px); opacity: calc(.55 * var(--fx)); will-change: transform; animation: bokehDrift 46s ease-in-out infinite alternate; }
-.bokeh.b1 { width: 280px; height: 280px; left: 4%;  top: 10%; background: radial-gradient(circle, rgba(var(--lamp), .55), transparent 70%); }
-.bokeh.b2 { width: 190px; height: 190px; left: 22%; top: 62%; background: radial-gradient(circle, rgba(var(--rose), .38), transparent 70%); animation-duration: 58s; animation-delay: -12s; }
-.bokeh.b3 { width: 340px; height: 340px; right: 6%; top: 8%;  background: radial-gradient(circle, rgba(var(--rain), .24), transparent 70%); animation-duration: 64s; animation-delay: -20s; }
-.bokeh.b4 { width: 150px; height: 150px; right: 18%; top: 54%; background: radial-gradient(circle, rgba(var(--lamp), .45), transparent 70%); animation-duration: 52s; animation-delay: -30s; }
-.bokeh.b5 { width: 120px; height: 120px; left: 48%; top: 22%; background: radial-gradient(circle, rgba(var(--lamp), .32), transparent 70%); animation-duration: 70s; animation-delay: -8s; }
-.bokeh.b6 { width: 220px; height: 220px; left: 64%; bottom: 4%; background: radial-gradient(circle, rgba(var(--rose), .3), transparent 70%); animation-duration: 60s; animation-delay: -40s; }
-@keyframes bokehDrift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(46px,-34px,0) scale(1.1); } }
-
-.atmosphere .fog {
-    position: absolute; inset: -20%; opacity: var(--fx);
-    background:
-        radial-gradient(60% 40% at 28% 72%, rgba(var(--rain), .07), transparent 70%),
-        radial-gradient(50% 36% at 76% 28%, rgba(var(--lamp), .06), transparent 70%);
-    animation: fogMove 90s ease-in-out infinite alternate;
+@keyframes lampBreathe {
+    0%, 100% { opacity: .85; }
+    50% { opacity: 1; }
 }
-@keyframes fogMove { to { transform: translate3d(-4%, 3%, 0); } }
 
-#rainCanvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: calc(.9 * var(--fx)); }
-
-.atmosphere .grain {
-    position: absolute; inset: 0; opacity: .085; mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+/* film grain (static, very light) */
+html::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: .07;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .9  0 0 0 0 .75  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
-.atmosphere .vignette { position: absolute; inset: 0; background: radial-gradient(125% 95% at 50% 38%, transparent 52%, rgba(0,0,0,.58)); }
 
-html[data-fx="off"] .atmosphere .bokeh, html[data-fx="off"] .atmosphere .fog { animation: none; }
-html[data-fx="off"] #rainCanvas { display: none; }
+/* editorial, dreamy headline */
+.hero h1 {
+    font-family: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -2px;
+    text-shadow: 0 0 60px rgba(232,150,60,.28), 0 4px 30px rgba(0,0,0,.4);
+}
+
+.sectionTitle {
+    font-family: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.logo span { color: #e0a45a; opacity: .75; }
 
 @media (prefers-reduced-motion: reduce) {
-    .atmosphere .bokeh, .atmosphere .fog { animation: none; }
-    #rainCanvas { display: none; }
-    html { scroll-behavior: auto; }
-    *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    body::after { animation: none; z-index: -1; }
 }
 
-/* ---------- Typography ---------- */
 
-h1, h2, h3, .logo, .menuTitle, .sectionTitle { font-family: var(--serif); font-weight: 500; }
-.sectionTitle { letter-spacing: -.02em; }
-.empty { font-family: var(--serif); font-size: 18px; }
-footer { font-family: var(--serif); font-style: italic; color: var(--muted); }
-
-/* ---------- Navbar: no line, it simply melts into the page ---------- */
-
-.navbar {
-    isolation: isolate;
-    background: linear-gradient(180deg, rgba(14,10,8,.84) 0%, rgba(14,10,8,.46) 58%, rgba(14,10,8,0) 100%);
-    border-bottom: 0;
-    -webkit-backdrop-filter: none; backdrop-filter: none;
-}
-.navbar::before {
-    content: ""; position: absolute; left: 0; right: 0; top: 0; bottom: -30px; z-index: -1; pointer-events: none;
-    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 100%);
-}
-.logo { font-size: 24px; letter-spacing: -.01em; }
-.logo span { font-style: italic; color: var(--accent); opacity: 1; }
-.menuButton, .navButton { border-radius: 50%; background: rgba(255,255,255,.05); }
-
-/* ---------- Menu (text only, editorial) ---------- */
-
-.menuDrawer { background: var(--glass-strong); border-left: 1px solid var(--border); }
-.menuItem { font-family: var(--serif); font-size: 18px; border-radius: 14px; }
-.menuItem.fxItem { font-family: inherit; font-size: 14px; color: var(--muted); margin-top: 18px; border: 1px dashed var(--border); }
-
-/* ---------- Hero ---------- */
-
-.heroEyebrow { font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
-.hero h1 {
-    font-size: clamp(54px, 9vw, 104px); letter-spacing: -.035em; line-height: .98; font-weight: 500;
-    background: linear-gradient(180deg, #fbf0dc 20%, #d9a066 130%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-.hero p { font-family: var(--serif); font-style: italic; font-size: clamp(16px, 2vw, 20px); color: var(--muted); }
-.searchBox { background: rgba(26,18,14,.72); border-radius: 999px; box-shadow: 0 20px 70px rgba(0,0,0,.4); transition: border-color .3s, box-shadow .3s; }
-.searchBox:focus-within { border-color: rgba(var(--lamp), .6); box-shadow: 0 20px 70px rgba(0,0,0,.4), 0 0 0 4px rgba(var(--lamp), .12); }
-.searchBox input::placeholder { color: rgba(243,232,214,.42); }
-.searchBtn { background: var(--accent); color: var(--accent-ink); border-radius: 999px; }
-
-/* ---------- Surfaces, buttons, cards ---------- */
-
-.glass { background: var(--glass); border-color: var(--border); box-shadow: 0 22px 60px rgba(0,0,0,.3); }
-.sectionTitle + .sectionSubtitle, .sectionSubtitle { color: var(--muted); }
-.smallBtn { border-radius: 999px; }
-.smallBtn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
-.featureArtist button { background: var(--accent); color: var(--accent-ink); border-radius: 999px; }
-.featureArtist h3, .resultGroupTitle { font-family: var(--serif); font-weight: 500; }
-.resultGroupTitle { font-size: 24px; }
-
-.resultCard { border-radius: 22px; transition: transform .45s var(--ease), box-shadow .45s, background .3s; }
-.resultCard:hover { transform: translateY(-6px); background: rgba(255,238,214,.09); box-shadow: 0 28px 56px rgba(0,0,0,.45), 0 0 0 1px rgba(var(--lamp), .22); }
-.cover, .topResultCover, .artistImage, .modalHero img { filter: saturate(.9) contrast(1.03) sepia(.12); }
-.cardTitle { font-weight: 650; }
-
-.topResult { border-radius: 28px; }
-.topResultInfo h3 { font-family: var(--serif); font-weight: 500; }
-.topResultActions button { border-radius: 999px; }
-.topResultActions .topPlayBtn { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff7ea; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
-@media (hover: hover) {
-    .topResultActions .topPlayBtn:hover { background: linear-gradient(135deg, var(--accent), var(--accent2)); filter: brightness(1.12); box-shadow: 0 16px 36px rgba(var(--lamp), .3); }
+/* animated rain canvas (sits behind the UI, never blocks clicks) */
+#rainCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
 }
 
-.tasteRow { background: rgba(255,238,214,.045); }
-.historyItem { border-radius: 999px; }
-.artistCard { border-radius: 24px; }
-
-.modalOverlay { background: rgba(8,5,4,.66); }
-.modal { background: var(--glass-strong); border-radius: 28px; }
-.modalHero h2 { font-family: var(--serif); font-weight: 500; letter-spacing: -.02em; }
-.modalButtons .playBtn { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff7ea; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
-.modalButtons .previewBtn { border-color: rgba(var(--lamp), .55); background: rgba(var(--lamp), .1); }
-@media (hover: hover) {
-    .modalButtons .playBtn:hover { background: linear-gradient(135deg, var(--accent), var(--accent2)); filter: brightness(1.12); box-shadow: 0 16px 36px rgba(var(--lamp), .3); }
-    .modalButtons .previewBtn:hover { background: rgba(var(--lamp), .22); border-color: rgba(var(--lamp), .8); box-shadow: 0 14px 32px rgba(var(--lamp), .25); }
+/* Telegram download hand-off panel */
+.tgPanel {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    z-index: 400;
+    width: min(460px, calc(100% - 24px));
+    transform: translate(-50%, 140%);
+    transition: transform .4s cubic-bezier(.22,.7,.2,1);
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(24,14,9,.96);
+    border: 1px solid var(--border);
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
 }
-.modalButtons .playBtn:active { background: linear-gradient(135deg, var(--accent), var(--accent2)); filter: brightness(1.12); }
-.modalButtons .previewBtn:active { background: rgba(var(--lamp), .22); border-color: rgba(var(--lamp), .8); }
-
-.fullPlayer { background: var(--glass-strong); }
-.fullPlayerDownload { border-radius: 999px; }
-
-.authSignOut, .authAvatar { border-color: var(--border); }
-
-/* section header buttons keep their natural size */
-.sectionHeader > .smallBtn { flex: 0 0 auto; padding: 10px 20px; }
-
-
-/* ---------- Player ---------- */
-
-.musicPlayer {
-    background: linear-gradient(180deg, rgba(46,34,27,.9), rgba(24,17,14,.92));
-    border: 1px solid var(--border); border-radius: 26px;
-    box-shadow: 0 24px 70px rgba(0,0,0,.55);
+.tgPanel.open { transform: translate(-50%, 0); }
+.tgPanel h4 { margin: 0 0 6px; font-size: 16px; }
+.tgPanel p { margin: 0 0 10px; font-size: 13px; line-height: 1.55; color: var(--muted); }
+.tgText {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.07);
+    border: 1px solid var(--border);
+    font-size: 13.5px;
+    word-break: break-all;
+    user-select: all;
+    margin-bottom: 12px;
 }
-.musicPlayer::before {
-    content: ""; position: absolute; inset: -1px; border-radius: inherit; z-index: -1; opacity: 0; pointer-events: none;
-    box-shadow: 0 0 46px 2px rgba(var(--lamp), .28); transition: opacity .8s;
-}
-.musicPlayer.is-playing::before { opacity: 1; animation: glowPulse 5s ease-in-out infinite alternate; }
-@keyframes glowPulse { from { opacity: .55; } to { opacity: 1; } }
-.playerCover { border-radius: 14px; filter: saturate(.92) sepia(.1); }
-.playerPlay { background: var(--accent); color: var(--accent-ink); }
-.playerPlay:hover { background: var(--accent); filter: brightness(1.1); }
-.playerProgress { background: linear-gradient(to right, var(--accent) var(--p, 0%), rgba(255,255,255,.16) var(--p, 0%)); }
-.playerArtist, .playerTime { color: var(--muted); }
+.tgButtons { display: flex; gap: 8px; flex-wrap: wrap; }
+.tgButtons .smallBtn { cursor: pointer; }
 
+.tgConfirm {
+    position: fixed; inset: 0; z-index: 500;
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+    background: rgba(8,4,2,.65);
+}
+.tgConfirmBox {
+    width: min(440px, 100%);
+    padding: 22px;
+    border-radius: 22px;
+    background: rgba(24,14,9,.97);
+    border: 1px solid var(--border);
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+}
+.tgConfirmBox p { margin: 0 0 12px; font-size: 15px; line-height: 1.7; }
+.tgConfirmBox p[dir="rtl"] { color: var(--muted); }
+.tgConfirmBox .tgButtons { margin-top: 16px; }
 
 /* =====================================================================
-   REFRESH: lighter charcoal / off-white / forest green / amber.  Rain only.
+   DARK WOOD THEME: deep warm autumn, bold type, faster paint.
+   (Visual layer only. Telegram panel and download buttons are not touched.)
 ===================================================================== */
 :root {
-    --bg: #2a2e2f; --bg2: #33383a; --bg3: #232728;
-    --ink: #f4f1ea; --text: #f4f1ea;
-    --muted: rgba(244,241,234,.72);
-    --accent: #7fa383; --accent2: #c99a45; --accent-ink: #14201a;
-    --border: rgba(244,241,234,.16);
-    --glass: rgba(58,64,65,.78);
-    --glass-strong: rgba(48,54,55,.94);
-    --dynamic-color: rgba(98,134,108,.20);
-    --dynamic-color-2: rgba(201,154,69,.10);
-    --dynamic-color-3: rgba(120,92,70,.12);
-    --lamp: 201,154,69; --rose: 127,163,131;
-    --head: "Archivo", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --serif: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.55; }
-#backgroundArt { opacity: .16; filter: blur(60px) saturate(.8); }
-.backgroundOverlay { background: linear-gradient(180deg, rgba(35,39,40,.35), rgba(35,39,40,.6)); }
-.atmosphere .fog { animation: none; }
-.atmosphere .vignette { background: radial-gradient(130% 100% at 50% 40%, transparent 60%, rgba(0,0,0,.28)); }
-#rainCanvas { opacity: calc(.6 * var(--fx)); }
-
-h1, h2, h3, .logo, .menuTitle, .sectionTitle, .menuItem, .resultGroupTitle,
-.featureArtist h3, .topResultInfo h3, .modalHero h2 { font-family: var(--head); font-weight: 700; letter-spacing: -.02em; font-style: normal; }
-.empty, footer, .hero p { font-family: "Inter", system-ui, sans-serif; font-style: normal; }
-.logo span { font-style: normal; color: var(--accent2); }
-.hero h1 { font-weight: 800; letter-spacing: -.04em; background: linear-gradient(180deg, #fbf8f1 30%, #b9cfbc 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.heroEyebrow { letter-spacing: .12em; color: var(--accent2); }
-.navbar { background: linear-gradient(180deg, rgba(35,39,40,.9) 0%, rgba(35,39,40,.5) 60%, rgba(35,39,40,0) 100%); }
-.searchBox { background: rgba(244,241,234,.08); box-shadow: 0 14px 44px rgba(0,0,0,.25); }
-.searchBox:focus-within { border-color: rgba(127,163,131,.8); box-shadow: 0 14px 44px rgba(0,0,0,.25), 0 0 0 4px rgba(127,163,131,.2); }
-.searchBox input::placeholder { color: rgba(244,241,234,.5); }
-.searchBtn, .smallBtn.primary, .featureArtist button, .playerPlay { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
-.topResultActions .topPlayBtn, .modalButtons .playBtn { background: linear-gradient(135deg, var(--accent), #5f8a69); color: #0f1a14; box-shadow: 0 8px 22px rgba(0,0,0,.25); }
-@media (hover:hover) {
-  .topResultActions .topPlayBtn:hover, .modalButtons .playBtn:hover { background: linear-gradient(135deg, #8fb593, #6a9774); box-shadow: 0 12px 28px rgba(127,163,131,.3); }
-  .searchBtn:hover, .smallBtn.primary:hover, .featureArtist button:hover { filter: brightness(1.08); }
-}
-.modalButtons .previewBtn { border-color: rgba(201,154,69,.6); background: rgba(201,154,69,.12); }
-.glass { box-shadow: 0 10px 30px rgba(0,0,0,.18); }
-.resultCard, .artistCard, .tasteRow { -webkit-backdrop-filter: none; backdrop-filter: none; }
-.resultCard:hover { background: rgba(244,241,234,.1); box-shadow: 0 18px 40px rgba(0,0,0,.3), 0 0 0 1px rgba(127,163,131,.4); transform: translateY(-4px); }
-.musicPlayer { background: linear-gradient(180deg, rgba(58,64,65,.96), rgba(40,45,46,.97)); }
-.musicPlayer::before { box-shadow: 0 0 40px 2px rgba(127,163,131,.3); }
-.cover, .topResultCover, .artistImage, .modalHero img, .playerCover { filter: none; }
-a { text-underline-offset: 3px; }
-
-/* images: fixed ratios, placeholders */
-.cover, .topResultCover { aspect-ratio: 1; object-fit: cover; background: rgba(244,241,234,.08); }
-.artistImage { aspect-ratio: 1; object-fit: cover; }
-div.cover, div.topResultCover, .cover.imgPlaceholder, .topResultCover.imgPlaceholder {
-    background: rgba(244,241,234,.08) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0a046' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18V6l10-2v12'/><circle cx='6.5' cy='18' r='2.5'/><circle cx='16.5' cy='16' r='2.5'/></svg>") center / 34% no-repeat;
-}
-div.artistImage, .artistImage.imgPlaceholder {
-    background: rgba(244,241,234,.08) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b9cfbc' stroke-width='1.4' stroke-linecap='round'><circle cx='12' cy='8' r='3.5'/><path d='M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6'/></svg>") center / 38% no-repeat;
-}
-
-/* skeletons */
-.skeletonGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px; }
-.skelCard { padding: 12px; border-radius: 20px; background: rgba(244,241,234,.05); }
-.skel { background: linear-gradient(90deg, rgba(244,241,234,.07) 25%, rgba(244,241,234,.14) 50%, rgba(244,241,234,.07) 75%); background-size: 200% 100%; animation: skelShine 1.3s linear infinite; border-radius: 10px; }
-.skelCover { aspect-ratio: 1; }
-.skelLine { height: 12px; margin-top: 12px; }
-.skelLine.short { width: 60%; }
-@keyframes skelShine { to { background-position: -200% 0; } }
-@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
-
-/* =====================================================================
-   FIRE: original warm-lamp soul + refreshed charcoal/forest/amber system
-===================================================================== */
-:root {
-    --ember: 224,160,70;
-    --forest: 127,163,131;
-    --paper: #f6f2e9;
-    --ring: linear-gradient(135deg, rgba(224,160,70,.9), rgba(127,163,131,.9));
-}
-body {
-    background:
-        radial-gradient(900px 560px at 50% -6%, rgba(224,160,70,.20), transparent 66%),
-        radial-gradient(800px 600px at 8% 30%, rgba(98,134,108,.20), transparent 64%),
-        radial-gradient(900px 640px at 100% 70%, rgba(150,100,60,.14), transparent 66%),
-        linear-gradient(180deg, #30363a 0%, #292d2f 55%, #222526 100%);
-    background-attachment: fixed;
-}
-/* window-light: a static warm lamp beam through the rain (no animation, no cost) */
-.atmosphere::before {
-    content: ""; position: absolute; inset: 0;
-    background:
-        radial-gradient(420px 420px at 12% 18%, rgba(224,160,70,.22), transparent 70%),
-        radial-gradient(300px 300px at 86% 58%, rgba(224,160,70,.12), transparent 70%),
-        radial-gradient(520px 360px at 78% 8%, rgba(127,163,131,.16), transparent 70%);
-}
-#rainCanvas { opacity: calc(.75 * var(--fx)); }
-
-/* ---------- Hero ---------- */
-.hero { position: relative; padding-top: clamp(40px, 9vh, 96px); }
-.hero h1 {
-    font-family: var(--head); font-weight: 800; text-transform: none;
-    font-size: clamp(60px, 12.5vw, 150px); line-height: .9; letter-spacing: -.055em;
-    background: linear-gradient(180deg, #fffaf0 0%, #f6f2e9 45%, #c8d8c6 115%);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    filter: drop-shadow(0 12px 40px rgba(224,160,70,.18));
-}
-.hero p { max-width: 560px; margin-inline: auto; color: var(--muted); font-weight: 450; }
-.heroEyebrow {
-    display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px 7px 12px;
-    border-radius: 999px; border: 1px solid rgba(224,160,70,.4); background: rgba(224,160,70,.10);
-    color: #f0c27a; font-weight: 600; letter-spacing: .06em; font-size: 12px; text-transform: none;
-}
-.heroEyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: rgb(var(--ember)); box-shadow: 0 0 12px rgb(var(--ember)); }
-
-/* one orchestrated entrance, hero only */
-@media (prefers-reduced-motion: no-preference) {
-    .hero > * { animation: heroIn .8s var(--ease) both; }
-    .hero > *:nth-child(2) { animation-delay: .08s; }
-    .hero > *:nth-child(3) { animation-delay: .16s; }
-    .hero > *:nth-child(4) { animation-delay: .24s; }
-    @keyframes heroIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
-}
-
-/* ---------- Search: the centerpiece ---------- */
-.searchBox {
-    position: relative; padding: 8px; background: rgba(20,24,25,.62);
-    border: 1px solid rgba(224,160,70,.45); border-radius: 999px;
-    box-shadow: 0 24px 70px rgba(0,0,0,.4); transition: border-color .3s, box-shadow .3s;
-}
-.searchBox:focus-within { border-color: rgba(224,160,70,.95); box-shadow: 0 24px 80px rgba(224,160,70,.18), 0 0 0 5px rgba(224,160,70,.12); }
-.searchBox input { font-size: 17px; font-weight: 500; color: var(--paper); }
-.searchBtn { background: linear-gradient(135deg, #8fb593, #6a9774); color: #0e1a13; font-weight: 800; letter-spacing: .01em; }
-.searchBtn:hover { transform: translateY(-1px); }
-
-/* ---------- Section headings ---------- */
-.sectionTitle {
-    font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.035em;
-    display: flex; align-items: center; gap: 14px;
-}
-.sectionTitle::before { content: ""; width: 5px; height: .9em; border-radius: 3px; background: linear-gradient(180deg, rgb(var(--ember)), var(--accent)); }
-.sectionSubtitle { font-weight: 450; }
-
-/* ---------- Cards: image-first, premium hover ---------- */
-.resultCard, .artistCard {
-    position: relative; overflow: hidden; padding: 12px; border-radius: 20px;
-    background: linear-gradient(180deg, rgba(246,242,233,.075), rgba(246,242,233,.035));
-    border: 1px solid rgba(246,242,233,.10);
-    transition: transform .35s var(--ease), border-color .3s, box-shadow .35s, background .3s;
-}
-.resultCard::after, .artistCard::after {
-    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
-    background: radial-gradient(260px 160px at 50% 0%, rgba(224,160,70,.16), transparent 70%); transition: opacity .35s;
-}
-.resultCard .cover, .artistCard .artistImage { transition: transform .6s var(--ease); border-radius: 14px; }
-.artistCard .artistImage { border-radius: 50%; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
-@media (hover: hover) {
-    .resultCard:hover, .artistCard:hover {
-        transform: translateY(-6px); border-color: rgba(224,160,70,.45);
-        box-shadow: 0 26px 50px rgba(0,0,0,.4), 0 0 0 1px rgba(224,160,70,.18);
-    }
-    .resultCard:hover::after, .artistCard:hover::after { opacity: 1; }
-    .resultCard:hover .cover { transform: scale(1.045); }
-    .artistCard:hover .artistImage { transform: scale(1.04); }
-}
-.cardTitle { font-weight: 700; letter-spacing: -.01em; color: var(--paper); }
-.resultGroupTitle { font-size: 24px; font-weight: 800; letter-spacing: -.03em; }
-.topResult { border: 1px solid rgba(224,160,70,.28); background: linear-gradient(135deg, rgba(224,160,70,.12), rgba(127,163,131,.08) 60%, rgba(246,242,233,.04)); }
-.topResultCover { border-radius: 20px; box-shadow: 0 24px 60px rgba(0,0,0,.45); }
-
-/* ---------- Buttons ---------- */
-.smallBtn { font-weight: 650; border-color: rgba(246,242,233,.2); transition: transform .2s, background .2s, border-color .2s; }
-.smallBtn:hover { border-color: rgba(224,160,70,.6); background: rgba(224,160,70,.10); }
-.smallBtn.primary:hover { background: #8fb593; }
-.menuItem { font-weight: 700; }
-.menuItem:hover { background: rgba(224,160,70,.10); }
-
-/* ---------- Player ---------- */
-.musicPlayer { border: 1px solid rgba(246,242,233,.16); box-shadow: 0 24px 70px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.2); }
-.playerProgress { background: linear-gradient(to right, rgb(var(--ember)) var(--p, 0%), rgba(255,255,255,.18) var(--p, 0%)); }
-.playerPlay { background: linear-gradient(135deg, #f0c27a, rgb(var(--ember))); color: #2a1a06; box-shadow: 0 6px 20px rgba(224,160,70,.35); }
-.musicPlayer.is-playing::before { box-shadow: 0 0 46px 2px rgba(224,160,70,.32); }
-
-/* ---------- Footer & tags ---------- */
-footer { color: var(--muted); font-weight: 500; }
-.tasteRow { border: 1px solid rgba(246,242,233,.08); }
-.historyItem:hover { border-color: rgba(224,160,70,.5); background: rgba(224,160,70,.1); }
-::selection { background: rgba(224,160,70,.4); color: #fff; }
-@media (max-width: 640px) {
-    .hero h1 { font-size: clamp(40px, 12.5vw, 64px); letter-spacing: -.045em; }
-    .searchBox { border-radius: 28px; }
-    .searchBox { padding: 6px; }
-}
-
-/* =====================================================================
-   DARK WOOD: deep, warm autumn. Charred-timber grain, ember glow, rain.
-===================================================================== */
-:root {
-    --bg: #1a120d; --bg2: #21170f; --bg3: #120c08;
-    --ink: #f3e7d3; --text: #f3e7d3;
-    --muted: rgba(243,231,211,.72);
-    --border: rgba(243,231,211,.14);
-    --glass: rgba(34,23,16,.78);
-    --glass-strong: rgba(28,19,13,.95);
-    --accent: #d9a05a; --accent2: #b8742f; --accent-ink: #1e1208;
-    --dynamic-color: rgba(190,110,50,.16);
-    --dynamic-color-2: rgba(120,70,35,.14);
-    --dynamic-color-3: rgba(90,50,25,.14);
+    --bg: #1a120d; --text: #f3e7d3; --muted: rgba(243,231,211,.72);
+    --border: rgba(243,231,211,.14); --accent: #d9a05a;
     --ember: 226,150,60;
+    --head: "Archivo", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --dynamic-color: rgba(190,110,50,.14);
+    --dynamic-color-2: rgba(120,70,35,.12);
+    --dynamic-color-3: rgba(90,50,25,.12);
 }
+html { color-scheme: dark; }
 body {
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.55;
     background-color: #1a120d;
     background-image:
-        radial-gradient(900px 560px at 50% -8%, rgba(226,150,60,.24), transparent 66%),
-        radial-gradient(700px 520px at 100% 60%, rgba(160,80,30,.16), transparent 66%),
+        radial-gradient(900px 560px at 50% -8%, rgba(226,150,60,.22), transparent 66%),
+        radial-gradient(700px 520px at 100% 60%, rgba(160,80,30,.14), transparent 66%),
         url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='w' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.42' numOctaves='4' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.33  0 0 0 0 0.16  0 0 0 0.7 -0.2'/></filter><rect width='100%25' height='100%25' filter='url(%23w)'/></svg>"),
         url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='k' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='0.003 0.09' numOctaves='3' seed='21' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.0 -0.42'/></filter><rect width='100%25' height='100%25' filter='url(%23k)'/></svg>"),
         linear-gradient(180deg, #24180f 0%, #1a120d 50%, #100a07 100%);
     background-attachment: fixed;
 }
-.backgroundOverlay { background: linear-gradient(180deg, rgba(16,10,6,.35), rgba(16,10,6,.6)); }
-.atmosphere::before {
-    background:
-        radial-gradient(460px 460px at 12% 16%, rgba(226,150,60,.26), transparent 70%),
-        radial-gradient(340px 340px at 88% 56%, rgba(210,120,45,.16), transparent 70%);
-}
-.atmosphere .vignette { background: radial-gradient(125% 95% at 50% 36%, transparent 45%, rgba(0,0,0,.6)); }
-#rainCanvas { opacity: calc(.7 * var(--fx)); }
+/* speed: remove full-screen blur layers and the always-animating glow */
+body::before { display: none; }
+body::after { animation: none; }
+#backgroundArt { opacity: .14; filter: blur(50px); }
+.backgroundOverlay { background: linear-gradient(180deg, rgba(16,10,6,.4), rgba(16,10,6,.62)); }
+.glass { background: linear-gradient(160deg, rgba(255,226,190,.07), rgba(255,226,190,.03)); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.resultCard, .artistCard, .tasteRow { -webkit-backdrop-filter: none; backdrop-filter: none; }
 
-.hero h1 { background: linear-gradient(180deg, #fff3de 0%, #f3e0bd 50%, #d9a05a 125%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 12px 44px rgba(226,150,60,.28)); }
-.hero p { font-size: clamp(17px, 2.2vw, 21px); }
-.navbar { background: linear-gradient(180deg, rgba(16,10,6,.92) 0%, rgba(16,10,6,.5) 60%, rgba(16,10,6,0) 100%); }
-.searchBox { background: rgba(18,11,7,.72); border-color: rgba(226,150,60,.5); }
-.searchBox input { color: #f3e7d3; }
-.searchBox input::placeholder { color: rgba(243,231,211,.5); }
-.searchBtn, .smallBtn.primary, .featureArtist button { background: linear-gradient(135deg, #e6b06a, #c47f35); color: #1e1208; }
-.searchBtn:hover, .smallBtn.primary:hover { background: linear-gradient(135deg, #efbd7c, #cf8a40); }
-.topResultActions .topPlayBtn, .modalButtons .playBtn { background: linear-gradient(135deg, #e6b06a, #c47f35); color: #1e1208; box-shadow: 0 8px 22px rgba(0,0,0,.4); }
-@media (hover:hover) {
-  .topResultActions .topPlayBtn:hover, .modalButtons .playBtn:hover { background: linear-gradient(135deg, #efbd7c, #cf8a40); box-shadow: 0 12px 28px rgba(226,150,60,.35); }
+/* type */
+.hero h1, .sectionTitle, .logo, h2, h3, .resultGroupTitle {
+    font-family: var(--head); font-style: normal; text-transform: none;
 }
-.sectionTitle::before { background: linear-gradient(180deg, #e6b06a, #a8642a); }
-.resultCard, .artistCard { background: linear-gradient(180deg, rgba(243,231,211,.07), rgba(243,231,211,.03)); border-color: rgba(243,231,211,.10); }
-.topResult { background: linear-gradient(135deg, rgba(226,150,60,.16), rgba(120,70,35,.12) 60%, rgba(243,231,211,.03)); border-color: rgba(226,150,60,.3); }
+.hero h1 {
+    font-weight: 800; font-size: clamp(44px, 12.5vw, 150px); line-height: .92; letter-spacing: -.05em;
+    background: linear-gradient(180deg, #fff3de 0%, #f3e0bd 50%, #d9a05a 125%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none;
+    filter: drop-shadow(0 12px 44px rgba(226,150,60,.28));
+}
+.hero p { font-size: clamp(17px, 2.2vw, 21px); font-weight: 450; color: var(--muted); }
+.sectionTitle { font-weight: 800; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.035em; display: flex; align-items: center; gap: 14px; }
+.sectionTitle::before { content: ""; width: 5px; height: .9em; border-radius: 3px; background: linear-gradient(180deg, #e6b06a, #a8642a); }
+.resultGroupTitle { font-weight: 800; letter-spacing: -.03em; }
+.logo { font-weight: 800; letter-spacing: -.02em; }
+.logo span { color: #e0a45a; opacity: 1; font-style: normal; }
+
+/* search + buttons */
+.searchBox { background: rgba(18,11,7,.72); border: 1px solid rgba(226,150,60,.5); box-shadow: 0 24px 70px rgba(0,0,0,.4); transition: border-color .3s, box-shadow .3s; }
+.searchBox:focus-within { border-color: rgba(226,150,60,.95); box-shadow: 0 24px 80px rgba(226,150,60,.18), 0 0 0 5px rgba(226,150,60,.12); }
+.searchBox input { color: #f3e7d3; font-weight: 500; }
+.searchBox input::placeholder { color: rgba(243,231,211,.5); }
+.searchBtn, .smallBtn.primary { background: linear-gradient(135deg, #e6b06a, #c47f35); color: #1e1208; font-weight: 800; border-color: transparent; }
+.searchBtn:hover, .smallBtn.primary:hover { background: linear-gradient(135deg, #efbd7c, #cf8a40); }
+.smallBtn { font-weight: 650; }
+.smallBtn:hover { border-color: rgba(226,150,60,.6); }
+
+/* cards: image-first, fixed ratios */
+.resultCard, .artistCard {
+    border: 1px solid rgba(243,231,211,.10); border-radius: 20px;
+    background: linear-gradient(180deg, rgba(243,231,211,.07), rgba(243,231,211,.03));
+    transition: transform .35s cubic-bezier(.2,.8,.2,1), border-color .3s, box-shadow .35s;
+}
+.resultCard .cover, .artistCard .artistImage { transition: transform .6s cubic-bezier(.2,.8,.2,1); }
+@media (hover: hover) {
+    .resultCard:hover, .artistCard:hover { transform: translateY(-6px); border-color: rgba(226,150,60,.45); box-shadow: 0 26px 50px rgba(0,0,0,.4); }
+    .resultCard:hover .cover { transform: scale(1.045); }
+    .artistCard:hover .artistImage { transform: scale(1.04); }
+}
+.cardTitle { font-weight: 700; letter-spacing: -.01em; }
+.topResult { border: 1px solid rgba(226,150,60,.3); background: linear-gradient(135deg, rgba(226,150,60,.16), rgba(120,70,35,.12) 60%, rgba(243,231,211,.03)); }
+.cover, .topResultCover { aspect-ratio: 1; object-fit: cover; background: rgba(243,231,211,.08); }
+.artistImage { aspect-ratio: 1; object-fit: cover; }
 .musicPlayer { background: linear-gradient(180deg, rgba(40,27,18,.97), rgba(24,16,11,.98)); }
-.modal, .menuDrawer, .fullPlayer { background: var(--glass-strong); }
-.playerPlay { background: linear-gradient(135deg, #f0c27a, #d98d3a); }
-.heroEyebrow { display: none; }
+.playerPlay { background: linear-gradient(135deg, #f0c27a, #d98d3a); color: #2a1a06; }
+
+/* placeholders (only when an image is missing) */
+div.cover, div.topResultCover, .cover.imgPlaceholder, .topResultCover.imgPlaceholder {
+    background: rgba(243,231,211,.08) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0a046' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18V6l10-2v12'/><circle cx='6.5' cy='18' r='2.5'/><circle cx='16.5' cy='16' r='2.5'/></svg>") center / 34% no-repeat;
+}
+div.artistImage, .artistImage.imgPlaceholder {
+    background: rgba(243,231,211,.08) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0a046' stroke-width='1.4' stroke-linecap='round'><circle cx='12' cy='8' r='3.5'/><path d='M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6'/></svg>") center / 38% no-repeat;
+}
+
+/* skeletons */
+.skeletonGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px; }
+.skelCard { padding: 12px; border-radius: 20px; background: rgba(243,231,211,.05); }
+.skel { background: linear-gradient(90deg, rgba(243,231,211,.07) 25%, rgba(243,231,211,.14) 50%, rgba(243,231,211,.07) 75%); background-size: 200% 100%; animation: skelShine 1.3s linear infinite; border-radius: 10px; }
+.skelCover { aspect-ratio: 1; }
+.skelLine { height: 12px; margin-top: 12px; }
+.skelLine.short { width: 60%; }
+@keyframes skelShine { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+@media (max-width: 640px) { .hero h1 { font-size: clamp(40px, 12.5vw, 64px); } .searchBox { border-radius: 28px; } }
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1977,12 +1787,6 @@ body {
 
 <div id="backgroundArt"></div>
 <div class="backgroundOverlay"></div>
-
-<div class="atmosphere" aria-hidden="true">
-    <div class="fog"></div>
-    <canvas id="rainCanvas"></canvas>
-    <div class="vignette"></div>
-</div>
 
 <!-- Music Player -->
 
@@ -2156,7 +1960,6 @@ body {
     <button class="menuItem" onclick="goTo('artists')">
         Artists
     </button>
-    <button class="menuItem fxItem" id="fxMenuItem" type="button" onclick="toggleFx()">Rain: On</button>
 
     <button class="menuItem" onclick="goTo('about')">
         About MusicFinder
@@ -2170,7 +1973,7 @@ body {
 
     <h1>MusicFinder</h1>
 
-    <p>Songs for rainy afternoons and warm coffee.</p>
+    <p>Discover songs, artists and albums.</p>
 
     <div class="searchBox" id="searchSection">
 
@@ -2317,6 +2120,10 @@ body {
 
         <p class="modalMuted">
             Music metadata and artwork are provided through Spotify.
+        </p>
+
+        <p class="modalMuted">
+            Contact: <a href="mailto:musicfinder.web@gmail.com" style="text-decoration:underline;">musicfinder.web@gmail.com</a>
         </p>
 
     </div>
@@ -2988,8 +2795,7 @@ function trackCard(track) {
 
                 <a
                     class="smallBtn"
-                    href="https://www.google.com/search?q=${search}+download"
-                    target="_blank"
+                    ${tgDownloadAttrs(track.name, artist, track.external_urls?.spotify)}
                 >
                     Download
                 </a>
@@ -3217,75 +3023,54 @@ function albumCard(album) {
    DYNAMIC BACKGROUND
 ========================= */
 
-function parseRgba(text) {
-
-    const match = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(text || "");
-
-    return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
-
-}
-
-/* Pull the artwork color toward the lamp color so the coffee/autumn mood survives */
-function warmMix(rgb, alpha) {
-
-    const lamp = (getComputedStyle(document.documentElement).getPropertyValue("--lamp") || "233,168,92")
-        .split(",").map(n => Number(n.trim()) || 0);
-
-    const mix = rgb.map((v, i) => Math.round(v * 0.78 + lamp[i] * 0.22));
-
-    return `rgba(${mix[0]},${mix[1]},${mix[2]},${alpha})`;
-
-}
-
-const artColorCache = new Map();
-
-function paintArt(image, colors) {
-
-    const bg = document.getElementById("backgroundArt");
-
-    bg.style.backgroundImage = `url("${image}")`;
-    bg.style.opacity = ".26";
-
-    if (!colors) return;
-
-    const root = document.documentElement.style;
-    const a = parseRgba(colors.primary);
-    const b = parseRgba(colors.secondary);
-    const c = parseRgba(colors.tertiary);
-
-    if (a) root.setProperty("--dynamic-color", warmMix(a, .26));
-    if (b) root.setProperty("--dynamic-color-2", warmMix(b, .2));
-    if (c) root.setProperty("--dynamic-color-3", warmMix(c, .16));
-
-}
-
 function setBackground(image) {
 
     if (!image) return;
 
-    // Colors are only extracted once per artwork
-    if (artColorCache.has(image)) {
-        paintArt(image, artColorCache.get(image));
-        return;
-    }
+    const bg =
+        document.getElementById("backgroundArt");
 
     const img = new Image();
 
     img.crossOrigin = "Anonymous";
 
-    img.onload = function () {
+    img.onload = function() {
 
-        const colors = extractImageColors(img);
+        bg.style.backgroundImage =
+            `url("${image}")`;
 
-        artColorCache.set(image, colors || null);
-        paintArt(image, colors);
+        const colors =
+            extractImageColors(img);
+
+        if (colors) {
+
+            document.documentElement.style.setProperty(
+                "--dynamic-color",
+                colors.primary
+            );
+
+            document.documentElement.style.setProperty(
+                "--dynamic-color-2",
+                colors.secondary
+            );
+
+            document.documentElement.style.setProperty(
+                "--dynamic-color-3",
+                colors.tertiary
+            );
+
+        }
+
+        bg.style.opacity = ".30";
 
     };
 
-    img.onerror = function () {
+    img.onerror = function() {
 
-        artColorCache.set(image, null);
-        paintArt(image, null);
+        bg.style.backgroundImage =
+            `url("${image}")`;
+
+        bg.style.opacity = ".24";
 
     };
 
@@ -3575,7 +3360,7 @@ function openTrackFromEncoded(encoded) {
     </svg>
     SoundCloud
 </a>
-            <a href="https://www.google.com/search?q=${downloadQuery}+download" target="_blank">
+            <a ${tgDownloadAttrs(track.name, artist, track.external_urls?.spotify)}>
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:middle;margin-right:6px;">
         <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"
               fill="none"
@@ -3584,7 +3369,7 @@ function openTrackFromEncoded(encoded) {
               stroke-linecap="round"
               stroke-linejoin="round"/>
     </svg>
-    Download Search
+    Download via Telegram
 </a>
 
         </div>
@@ -4759,7 +4544,6 @@ musicAudio.addEventListener("timeupdate", () => {
         (musicAudio.currentTime / musicAudio.duration) * 100;
 
     playerProgress.value = progress;
-    playerProgress.style.setProperty("--p", progress + "%");
 
     playerCurrentTime.textContent =
         formatPlayerTime(musicAudio.currentTime);
@@ -4808,7 +4592,6 @@ musicAudio.addEventListener("ended", () => {
     setPlayerPlaying(false);
 
     playerProgress.value = 0;
-    playerProgress.style.setProperty("--p", "0%");
 
     playerCurrentTime.textContent = "0:00";
 
@@ -4933,12 +4716,10 @@ function playFullSong(song) {
     const downloadLink = `
         <a
             class="fullPlayerDownload"
-            href="https://www.google.com/search?q=${encodeURIComponent(searchText)}"
-            target="_blank"
-            rel="noopener"
+            ${tgDownloadAttrs(song.name, artists.join(", "), song.external_urls?.spotify || (song.id ? "https://open.spotify.com/track/" + song.id : ""))}
         >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Download Search
+            Download via Telegram
         </a>
     `;
 
@@ -5189,243 +4970,135 @@ renderAuth();
 
 window.addEventListener("load", () => initGoogleLogin());
 
+</script>
 
 
-/* =========================
-   Atmosphere: rain on the glass
-   (light canvas, paused when hidden, respects reduced motion)
-========================= */
+<script>
+/* Subtle animated rain: depth-layered drops with varied speed, length, width and opacity.
+   Far drops are thinner/fainter (and soft because the canvas is rendered below full resolution). */
+(function () {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-const FX_KEY = "musicFinderFx";
+    const canvas = document.createElement("canvas");
+    canvas.id = "rainCanvas";
+    canvas.setAttribute("aria-hidden", "true");
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext("2d");
 
-function fxIsOn() {
-    return document.documentElement.dataset.fx !== "off";
-}
+    const SCALE = 0.7;                       // lower-res canvas = softer drops + cheaper
+    const SLANT = 0.14;                      // gentle wind, drops lean left
+    const lowPower = (navigator.hardwareConcurrency || 4) <= 2;
+    let w = 0, h = 0, drops = [], raf = 0, last = 0;
 
-function updateFxMenuLabel() {
-
-    const item = document.getElementById("fxMenuItem");
-
-    if (item) {
-        item.textContent = `Rain: ${fxIsOn() ? "On" : "Off"}`;
-        item.setAttribute("aria-pressed", String(fxIsOn()));
-    }
-
-}
-
-const Atmosphere = (() => {
-
-    const canvas = document.getElementById("rainCanvas");
-    const ctx = canvas ? canvas.getContext("2d") : null;
-
-    let width = 0;
-    let height = 0;
-    let frame = 0;
-    let lastTime = 0;
-    let running = false;
-    let resizeTimer = 0;
-
-    let streaks = [];
-    let beads = [];
-
-    let rain = "190,205,220";
-
-    const lowPower =
-        (navigator.hardwareConcurrency || 8) <= 4 ||
-        (navigator.deviceMemory || 8) <= 4;
-
-    const rand = (min, max) => min + Math.random() * (max - min);
-
-    function readColors() {
-
-        const styles = getComputedStyle(document.documentElement);
-
-        rain = styles.getPropertyValue("--rain").trim() || rain;
-
-    }
-
-    function newStreak(initial) {
+    function makeDrop(initial) {
+        const depth = Math.random();         // 0 = far, 1 = near
         return {
-            x: rand(0, width),
-            y: initial ? rand(-height, height) : rand(-80, -10),
-            len: rand(10, 34),
-            speed: rand(220, 460),
-            alpha: rand(.05, .16)
+            x: Math.random() * (w + 80),
+            y: initial ? Math.random() * h : -40 - Math.random() * 120,
+            len: (10 + depth * 30) * (0.8 + Math.random() * 0.5),
+            speed: (340 + depth * 760) * (0.85 + Math.random() * 0.3),
+            width: 0.5 + depth * 1.1,
+            alpha: 0.05 + depth * 0.15 + Math.random() * 0.03
         };
     }
 
-    function newBead() {
-        return { x: rand(0, width), y: rand(0, height), r: rand(1.4, 3.2), v: 0, wait: rand(1, 8) };
-    }
-
     function resize() {
-
-        if (!canvas) return;
-
-        const scale = lowPower || window.innerWidth < 700 ? .4 : .55;
-
-        width = Math.ceil(window.innerWidth * scale);
-        height = Math.ceil(window.innerHeight * scale);
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const wide = Math.min(1, window.innerWidth / 1400);
-
-        streaks = Array.from({ length: Math.round((lowPower ? 36 : 70) * (.5 + .5 * wide)) }, () => newStreak(true));
-        beads = Array.from({ length: lowPower ? 7 : 13 }, newBead);
-
+        w = Math.ceil(window.innerWidth * SCALE);
+        h = Math.ceil(window.innerHeight * SCALE);
+        canvas.width = w; canvas.height = h;
+        const count = Math.round(Math.min(window.innerWidth < 700 ? 55 : 130, (window.innerWidth * window.innerHeight) / 9000));
+        drops = Array.from({ length: count }, () => makeDrop(true));
     }
 
-    function loop(time) {
-
-        frame = requestAnimationFrame(loop);
-
-        if (time - lastTime < 33) return;
-
-        const dt = Math.min(.1, (time - lastTime) / 1000);
-
-        lastTime = time;
-
-        ctx.clearRect(0, 0, width, height);
-
-        // glass beads that slide now and then
-        for (const b of beads) {
-
-            b.wait -= dt;
-
-            if (b.wait <= 0) { b.v = rand(14, 50); b.wait = rand(3, 9); }
-
-            b.y += b.v * dt;
-            b.v = Math.max(0, b.v - 36 * dt);
-
-            if (b.y > height + 10) Object.assign(b, newBead(), { y: -6 });
-
-            const glow = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r * 2.2);
-
-            glow.addColorStop(0, `rgba(${rain},.34)`);
-            glow.addColorStop(1, `rgba(${rain},0)`);
-
-            ctx.fillStyle = glow;
+    function frame(now) {
+        raf = requestAnimationFrame(frame);
+        const dt = Math.min(now - last, 60) / 1000;
+        if (lowPower && now - last < 33) return;      // cap at ~30fps on weak devices
+        last = now;
+        ctx.clearRect(0, 0, w, h);
+        ctx.lineCap = "round";
+        for (const d of drops) {
+            d.y += d.speed * SCALE * dt;
+            d.x -= d.speed * SCALE * dt * SLANT;
+            if (d.y - d.len > h || d.x < -40) { Object.assign(d, makeDrop(false)); continue; }
+            ctx.strokeStyle = "rgba(205,218,232," + d.alpha + ")";
+            ctx.lineWidth = d.width;
             ctx.beginPath();
-            ctx.arc(b.x, b.y, b.r * 2.2, 0, Math.PI * 2);
-            ctx.fill();
-
-            if (b.v > 1) {
-                ctx.strokeStyle = `rgba(${rain},.07)`;
-                ctx.lineWidth = b.r * .8;
-                ctx.beginPath();
-                ctx.moveTo(b.x, b.y - b.v * .5);
-                ctx.lineTo(b.x, b.y);
-                ctx.stroke();
-            }
-
-        }
-
-        // fine rain streaks
-        ctx.lineWidth = 1;
-
-        for (const s of streaks) {
-
-            s.y += s.speed * dt;
-            s.x -= s.speed * dt * .12;
-
-            if (s.y > height + 40 || s.x < -40) Object.assign(s, newStreak(false), { x: rand(0, width + 60) });
-
-            ctx.strokeStyle = `rgba(${rain},${s.alpha})`;
-            ctx.beginPath();
-            ctx.moveTo(s.x, s.y);
-            ctx.lineTo(s.x - s.len * .12, s.y + s.len);
+            ctx.moveTo(d.x, d.y);
+            ctx.lineTo(d.x + d.len * SLANT, d.y - d.len);
             ctx.stroke();
-
         }
-
     }
 
-    function start() {
+    function start() { if (!raf && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+    function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
 
-        if (running || !ctx) return;
-
-        running = true;
-        lastTime = performance.now();
-        frame = requestAnimationFrame(loop);
-
-    }
-
-    function stop() {
-
-        running = false;
-        cancelAnimationFrame(frame);
-
-        if (ctx) ctx.clearRect(0, 0, width, height);
-
-    }
-
-    function refresh() {
-
-        if (fxIsOn() && !document.hidden) start();
-        else stop();
-
-    }
-
-    function init() {
-
-        if (!canvas || !ctx) return;
-
-        readColors();
-        resize();
-        refresh();
-
-        window.addEventListener("resize", () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(resize, 200);
-        });
-
-        document.addEventListener("visibilitychange", refresh);
-
-    }
-
-    return { init, refresh };
-
+    let t;
+    window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(resize, 200); });
+    document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());   // no work in background tabs
+    resize(); start();
 })();
-
-function setFx(on) {
-
-    document.documentElement.dataset.fx = on ? "on" : "off";
-
-    try {
-        localStorage.setItem(FX_KEY, on ? "on" : "off");
-    } catch {}
-
-    updateFxMenuLabel();
-    Atmosphere.refresh();
-
-}
-
-function toggleFx() {
-    setFx(!fxIsOn());
-}
-
-(function initAtmosphere() {
-
-    let saved = null;
-
-    try {
-        saved = localStorage.getItem(FX_KEY);
-    } catch {}
-
-    // Animated effects start OFF for people who asked their system for reduced motion
-    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const on = saved ? saved === "on" : !reduced;
-
-    document.documentElement.dataset.fx = on ? "on" : "off";
-
-    updateFxMenuLabel();
-    Atmosphere.init();
-
-})();
-
 </script>
 
+<script>
+/* Download -> @RegaSpotify_bot (inline bot).
+   Telegram has no official link that opens "Saved Messages" with text inserted (Saved Messages has
+   no username), and a website can't type into the Telegram app. The official mechanism is the
+   share link: it opens Telegram with a ready-made draft and lets the user pick the chat. The draft
+   starts with "@RegaSpotify_bot", which is how Telegram triggers an inline bot's results, so the user
+   picks Saved Messages, sees the bot's results for the song, taps the right one and presses Send.
+   No bot token or Telegram API is used. */
+/* Change ONLY this line to switch the download bot (username without @) */
+const TG_BOT_USERNAME = "fmusbot";
+const TG_BOT_URL = "https://t.me/" + TG_BOT_USERNAME;
+
+/* The exact draft: "@RegaSpotify_Bot Title - Artist" */
+function tgQuery(title, artist) {
+    const t = (title || "").trim(), a = (artist || "").trim();
+    return `${t}${a ? " - " + a : ""}`;
+}
+function tgShareUrl(query) {
+    return "https://t.me/share/url?url=%20&text=" + encodeURIComponent(query);
+}
+
+function tgDownloadAttrs(title, artist, spotifyUrl) {
+    const url = /^https?:\/\//.test(spotifyUrl || "") ? spotifyUrl : "";
+    return `href="${escapeHtml(TG_BOT_URL + "?text=" + encodeURIComponent(tgQuery(title, artist)))}" target="_blank" rel="noopener" data-tg-title="${escapeHtml(title || "")}" data-tg-artist="${escapeHtml(artist || "")}" data-tg-url="${escapeHtml(url)}"`;
+}
+
+async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch {}
+    try {
+        const ta = document.createElement("textarea");
+        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove(); return ok;
+    } catch { return false; }
+}
+
+function showTelegramPanel(query, copied) {
+    let panel = document.getElementById("tgPanel");
+    if (!panel) {
+        panel = document.createElement("div");
+        panel.id = "tgPanel"; panel.className = "tgPanel"; panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", "Download with Telegram");
+        document.body.appendChild(panel);
+    }
+    panel.innerHTML = `
+        <h4>Download via @${TG_BOT_USERNAME}</h4>
+        <p id="tgNote">Telegram should open @${TG_BOT_USERNAME} with the song name ready — press Send. If it did not open or the text is missing, tap <b>Open bot</b> below.</p>
+        <div class="tgText" id="tgText">${escapeHtml(query)}</div>
+        <div class="tgButtons">
+            <a class="smallBtn primary" style="font-weight:800;" href="${escapeHtml(TG_BOT_URL + "?text=" + encodeURIComponent(query))}" target="_blank" rel="noopener"><b>Open bot</b></a>
+            <button class="smallBtn" type="button" id="tgCopy">Copy</button>
+            <button class="smallBtn" type="button" id="tgClose">Close</button>
+        </div>`;
+    document.getElementById("tgCopy").onclick = async e => { e.target.textContent = (await copyText(query)) ? "Copied ✓" : "Select the text above"; };
+    document.getElementById("tgClose").onclick = () => panel.classList.remove("open");
+    requestAnimationFrame(() => panel.classList.add("open"));
+}
+
+/* Download buttons are plain links to the bot chat (t.me/fmusbot?text=...), so Telegram opens natively on desktop and Android. */
+</script>
 </body>
 </html>

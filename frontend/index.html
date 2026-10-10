@@ -6,6 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <title>MusicFinder</title>
+<link rel="preconnect" href="https://musicfinder-api.vercel.app" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<meta name="theme-color" content="#2a2e2f">
+
 
 <style>
 
@@ -1536,7 +1542,7 @@ footer {
     --dynamic-color: rgba(168,92,56,.22);
     --dynamic-color-2: rgba(92,112,128,.20);
     --dynamic-color-3: rgba(122,40,52,.20);
-    --lamp: 233,168,92; --rose: 196,120,128; --rain: 190,205,220; --leaf: 190,110,52;
+    --lamp: 233,168,92; --rose: 196,120,128; --rain: 190,205,220;
     --fx: 1;
     --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Source Serif Pro", Georgia, "Times New Roman", serif;
     --ease: cubic-bezier(.2,.8,.2,1);
@@ -1713,6 +1719,254 @@ footer { font-family: var(--serif); font-style: italic; color: var(--muted); }
 .playerProgress { background: linear-gradient(to right, var(--accent) var(--p, 0%), rgba(255,255,255,.16) var(--p, 0%)); }
 .playerArtist, .playerTime { color: var(--muted); }
 
+
+/* =====================================================================
+   REFRESH: lighter charcoal / off-white / forest green / amber.  Rain only.
+===================================================================== */
+:root {
+    --bg: #2a2e2f; --bg2: #33383a; --bg3: #232728;
+    --ink: #f4f1ea; --text: #f4f1ea;
+    --muted: rgba(244,241,234,.72);
+    --accent: #7fa383; --accent2: #c99a45; --accent-ink: #14201a;
+    --border: rgba(244,241,234,.16);
+    --glass: rgba(58,64,65,.78);
+    --glass-strong: rgba(48,54,55,.94);
+    --dynamic-color: rgba(98,134,108,.20);
+    --dynamic-color-2: rgba(201,154,69,.10);
+    --dynamic-color-3: rgba(120,92,70,.12);
+    --lamp: 201,154,69; --rose: 127,163,131;
+    --head: "Archivo", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --serif: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+body { font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.55; }
+#backgroundArt { opacity: .16; filter: blur(60px) saturate(.8); }
+.backgroundOverlay { background: linear-gradient(180deg, rgba(35,39,40,.35), rgba(35,39,40,.6)); }
+.atmosphere .fog { animation: none; }
+.atmosphere .vignette { background: radial-gradient(130% 100% at 50% 40%, transparent 60%, rgba(0,0,0,.28)); }
+#rainCanvas { opacity: calc(.6 * var(--fx)); }
+
+h1, h2, h3, .logo, .menuTitle, .sectionTitle, .menuItem, .resultGroupTitle,
+.featureArtist h3, .topResultInfo h3, .modalHero h2 { font-family: var(--head); font-weight: 700; letter-spacing: -.02em; font-style: normal; }
+.empty, footer, .hero p { font-family: "Inter", system-ui, sans-serif; font-style: normal; }
+.logo span { font-style: normal; color: var(--accent2); }
+.hero h1 { font-weight: 800; letter-spacing: -.04em; background: linear-gradient(180deg, #fbf8f1 30%, #b9cfbc 120%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.heroEyebrow { letter-spacing: .12em; color: var(--accent2); }
+.navbar { background: linear-gradient(180deg, rgba(35,39,40,.9) 0%, rgba(35,39,40,.5) 60%, rgba(35,39,40,0) 100%); }
+.searchBox { background: rgba(244,241,234,.08); box-shadow: 0 14px 44px rgba(0,0,0,.25); }
+.searchBox:focus-within { border-color: rgba(127,163,131,.8); box-shadow: 0 14px 44px rgba(0,0,0,.25), 0 0 0 4px rgba(127,163,131,.2); }
+.searchBox input::placeholder { color: rgba(244,241,234,.5); }
+.searchBtn, .smallBtn.primary, .featureArtist button, .playerPlay { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.topResultActions .topPlayBtn, .modalButtons .playBtn { background: linear-gradient(135deg, var(--accent), #5f8a69); color: #0f1a14; box-shadow: 0 8px 22px rgba(0,0,0,.25); }
+@media (hover:hover) {
+  .topResultActions .topPlayBtn:hover, .modalButtons .playBtn:hover { background: linear-gradient(135deg, #8fb593, #6a9774); box-shadow: 0 12px 28px rgba(127,163,131,.3); }
+  .searchBtn:hover, .smallBtn.primary:hover, .featureArtist button:hover { filter: brightness(1.08); }
+}
+.modalButtons .previewBtn { border-color: rgba(201,154,69,.6); background: rgba(201,154,69,.12); }
+.glass { box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+.resultCard, .artistCard, .tasteRow { -webkit-backdrop-filter: none; backdrop-filter: none; }
+.resultCard:hover { background: rgba(244,241,234,.1); box-shadow: 0 18px 40px rgba(0,0,0,.3), 0 0 0 1px rgba(127,163,131,.4); transform: translateY(-4px); }
+.musicPlayer { background: linear-gradient(180deg, rgba(58,64,65,.96), rgba(40,45,46,.97)); }
+.musicPlayer::before { box-shadow: 0 0 40px 2px rgba(127,163,131,.3); }
+.cover, .topResultCover, .artistImage, .modalHero img, .playerCover { filter: none; }
+a { text-underline-offset: 3px; }
+
+/* images: fixed ratios, placeholders */
+.cover, .topResultCover { aspect-ratio: 1; object-fit: cover; background: rgba(244,241,234,.08); }
+.artistImage { aspect-ratio: 1; object-fit: cover; }
+div.cover, div.topResultCover, .cover.imgPlaceholder, .topResultCover.imgPlaceholder {
+    background: rgba(244,241,234,.08) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0a046' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18V6l10-2v12'/><circle cx='6.5' cy='18' r='2.5'/><circle cx='16.5' cy='16' r='2.5'/></svg>") center / 34% no-repeat;
+}
+div.artistImage, .artistImage.imgPlaceholder {
+    background: rgba(244,241,234,.08) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b9cfbc' stroke-width='1.4' stroke-linecap='round'><circle cx='12' cy='8' r='3.5'/><path d='M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6'/></svg>") center / 38% no-repeat;
+}
+
+/* skeletons */
+.skeletonGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px; }
+.skelCard { padding: 12px; border-radius: 20px; background: rgba(244,241,234,.05); }
+.skel { background: linear-gradient(90deg, rgba(244,241,234,.07) 25%, rgba(244,241,234,.14) 50%, rgba(244,241,234,.07) 75%); background-size: 200% 100%; animation: skelShine 1.3s linear infinite; border-radius: 10px; }
+.skelCover { aspect-ratio: 1; }
+.skelLine { height: 12px; margin-top: 12px; }
+.skelLine.short { width: 60%; }
+@keyframes skelShine { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
+
+/* =====================================================================
+   FIRE: original warm-lamp soul + refreshed charcoal/forest/amber system
+===================================================================== */
+:root {
+    --ember: 224,160,70;
+    --forest: 127,163,131;
+    --paper: #f6f2e9;
+    --ring: linear-gradient(135deg, rgba(224,160,70,.9), rgba(127,163,131,.9));
+}
+body {
+    background:
+        radial-gradient(900px 560px at 50% -6%, rgba(224,160,70,.20), transparent 66%),
+        radial-gradient(800px 600px at 8% 30%, rgba(98,134,108,.20), transparent 64%),
+        radial-gradient(900px 640px at 100% 70%, rgba(150,100,60,.14), transparent 66%),
+        linear-gradient(180deg, #30363a 0%, #292d2f 55%, #222526 100%);
+    background-attachment: fixed;
+}
+/* window-light: a static warm lamp beam through the rain (no animation, no cost) */
+.atmosphere::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+        radial-gradient(420px 420px at 12% 18%, rgba(224,160,70,.22), transparent 70%),
+        radial-gradient(300px 300px at 86% 58%, rgba(224,160,70,.12), transparent 70%),
+        radial-gradient(520px 360px at 78% 8%, rgba(127,163,131,.16), transparent 70%);
+}
+#rainCanvas { opacity: calc(.75 * var(--fx)); }
+
+/* ---------- Hero ---------- */
+.hero { position: relative; padding-top: clamp(40px, 9vh, 96px); }
+.hero h1 {
+    font-family: var(--head); font-weight: 800; text-transform: none;
+    font-size: clamp(60px, 12.5vw, 150px); line-height: .9; letter-spacing: -.055em;
+    background: linear-gradient(180deg, #fffaf0 0%, #f6f2e9 45%, #c8d8c6 115%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 12px 40px rgba(224,160,70,.18));
+}
+.hero p { max-width: 560px; margin-inline: auto; color: var(--muted); font-weight: 450; }
+.heroEyebrow {
+    display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px 7px 12px;
+    border-radius: 999px; border: 1px solid rgba(224,160,70,.4); background: rgba(224,160,70,.10);
+    color: #f0c27a; font-weight: 600; letter-spacing: .06em; font-size: 12px; text-transform: none;
+}
+.heroEyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: rgb(var(--ember)); box-shadow: 0 0 12px rgb(var(--ember)); }
+
+/* one orchestrated entrance, hero only */
+@media (prefers-reduced-motion: no-preference) {
+    .hero > * { animation: heroIn .8s var(--ease) both; }
+    .hero > *:nth-child(2) { animation-delay: .08s; }
+    .hero > *:nth-child(3) { animation-delay: .16s; }
+    .hero > *:nth-child(4) { animation-delay: .24s; }
+    @keyframes heroIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+}
+
+/* ---------- Search: the centerpiece ---------- */
+.searchBox {
+    position: relative; padding: 8px; background: rgba(20,24,25,.62);
+    border: 1px solid rgba(224,160,70,.45); border-radius: 999px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.4); transition: border-color .3s, box-shadow .3s;
+}
+.searchBox:focus-within { border-color: rgba(224,160,70,.95); box-shadow: 0 24px 80px rgba(224,160,70,.18), 0 0 0 5px rgba(224,160,70,.12); }
+.searchBox input { font-size: 17px; font-weight: 500; color: var(--paper); }
+.searchBtn { background: linear-gradient(135deg, #8fb593, #6a9774); color: #0e1a13; font-weight: 800; letter-spacing: .01em; }
+.searchBtn:hover { transform: translateY(-1px); }
+
+/* ---------- Section headings ---------- */
+.sectionTitle {
+    font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.035em;
+    display: flex; align-items: center; gap: 14px;
+}
+.sectionTitle::before { content: ""; width: 5px; height: .9em; border-radius: 3px; background: linear-gradient(180deg, rgb(var(--ember)), var(--accent)); }
+.sectionSubtitle { font-weight: 450; }
+
+/* ---------- Cards: image-first, premium hover ---------- */
+.resultCard, .artistCard {
+    position: relative; overflow: hidden; padding: 12px; border-radius: 20px;
+    background: linear-gradient(180deg, rgba(246,242,233,.075), rgba(246,242,233,.035));
+    border: 1px solid rgba(246,242,233,.10);
+    transition: transform .35s var(--ease), border-color .3s, box-shadow .35s, background .3s;
+}
+.resultCard::after, .artistCard::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+    background: radial-gradient(260px 160px at 50% 0%, rgba(224,160,70,.16), transparent 70%); transition: opacity .35s;
+}
+.resultCard .cover, .artistCard .artistImage { transition: transform .6s var(--ease); border-radius: 14px; }
+.artistCard .artistImage { border-radius: 50%; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+@media (hover: hover) {
+    .resultCard:hover, .artistCard:hover {
+        transform: translateY(-6px); border-color: rgba(224,160,70,.45);
+        box-shadow: 0 26px 50px rgba(0,0,0,.4), 0 0 0 1px rgba(224,160,70,.18);
+    }
+    .resultCard:hover::after, .artistCard:hover::after { opacity: 1; }
+    .resultCard:hover .cover { transform: scale(1.045); }
+    .artistCard:hover .artistImage { transform: scale(1.04); }
+}
+.cardTitle { font-weight: 700; letter-spacing: -.01em; color: var(--paper); }
+.resultGroupTitle { font-size: 24px; font-weight: 800; letter-spacing: -.03em; }
+.topResult { border: 1px solid rgba(224,160,70,.28); background: linear-gradient(135deg, rgba(224,160,70,.12), rgba(127,163,131,.08) 60%, rgba(246,242,233,.04)); }
+.topResultCover { border-radius: 20px; box-shadow: 0 24px 60px rgba(0,0,0,.45); }
+
+/* ---------- Buttons ---------- */
+.smallBtn { font-weight: 650; border-color: rgba(246,242,233,.2); transition: transform .2s, background .2s, border-color .2s; }
+.smallBtn:hover { border-color: rgba(224,160,70,.6); background: rgba(224,160,70,.10); }
+.smallBtn.primary:hover { background: #8fb593; }
+.menuItem { font-weight: 700; }
+.menuItem:hover { background: rgba(224,160,70,.10); }
+
+/* ---------- Player ---------- */
+.musicPlayer { border: 1px solid rgba(246,242,233,.16); box-shadow: 0 24px 70px rgba(0,0,0,.5), 0 0 0 1px rgba(0,0,0,.2); }
+.playerProgress { background: linear-gradient(to right, rgb(var(--ember)) var(--p, 0%), rgba(255,255,255,.18) var(--p, 0%)); }
+.playerPlay { background: linear-gradient(135deg, #f0c27a, rgb(var(--ember))); color: #2a1a06; box-shadow: 0 6px 20px rgba(224,160,70,.35); }
+.musicPlayer.is-playing::before { box-shadow: 0 0 46px 2px rgba(224,160,70,.32); }
+
+/* ---------- Footer & tags ---------- */
+footer { color: var(--muted); font-weight: 500; }
+.tasteRow { border: 1px solid rgba(246,242,233,.08); }
+.historyItem:hover { border-color: rgba(224,160,70,.5); background: rgba(224,160,70,.1); }
+::selection { background: rgba(224,160,70,.4); color: #fff; }
+@media (max-width: 640px) {
+    .hero h1 { font-size: clamp(40px, 12.5vw, 64px); letter-spacing: -.045em; }
+    .searchBox { border-radius: 28px; }
+    .searchBox { padding: 6px; }
+}
+
+/* =====================================================================
+   DARK WOOD: deep, warm autumn. Charred-timber grain, ember glow, rain.
+===================================================================== */
+:root {
+    --bg: #1a120d; --bg2: #21170f; --bg3: #120c08;
+    --ink: #f3e7d3; --text: #f3e7d3;
+    --muted: rgba(243,231,211,.72);
+    --border: rgba(243,231,211,.14);
+    --glass: rgba(34,23,16,.78);
+    --glass-strong: rgba(28,19,13,.95);
+    --accent: #d9a05a; --accent2: #b8742f; --accent-ink: #1e1208;
+    --dynamic-color: rgba(190,110,50,.16);
+    --dynamic-color-2: rgba(120,70,35,.14);
+    --dynamic-color-3: rgba(90,50,25,.14);
+    --ember: 226,150,60;
+}
+body {
+    background-color: #1a120d;
+    background-image:
+        radial-gradient(900px 560px at 50% -8%, rgba(226,150,60,.24), transparent 66%),
+        radial-gradient(700px 520px at 100% 60%, rgba(160,80,30,.16), transparent 66%),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='w' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.42' numOctaves='4' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.33  0 0 0 0 0.16  0 0 0 0.7 -0.2'/></filter><rect width='100%25' height='100%25' filter='url(%23w)'/></svg>"),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='k' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='0.003 0.09' numOctaves='3' seed='21' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.0 -0.42'/></filter><rect width='100%25' height='100%25' filter='url(%23k)'/></svg>"),
+        linear-gradient(180deg, #24180f 0%, #1a120d 50%, #100a07 100%);
+    background-attachment: fixed;
+}
+.backgroundOverlay { background: linear-gradient(180deg, rgba(16,10,6,.35), rgba(16,10,6,.6)); }
+.atmosphere::before {
+    background:
+        radial-gradient(460px 460px at 12% 16%, rgba(226,150,60,.26), transparent 70%),
+        radial-gradient(340px 340px at 88% 56%, rgba(210,120,45,.16), transparent 70%);
+}
+.atmosphere .vignette { background: radial-gradient(125% 95% at 50% 36%, transparent 45%, rgba(0,0,0,.6)); }
+#rainCanvas { opacity: calc(.7 * var(--fx)); }
+
+.hero h1 { background: linear-gradient(180deg, #fff3de 0%, #f3e0bd 50%, #d9a05a 125%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 12px 44px rgba(226,150,60,.28)); }
+.hero p { font-size: clamp(17px, 2.2vw, 21px); }
+.navbar { background: linear-gradient(180deg, rgba(16,10,6,.92) 0%, rgba(16,10,6,.5) 60%, rgba(16,10,6,0) 100%); }
+.searchBox { background: rgba(18,11,7,.72); border-color: rgba(226,150,60,.5); }
+.searchBox input { color: #f3e7d3; }
+.searchBox input::placeholder { color: rgba(243,231,211,.5); }
+.searchBtn, .smallBtn.primary, .featureArtist button { background: linear-gradient(135deg, #e6b06a, #c47f35); color: #1e1208; }
+.searchBtn:hover, .smallBtn.primary:hover { background: linear-gradient(135deg, #efbd7c, #cf8a40); }
+.topResultActions .topPlayBtn, .modalButtons .playBtn { background: linear-gradient(135deg, #e6b06a, #c47f35); color: #1e1208; box-shadow: 0 8px 22px rgba(0,0,0,.4); }
+@media (hover:hover) {
+  .topResultActions .topPlayBtn:hover, .modalButtons .playBtn:hover { background: linear-gradient(135deg, #efbd7c, #cf8a40); box-shadow: 0 12px 28px rgba(226,150,60,.35); }
+}
+.sectionTitle::before { background: linear-gradient(180deg, #e6b06a, #a8642a); }
+.resultCard, .artistCard { background: linear-gradient(180deg, rgba(243,231,211,.07), rgba(243,231,211,.03)); border-color: rgba(243,231,211,.10); }
+.topResult { background: linear-gradient(135deg, rgba(226,150,60,.16), rgba(120,70,35,.12) 60%, rgba(243,231,211,.03)); border-color: rgba(226,150,60,.3); }
+.musicPlayer { background: linear-gradient(180deg, rgba(40,27,18,.97), rgba(24,16,11,.98)); }
+.modal, .menuDrawer, .fullPlayer { background: var(--glass-strong); }
+.playerPlay { background: linear-gradient(135deg, #f0c27a, #d98d3a); }
+.heroEyebrow { display: none; }
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1725,11 +1979,8 @@ footer { font-family: var(--serif); font-style: italic; color: var(--muted); }
 <div class="backgroundOverlay"></div>
 
 <div class="atmosphere" aria-hidden="true">
-    <span class="bokeh b1"></span><span class="bokeh b2"></span><span class="bokeh b3"></span>
-    <span class="bokeh b4"></span><span class="bokeh b5"></span><span class="bokeh b6"></span>
     <div class="fog"></div>
     <canvas id="rainCanvas"></canvas>
-    <div class="grain"></div>
     <div class="vignette"></div>
 </div>
 
@@ -1737,7 +1988,7 @@ footer { font-family: var(--serif); font-style: italic; color: var(--muted); }
 
 <div class="musicPlayer" id="musicPlayer">
 
-    <img
+    <img loading="lazy" decoding="async"
         class="playerCover"
         id="playerCover"
         src=""
@@ -1905,7 +2156,7 @@ footer { font-family: var(--serif); font-style: italic; color: var(--muted); }
     <button class="menuItem" onclick="goTo('artists')">
         Artists
     </button>
-    <button class="menuItem fxItem" id="fxMenuItem" type="button" onclick="toggleFx()">Rain &amp; leaves: On</button>
+    <button class="menuItem fxItem" id="fxMenuItem" type="button" onclick="toggleFx()">Rain: On</button>
 
     <button class="menuItem" onclick="goTo('about')">
         About MusicFinder
@@ -1917,14 +2168,9 @@ footer { font-family: var(--serif); font-style: italic; color: var(--muted); }
 
 <section class="hero" id="home">
 
-    <span class="heroEyebrow">a rainy autumn evening</span>
-
     <h1>MusicFinder</h1>
 
-    <p>
-        Songs for rainy afternoons, warm coffee and faded summer memories.
-        Search what is playing in your head, or simply wander.
-    </p>
+    <p>Songs for rainy afternoons and warm coffee.</p>
 
     <div class="searchBox" id="searchSection">
 
@@ -2453,6 +2699,45 @@ function registerTrackClick(track) {
    SEARCH
 ========================= */
 
+/* ---- speed: search cache, request cancelling, skeletons ---- */
+const searchCache = new Map();
+let searchController = null;
+
+async function cachedSearch(query) {
+    const key = query.toLowerCase();
+    if (searchCache.has(key)) return searchCache.get(key);
+    if (searchController) searchController.abort();
+    const controller = searchController = new AbortController();
+    try {
+        const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+        if (!response.ok) throw new Error("Search failed");
+        const data = await response.json();
+        searchCache.set(key, data);
+        if (searchCache.size > 30) searchCache.delete(searchCache.keys().next().value);
+        return data;
+    } catch (err) {
+        if (err.name === "AbortError") return null;
+        throw err;
+    }
+}
+
+function skeletonCards(count) {
+    return '<div class="skeletonGrid" aria-busy="true" aria-label="Loading results">' +
+        '<div class="skelCard"><div class="skel skelCover"></div><div class="skel skelLine"></div><div class="skel skelLine short"></div></div>'.repeat(count) +
+        '</div>';
+}
+
+/* broken images -> clean placeholder (never a wrong picture) */
+document.addEventListener("error", e => {
+    const img = e.target;
+    if (!(img instanceof HTMLImageElement) || img.dataset.failed) return;
+    if (!/(cover|artistImage|topResultCover)/.test(img.className) && !img.closest(".featureArtist")) return;
+    img.dataset.failed = "1";
+    const ph = document.createElement("div");
+    ph.className = img.className + " imgPlaceholder";
+    img.replaceWith(ph);
+}, true);
+
 async function performSearch() {
 
     const input =
@@ -2483,21 +2768,7 @@ status.innerHTML = `
     </span>
 `;
 
-results.innerHTML = `
-    <div class="empty glass searchLoadingBox">
-
-        <span class="loadingText">
-            Finding your music
-        </span>
-
-        <span class="searchLoading">
-            <span></span>
-            <span></span>
-            <span></span>
-        </span>
-
-    </div>
-`;
+results.innerHTML = skeletonCards(8);
 
 
 
@@ -2505,15 +2776,8 @@ results.innerHTML = `
 
     try {
 
-        const response = await fetch(
-            `${API_BASE}/search?q=${encodeURIComponent(query)}`
-        );
-
-        if (!response.ok) {
-            throw new Error("Search failed");
-        }
-
-        const data = await response.json();
+        const data = await cachedSearch(query);
+        if (data === null) return;   // superseded by a newer search
 
         renderSearchResults(data, query);
 
@@ -2678,7 +2942,7 @@ function trackCard(track) {
 
             ${
                 image
-                ? `<img
+                ? `<img loading="lazy" decoding="async"
                     class="cover"
                     src="${image}"
                     alt=""
@@ -2773,7 +3037,7 @@ function topResultCard(track) {
 
             ${
                 image
-                ? `<img class="topResultCover" src="${image}" alt="">`
+                ? `<img loading="lazy" decoding="async" class="topResultCover" src="${image}" alt="">`
                 : `<div class="topResultCover"></div>`
             }
 
@@ -2852,7 +3116,7 @@ function artistSearchCard(artist) {
 
             ${
                 image
-                ? `<img
+                ? `<img loading="lazy" decoding="async"
                     class="cover"
                     src="${image}"
                     alt=""
@@ -2911,7 +3175,7 @@ function albumCard(album) {
 
             ${
                 image
-                ? `<img
+                ? `<img loading="lazy" decoding="async"
                     class="cover"
                     src="${image}"
                     alt=""
@@ -3256,7 +3520,7 @@ function openTrackFromEncoded(encoded) {
 
             ${
                 image
-                ? `<img src="${image}" alt="">`
+                ? `<img loading="lazy" decoding="async" src="${image}" alt="">`
                 : ""
             }
 
@@ -3501,7 +3765,7 @@ function renderArtistModal(
 
             ${
                 image
-                ? `<img src="${image}" alt="">`
+                ? `<img loading="lazy" decoding="async" src="${image}" alt="">`
                 : ""
             }
 
@@ -3623,7 +3887,7 @@ function renderArtistModal(
                             ${
                                 album.images?.[0]?.url
                                 ? `
-                                    <img
+                                    <img loading="lazy" decoding="async"
                                         src="${album.images[0].url}"
                                         alt=""
                                     >
@@ -3729,7 +3993,7 @@ function renderArtists() {
                     ${
                         image
                         ? `
-                            <img
+                            <img loading="lazy" decoding="async"
                                 class="artistImage"
                                 src="${image}"
                                 alt=""
@@ -3825,7 +4089,7 @@ function renderForYou() {
                 ${
                     artist.image
                     ? `
-                        <img
+                        <img loading="lazy" decoding="async"
                             src="${artist.image}"
                             alt=""
                         >
@@ -3918,7 +4182,7 @@ function renderForYou() {
                                         ${
                                             track.image
                                             ? `
-                                                <img
+                                                <img loading="lazy" decoding="async"
                                                     class="cover"
                                                     src="${track.image}"
                                                     alt=""
@@ -4890,7 +5154,7 @@ function renderAuth() {
 
                 ${
                     currentUser.picture
-                    ? `<img
+                    ? `<img loading="lazy" decoding="async"
                             class="authAvatar"
                             src="${escapeHtml(currentUser.picture)}"
                             alt=""
@@ -4928,7 +5192,7 @@ window.addEventListener("load", () => initGoogleLogin());
 
 
 /* =========================
-   Atmosphere: rain on the glass, drifting leaves
+   Atmosphere: rain on the glass
    (light canvas, paused when hidden, respects reduced motion)
 ========================= */
 
@@ -4943,7 +5207,7 @@ function updateFxMenuLabel() {
     const item = document.getElementById("fxMenuItem");
 
     if (item) {
-        item.textContent = `Rain & leaves: ${fxIsOn() ? "On" : "Off"}`;
+        item.textContent = `Rain: ${fxIsOn() ? "On" : "Off"}`;
         item.setAttribute("aria-pressed", String(fxIsOn()));
     }
 
@@ -4963,10 +5227,8 @@ const Atmosphere = (() => {
 
     let streaks = [];
     let beads = [];
-    let leaves = [];
 
     let rain = "190,205,220";
-    let leaf = "190,110,52";
 
     const lowPower =
         (navigator.hardwareConcurrency || 8) <= 4 ||
@@ -4979,7 +5241,6 @@ const Atmosphere = (() => {
         const styles = getComputedStyle(document.documentElement);
 
         rain = styles.getPropertyValue("--rain").trim() || rain;
-        leaf = styles.getPropertyValue("--leaf").trim() || leaf;
 
     }
 
@@ -4995,19 +5256,6 @@ const Atmosphere = (() => {
 
     function newBead() {
         return { x: rand(0, width), y: rand(0, height), r: rand(1.4, 3.2), v: 0, wait: rand(1, 8) };
-    }
-
-    function newLeaf(initial) {
-        return {
-            x: rand(0, width),
-            y: initial ? rand(0, height) : rand(-60, -20),
-            size: rand(12, 30),
-            rot: rand(0, Math.PI * 2),
-            spin: rand(-.35, .35),
-            fall: rand(10, 24),
-            sway: rand(0, Math.PI * 2),
-            alpha: rand(.16, .34)
-        };
     }
 
     function resize() {
@@ -5026,30 +5274,6 @@ const Atmosphere = (() => {
 
         streaks = Array.from({ length: Math.round((lowPower ? 36 : 70) * (.5 + .5 * wide)) }, () => newStreak(true));
         beads = Array.from({ length: lowPower ? 7 : 13 }, newBead);
-        leaves = Array.from({ length: lowPower ? 4 : 8 }, () => newLeaf(true));
-
-    }
-
-    function drawLeaf(l) {
-
-        const s = l.size;
-
-        ctx.save();
-        ctx.translate(l.x, l.y);
-        ctx.rotate(l.rot);
-
-        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, s);
-
-        gradient.addColorStop(0, `rgba(${leaf},${l.alpha})`);
-        gradient.addColorStop(1, `rgba(${leaf},${l.alpha * .25})`);
-
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.moveTo(0, -s);
-        ctx.bezierCurveTo(s * .9, -s * .4, s * .7, s * .7, 0, s);
-        ctx.bezierCurveTo(-s * .7, s * .7, -s * .9, -s * .4, 0, -s);
-        ctx.fill();
-        ctx.restore();
 
     }
 
@@ -5064,20 +5288,6 @@ const Atmosphere = (() => {
         lastTime = time;
 
         ctx.clearRect(0, 0, width, height);
-
-        // leaves: slow, out of focus
-        for (const l of leaves) {
-
-            l.y += l.fall * dt;
-            l.sway += dt * .6;
-            l.x += Math.sin(l.sway) * 8 * dt;
-            l.rot += l.spin * dt;
-
-            if (l.y > height + 40) Object.assign(l, newLeaf(false));
-
-            drawLeaf(l);
-
-        }
 
         // glass beads that slide now and then
         for (const b of beads) {

@@ -7,9 +7,6 @@
 
 <title>MusicFinder</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
 <style>
 
 * {
@@ -143,20 +140,9 @@ a {
     justify-content: space-between;
     padding: 0 28px;
 
-}
-
-/* Header backdrop fades out at its bottom edge instead of ending in a hard line */
-.navbar::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 -28px 0;
-    z-index: -1;
-    pointer-events: none;
     background: rgba(10,11,17,.60);
     backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+    border-bottom: 1px solid var(--border);
 }
 
 .logo {
@@ -1240,15 +1226,6 @@ main {
    FOOTER
 ========================= */
 
-/* About: trim the extra bottom spacing so the section ends cleanly */
-#about {
-    margin-bottom: 0;
-}
-
-#about .glass > :last-child {
-    margin-bottom: 0;
-}
-
 footer {
     padding: 70px 0 140px;
     text-align: center;
@@ -1535,145 +1512,207 @@ footer {
     }
 }
 
+</style>
 
-/* =========================
-   AUTUMN · COFFEE · RAINY-EVENING ATMOSPHERE
-   (visual layer only: colours, glow, grain, shadows)
-========================= */
+<style id="vibe">
+/* =====================================================================
+   COFFEE · AUTUMN · LANA — warm atmosphere layer
+   (overrides the base look; every feature and layout keeps working)
+===================================================================== */
+
+@property --dynamic-color   { syntax: '<color>'; inherits: true; initial-value: rgba(168,92,56,.22); }
+@property --dynamic-color-2 { syntax: '<color>'; inherits: true; initial-value: rgba(92,112,128,.20); }
+@property --dynamic-color-3 { syntax: '<color>'; inherits: true; initial-value: rgba(122,40,52,.20); }
 
 :root {
-    --bg: #110b08;
-    --glass: rgba(255,226,190,0.07);
-    --glass-strong: rgba(255,226,190,0.12);
-    --border: rgba(255,220,180,0.14);
-    --text: #f4e8d4;
-    --muted: rgba(244,232,212,0.58);
-    --accent: #f4e8d4;
-
-    /* default light: amber lamp, burgundy dusk, rainy blue-gray (artwork colours still override these) */
-    --dynamic-color: rgba(214,138,58,.24);
-    --dynamic-color-2: rgba(96,120,140,.16);
-    --dynamic-color-3: rgba(140,52,64,.20);
+    --bg: #14100d; --bg2: #1e1612; --bg3: #0c0908;
+    --ink: #f3e8d6;
+    --text: #f3e8d6;
+    --muted: rgba(243,232,214,.64);
+    --accent: #d9a066; --accent2: #a8505a; --accent-ink: #24150b;
+    --border: rgba(243,232,214,.14);
+    --glass: rgba(36,26,21,.64);
+    --glass-strong: rgba(52,38,31,.82);
+    --dynamic-color: rgba(168,92,56,.22);
+    --dynamic-color-2: rgba(92,112,128,.20);
+    --dynamic-color-3: rgba(122,40,52,.20);
+    --lamp: 233,168,92; --rose: 196,120,128; --rain: 190,205,220; --leaf: 190,110,52;
+    --fx: 1;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "Source Serif Pro", Georgia, "Times New Roman", serif;
+    --ease: cubic-bezier(.2,.8,.2,1);
+    transition: --dynamic-color 1.6s ease, --dynamic-color-2 1.6s ease, --dynamic-color-3 1.6s ease;
 }
 
-.navbar::before { background: rgba(24,14,9,.62); }
+html { color-scheme: dark; }
 
-.glass {
-    background: linear-gradient(160deg, rgba(255,226,190,.085), rgba(255,226,190,.04));
-    box-shadow: 0 25px 70px rgba(10,4,2,.35), inset 0 1px 0 rgba(255,236,210,.06);
-}
-
-/* warm lamp glow + faint rain streaks + film grain + vignette, fixed behind the UI */
-body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
+body {
+    color: var(--ink);
     background:
-        radial-gradient(ellipse 70% 55% at 14% -8%, rgba(236,148,56,.38), transparent 72%),
-        radial-gradient(ellipse 45% 40% at 85% 20%, rgba(110,134,156,.16), transparent 70%),
-        radial-gradient(ellipse 60% 45% at 92% 108%, rgba(160,56,56,.30), transparent 72%),
-        radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0,0,0,.4) 100%);
-    animation: lampBreathe 14s ease-in-out infinite;
+        radial-gradient(1100px 720px at 10% 6%, var(--dynamic-color), transparent 62%),
+        radial-gradient(900px 640px at 92% 16%, var(--dynamic-color-2), transparent 62%),
+        radial-gradient(1000px 700px at 50% 110%, var(--dynamic-color-3), transparent 64%),
+        linear-gradient(180deg, var(--bg2) 0%, var(--bg) 55%, var(--bg3) 100%);
+    background-attachment: fixed;
 }
+body::before { display: none; }
 
-body::selection, ::selection { background: rgba(214,138,58,.4); }
+::selection { background: rgba(var(--lamp), .35); color: #fff; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-@keyframes lampBreathe {
-    0%, 100% { opacity: .85; }
-    50% { opacity: 1; }
+/* ---------- Atmosphere: lamps, fog, rain, grain, vignette (never block clicks) ---------- */
+
+#backgroundArt { opacity: .26; filter: blur(90px) sepia(.4) saturate(.85); }
+.backgroundOverlay { background: linear-gradient(180deg, rgba(10,7,6,.55), rgba(10,7,6,.82)); }
+
+.atmosphere { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.atmosphere .bokeh { position: absolute; border-radius: 50%; filter: blur(26px); opacity: calc(.55 * var(--fx)); will-change: transform; animation: bokehDrift 46s ease-in-out infinite alternate; }
+.bokeh.b1 { width: 280px; height: 280px; left: 4%;  top: 10%; background: radial-gradient(circle, rgba(var(--lamp), .55), transparent 70%); }
+.bokeh.b2 { width: 190px; height: 190px; left: 22%; top: 62%; background: radial-gradient(circle, rgba(var(--rose), .38), transparent 70%); animation-duration: 58s; animation-delay: -12s; }
+.bokeh.b3 { width: 340px; height: 340px; right: 6%; top: 8%;  background: radial-gradient(circle, rgba(var(--rain), .24), transparent 70%); animation-duration: 64s; animation-delay: -20s; }
+.bokeh.b4 { width: 150px; height: 150px; right: 18%; top: 54%; background: radial-gradient(circle, rgba(var(--lamp), .45), transparent 70%); animation-duration: 52s; animation-delay: -30s; }
+.bokeh.b5 { width: 120px; height: 120px; left: 48%; top: 22%; background: radial-gradient(circle, rgba(var(--lamp), .32), transparent 70%); animation-duration: 70s; animation-delay: -8s; }
+.bokeh.b6 { width: 220px; height: 220px; left: 64%; bottom: 4%; background: radial-gradient(circle, rgba(var(--rose), .3), transparent 70%); animation-duration: 60s; animation-delay: -40s; }
+@keyframes bokehDrift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(46px,-34px,0) scale(1.1); } }
+
+.atmosphere .fog {
+    position: absolute; inset: -20%; opacity: var(--fx);
+    background:
+        radial-gradient(60% 40% at 28% 72%, rgba(var(--rain), .07), transparent 70%),
+        radial-gradient(50% 36% at 76% 28%, rgba(var(--lamp), .06), transparent 70%);
+    animation: fogMove 90s ease-in-out infinite alternate;
 }
+@keyframes fogMove { to { transform: translate3d(-4%, 3%, 0); } }
 
-/* film grain (static, very light) */
-html::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: .07;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .9  0 0 0 0 .75  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+#rainCanvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: calc(.9 * var(--fx)); }
+
+.atmosphere .grain {
+    position: absolute; inset: 0; opacity: .085; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
+.atmosphere .vignette { position: absolute; inset: 0; background: radial-gradient(125% 95% at 50% 38%, transparent 52%, rgba(0,0,0,.58)); }
 
-/* editorial, dreamy headline */
-.hero h1 {
-    font-family: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
-    font-weight: 500;
-    letter-spacing: -2px;
-    text-shadow: 0 0 60px rgba(232,150,60,.28), 0 4px 30px rgba(0,0,0,.4);
-}
-
-.sectionTitle {
-    font-family: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
-    font-weight: 600;
-    letter-spacing: 0;
-}
-
-.logo span { color: #e0a45a; opacity: .75; }
+html[data-fx="off"] .atmosphere .bokeh, html[data-fx="off"] .atmosphere .fog { animation: none; }
+html[data-fx="off"] #rainCanvas { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
-    body::after { animation: none; }
+    .atmosphere .bokeh, .atmosphere .fog { animation: none; }
+    #rainCanvas { display: none; }
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
 
+/* ---------- Typography ---------- */
 
-/* animated rain canvas (sits behind the UI, never blocks clicks) */
-#rainCanvas {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    pointer-events: none;
+h1, h2, h3, .logo, .menuTitle, .sectionTitle { font-family: var(--serif); font-weight: 500; }
+.sectionTitle { letter-spacing: -.02em; }
+.empty { font-family: var(--serif); font-size: 18px; }
+footer { font-family: var(--serif); font-style: italic; color: var(--muted); }
+
+/* ---------- Navbar: no line, it simply melts into the page ---------- */
+
+.navbar {
+    isolation: isolate;
+    background: linear-gradient(180deg, rgba(14,10,8,.84) 0%, rgba(14,10,8,.46) 58%, rgba(14,10,8,0) 100%);
+    border-bottom: 0;
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+.navbar::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; bottom: -30px; z-index: -1; pointer-events: none;
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 42%, transparent 100%);
+}
+.logo { font-size: 24px; letter-spacing: -.01em; }
+.logo span { font-style: italic; color: var(--accent); opacity: 1; }
+.menuButton, .navButton { border-radius: 50%; background: rgba(255,255,255,.05); }
+
+/* ---------- Menu (text only, editorial) ---------- */
+
+.menuDrawer { background: var(--glass-strong); border-left: 1px solid var(--border); }
+.menuItem { font-family: var(--serif); font-size: 18px; border-radius: 14px; }
+.menuItem.fxItem { font-family: inherit; font-size: 14px; color: var(--muted); margin-top: 18px; border: 1px dashed var(--border); }
+
+/* ---------- Hero ---------- */
+
+.heroEyebrow { font-size: 11px; letter-spacing: .26em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+.hero h1 {
+    font-size: clamp(54px, 9vw, 104px); letter-spacing: -.035em; line-height: .98; font-weight: 500;
+    background: linear-gradient(180deg, #fbf0dc 20%, #d9a066 130%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero p { font-family: var(--serif); font-style: italic; font-size: clamp(16px, 2vw, 20px); color: var(--muted); }
+.searchBox { background: rgba(26,18,14,.72); border-radius: 999px; box-shadow: 0 20px 70px rgba(0,0,0,.4); transition: border-color .3s, box-shadow .3s; }
+.searchBox:focus-within { border-color: rgba(var(--lamp), .6); box-shadow: 0 20px 70px rgba(0,0,0,.4), 0 0 0 4px rgba(var(--lamp), .12); }
+.searchBox input::placeholder { color: rgba(243,232,214,.42); }
+.searchBtn { background: var(--accent); color: var(--accent-ink); border-radius: 999px; }
+
+/* ---------- Surfaces, buttons, cards ---------- */
+
+.glass { background: var(--glass); border-color: var(--border); box-shadow: 0 22px 60px rgba(0,0,0,.3); }
+.sectionTitle + .sectionSubtitle, .sectionSubtitle { color: var(--muted); }
+.smallBtn { border-radius: 999px; }
+.smallBtn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.featureArtist button { background: var(--accent); color: var(--accent-ink); border-radius: 999px; }
+.featureArtist h3, .resultGroupTitle { font-family: var(--serif); font-weight: 500; }
+.resultGroupTitle { font-size: 24px; }
+
+.resultCard { border-radius: 22px; transition: transform .45s var(--ease), box-shadow .45s, background .3s; }
+.resultCard:hover { transform: translateY(-6px); background: rgba(255,238,214,.09); box-shadow: 0 28px 56px rgba(0,0,0,.45), 0 0 0 1px rgba(var(--lamp), .22); }
+.cover, .topResultCover, .artistImage, .modalHero img { filter: saturate(.9) contrast(1.03) sepia(.12); }
+.cardTitle { font-weight: 650; }
+
+.topResult { border-radius: 28px; }
+.topResultInfo h3 { font-family: var(--serif); font-weight: 500; }
+.topResultActions button { border-radius: 999px; }
+.topResultActions .topPlayBtn { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff7ea; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+@media (hover: hover) {
+    .topResultActions .topPlayBtn:hover { background: linear-gradient(135deg, var(--accent), var(--accent2)); filter: brightness(1.12); box-shadow: 0 16px 36px rgba(var(--lamp), .3); }
 }
 
-/* Telegram download hand-off panel */
-.tgPanel {
-    position: fixed;
-    left: 50%;
-    bottom: 18px;
-    z-index: 400;
-    width: min(460px, calc(100% - 24px));
-    transform: translate(-50%, 140%);
-    transition: transform .4s cubic-bezier(.22,.7,.2,1);
-    padding: 18px;
-    border-radius: 22px;
-    background: rgba(24,14,9,.96);
-    border: 1px solid var(--border);
-    box-shadow: 0 30px 80px rgba(0,0,0,.6);
-}
-.tgPanel.open { transform: translate(-50%, 0); }
-.tgPanel h4 { margin: 0 0 6px; font-size: 16px; }
-.tgPanel p { margin: 0 0 10px; font-size: 13px; line-height: 1.55; color: var(--muted); }
-.tgText {
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: rgba(255,255,255,.07);
-    border: 1px solid var(--border);
-    font-size: 13.5px;
-    word-break: break-all;
-    user-select: all;
-    margin-bottom: 12px;
-}
-.tgButtons { display: flex; gap: 8px; flex-wrap: wrap; }
-.tgButtons .smallBtn { cursor: pointer; }
+.tasteRow { background: rgba(255,238,214,.045); }
+.historyItem { border-radius: 999px; }
+.artistCard { border-radius: 24px; }
 
-.tgConfirm {
-    position: fixed; inset: 0; z-index: 500;
-    display: flex; align-items: center; justify-content: center; padding: 16px;
-    background: rgba(8,4,2,.65);
+.modalOverlay { background: rgba(8,5,4,.66); }
+.modal { background: var(--glass-strong); border-radius: 28px; }
+.modalHero h2 { font-family: var(--serif); font-weight: 500; letter-spacing: -.02em; }
+.modalButtons .playBtn { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff7ea; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+.modalButtons .previewBtn { border-color: rgba(var(--lamp), .55); background: rgba(var(--lamp), .1); }
+@media (hover: hover) {
+    .modalButtons .playBtn:hover { background: linear-gradient(135deg, var(--accent), var(--accent2)); filter: brightness(1.12); box-shadow: 0 16px 36px rgba(var(--lamp), .3); }
+    .modalButtons .previewBtn:hover { background: rgba(var(--lamp), .22); border-color: rgba(var(--lamp), .8); box-shadow: 0 14px 32px rgba(var(--lamp), .25); }
 }
-.tgConfirmBox {
-    width: min(440px, 100%);
-    padding: 22px;
-    border-radius: 22px;
-    background: rgba(24,14,9,.97);
-    border: 1px solid var(--border);
-    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+.modalButtons .playBtn:active { background: linear-gradient(135deg, var(--accent), var(--accent2)); filter: brightness(1.12); }
+.modalButtons .previewBtn:active { background: rgba(var(--lamp), .22); border-color: rgba(var(--lamp), .8); }
+
+.fullPlayer { background: var(--glass-strong); }
+.fullPlayerDownload { border-radius: 999px; }
+
+.authSignOut, .authAvatar { border-color: var(--border); }
+
+/* section header buttons keep their natural size */
+.sectionHeader > .smallBtn { flex: 0 0 auto; padding: 10px 20px; }
+
+
+/* ---------- Player ---------- */
+
+.musicPlayer {
+    background: linear-gradient(180deg, rgba(46,34,27,.9), rgba(24,17,14,.92));
+    border: 1px solid var(--border); border-radius: 26px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.55);
 }
-.tgConfirmBox p { margin: 0 0 12px; font-size: 15px; line-height: 1.7; }
-.tgConfirmBox p[dir="rtl"] { color: var(--muted); }
-.tgConfirmBox .tgButtons { margin-top: 16px; }
+.musicPlayer::before {
+    content: ""; position: absolute; inset: -1px; border-radius: inherit; z-index: -1; opacity: 0; pointer-events: none;
+    box-shadow: 0 0 46px 2px rgba(var(--lamp), .28); transition: opacity .8s;
+}
+.musicPlayer.is-playing::before { opacity: 1; animation: glowPulse 5s ease-in-out infinite alternate; }
+@keyframes glowPulse { from { opacity: .55; } to { opacity: 1; } }
+.playerCover { border-radius: 14px; filter: saturate(.92) sepia(.1); }
+.playerPlay { background: var(--accent); color: var(--accent-ink); }
+.playerPlay:hover { background: var(--accent); filter: brightness(1.1); }
+.playerProgress { background: linear-gradient(to right, var(--accent) var(--p, 0%), rgba(255,255,255,.16) var(--p, 0%)); }
+.playerArtist, .playerTime { color: var(--muted); }
+
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1684,6 +1723,15 @@ html::after {
 
 <div id="backgroundArt"></div>
 <div class="backgroundOverlay"></div>
+
+<div class="atmosphere" aria-hidden="true">
+    <span class="bokeh b1"></span><span class="bokeh b2"></span><span class="bokeh b3"></span>
+    <span class="bokeh b4"></span><span class="bokeh b5"></span><span class="bokeh b6"></span>
+    <div class="fog"></div>
+    <canvas id="rainCanvas"></canvas>
+    <div class="grain"></div>
+    <div class="vignette"></div>
+</div>
 
 <!-- Music Player -->
 
@@ -1857,6 +1905,7 @@ html::after {
     <button class="menuItem" onclick="goTo('artists')">
         Artists
     </button>
+    <button class="menuItem fxItem" id="fxMenuItem" type="button" onclick="toggleFx()">Rain &amp; leaves: On</button>
 
     <button class="menuItem" onclick="goTo('about')">
         About MusicFinder
@@ -1868,11 +1917,13 @@ html::after {
 
 <section class="hero" id="home">
 
+    <span class="heroEyebrow">a rainy autumn evening</span>
+
     <h1>MusicFinder</h1>
 
     <p>
-        Discover songs, artists and albums.
-        Search your favorite music and explore your personal taste.
+        Songs for rainy afternoons, warm coffee and faded summer memories.
+        Search what is playing in your head, or simply wander.
     </p>
 
     <div class="searchBox" id="searchSection">
@@ -2020,10 +2071,6 @@ html::after {
 
         <p class="modalMuted">
             Music metadata and artwork are provided through Spotify.
-        </p>
-
-        <p class="modalMuted">
-            Contact: <a href="mailto:musicfinder.web@gmail.com" style="text-decoration:underline;">musicfinder.web@gmail.com</a>
         </p>
 
     </div>
@@ -2677,7 +2724,8 @@ function trackCard(track) {
 
                 <a
                     class="smallBtn"
-                    ${tgDownloadAttrs(track.name, artist, track.external_urls?.spotify)}
+                    href="https://www.google.com/search?q=${search}+download"
+                    target="_blank"
                 >
                     Download
                 </a>
@@ -2905,54 +2953,75 @@ function albumCard(album) {
    DYNAMIC BACKGROUND
 ========================= */
 
+function parseRgba(text) {
+
+    const match = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(text || "");
+
+    return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+
+}
+
+/* Pull the artwork color toward the lamp color so the coffee/autumn mood survives */
+function warmMix(rgb, alpha) {
+
+    const lamp = (getComputedStyle(document.documentElement).getPropertyValue("--lamp") || "233,168,92")
+        .split(",").map(n => Number(n.trim()) || 0);
+
+    const mix = rgb.map((v, i) => Math.round(v * 0.78 + lamp[i] * 0.22));
+
+    return `rgba(${mix[0]},${mix[1]},${mix[2]},${alpha})`;
+
+}
+
+const artColorCache = new Map();
+
+function paintArt(image, colors) {
+
+    const bg = document.getElementById("backgroundArt");
+
+    bg.style.backgroundImage = `url("${image}")`;
+    bg.style.opacity = ".26";
+
+    if (!colors) return;
+
+    const root = document.documentElement.style;
+    const a = parseRgba(colors.primary);
+    const b = parseRgba(colors.secondary);
+    const c = parseRgba(colors.tertiary);
+
+    if (a) root.setProperty("--dynamic-color", warmMix(a, .26));
+    if (b) root.setProperty("--dynamic-color-2", warmMix(b, .2));
+    if (c) root.setProperty("--dynamic-color-3", warmMix(c, .16));
+
+}
+
 function setBackground(image) {
 
     if (!image) return;
 
-    const bg =
-        document.getElementById("backgroundArt");
+    // Colors are only extracted once per artwork
+    if (artColorCache.has(image)) {
+        paintArt(image, artColorCache.get(image));
+        return;
+    }
 
     const img = new Image();
 
     img.crossOrigin = "Anonymous";
 
-    img.onload = function() {
+    img.onload = function () {
 
-        bg.style.backgroundImage =
-            `url("${image}")`;
+        const colors = extractImageColors(img);
 
-        const colors =
-            extractImageColors(img);
-
-        if (colors) {
-
-            document.documentElement.style.setProperty(
-                "--dynamic-color",
-                colors.primary
-            );
-
-            document.documentElement.style.setProperty(
-                "--dynamic-color-2",
-                colors.secondary
-            );
-
-            document.documentElement.style.setProperty(
-                "--dynamic-color-3",
-                colors.tertiary
-            );
-
-        }
-
-        bg.style.opacity = ".30";
+        artColorCache.set(image, colors || null);
+        paintArt(image, colors);
 
     };
 
-    img.onerror = function() {
+    img.onerror = function () {
 
-        bg.style.backgroundImage =
-            `url("${image}")`;
-
-        bg.style.opacity = ".24";
+        artColorCache.set(image, null);
+        paintArt(image, null);
 
     };
 
@@ -3242,7 +3311,7 @@ function openTrackFromEncoded(encoded) {
     </svg>
     SoundCloud
 </a>
-            <a ${tgDownloadAttrs(track.name, artist, track.external_urls?.spotify)}>
+            <a href="https://www.google.com/search?q=${downloadQuery}+download" target="_blank">
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:middle;margin-right:6px;">
         <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"
               fill="none"
@@ -3251,7 +3320,7 @@ function openTrackFromEncoded(encoded) {
               stroke-linecap="round"
               stroke-linejoin="round"/>
     </svg>
-    Download via Telegram
+    Download Search
 </a>
 
         </div>
@@ -4426,6 +4495,7 @@ musicAudio.addEventListener("timeupdate", () => {
         (musicAudio.currentTime / musicAudio.duration) * 100;
 
     playerProgress.value = progress;
+    playerProgress.style.setProperty("--p", progress + "%");
 
     playerCurrentTime.textContent =
         formatPlayerTime(musicAudio.currentTime);
@@ -4474,6 +4544,7 @@ musicAudio.addEventListener("ended", () => {
     setPlayerPlaying(false);
 
     playerProgress.value = 0;
+    playerProgress.style.setProperty("--p", "0%");
 
     playerCurrentTime.textContent = "0:00";
 
@@ -4598,10 +4669,12 @@ function playFullSong(song) {
     const downloadLink = `
         <a
             class="fullPlayerDownload"
-            ${tgDownloadAttrs(song.name, artists.join(", "), song.external_urls?.spotify || (song.id ? "https://open.spotify.com/track/" + song.id : ""))}
+            href="https://www.google.com/search?q=${encodeURIComponent(searchText)}"
+            target="_blank"
+            rel="noopener"
         >
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Download via Telegram
+            Download Search
         </a>
     `;
 
@@ -4852,135 +4925,297 @@ renderAuth();
 
 window.addEventListener("load", () => initGoogleLogin());
 
-</script>
 
 
-<script>
-/* Subtle animated rain: depth-layered drops with varied speed, length, width and opacity.
-   Far drops are thinner/fainter (and soft because the canvas is rendered below full resolution). */
-(function () {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+/* =========================
+   Atmosphere: rain on the glass, drifting leaves
+   (light canvas, paused when hidden, respects reduced motion)
+========================= */
 
-    const canvas = document.createElement("canvas");
-    canvas.id = "rainCanvas";
-    canvas.setAttribute("aria-hidden", "true");
-    document.body.appendChild(canvas);
-    const ctx = canvas.getContext("2d");
+const FX_KEY = "musicFinderFx";
 
-    const SCALE = 0.7;                       // lower-res canvas = softer drops + cheaper
-    const SLANT = 0.14;                      // gentle wind, drops lean left
-    const lowPower = (navigator.hardwareConcurrency || 4) <= 2;
-    let w = 0, h = 0, drops = [], raf = 0, last = 0;
+function fxIsOn() {
+    return document.documentElement.dataset.fx !== "off";
+}
 
-    function makeDrop(initial) {
-        const depth = Math.random();         // 0 = far, 1 = near
+function updateFxMenuLabel() {
+
+    const item = document.getElementById("fxMenuItem");
+
+    if (item) {
+        item.textContent = `Rain & leaves: ${fxIsOn() ? "On" : "Off"}`;
+        item.setAttribute("aria-pressed", String(fxIsOn()));
+    }
+
+}
+
+const Atmosphere = (() => {
+
+    const canvas = document.getElementById("rainCanvas");
+    const ctx = canvas ? canvas.getContext("2d") : null;
+
+    let width = 0;
+    let height = 0;
+    let frame = 0;
+    let lastTime = 0;
+    let running = false;
+    let resizeTimer = 0;
+
+    let streaks = [];
+    let beads = [];
+    let leaves = [];
+
+    let rain = "190,205,220";
+    let leaf = "190,110,52";
+
+    const lowPower =
+        (navigator.hardwareConcurrency || 8) <= 4 ||
+        (navigator.deviceMemory || 8) <= 4;
+
+    const rand = (min, max) => min + Math.random() * (max - min);
+
+    function readColors() {
+
+        const styles = getComputedStyle(document.documentElement);
+
+        rain = styles.getPropertyValue("--rain").trim() || rain;
+        leaf = styles.getPropertyValue("--leaf").trim() || leaf;
+
+    }
+
+    function newStreak(initial) {
         return {
-            x: Math.random() * (w + 80),
-            y: initial ? Math.random() * h : -40 - Math.random() * 120,
-            len: (10 + depth * 30) * (0.8 + Math.random() * 0.5),
-            speed: (340 + depth * 760) * (0.85 + Math.random() * 0.3),
-            width: 0.5 + depth * 1.1,
-            alpha: 0.05 + depth * 0.15 + Math.random() * 0.03
+            x: rand(0, width),
+            y: initial ? rand(-height, height) : rand(-80, -10),
+            len: rand(10, 34),
+            speed: rand(220, 460),
+            alpha: rand(.05, .16)
+        };
+    }
+
+    function newBead() {
+        return { x: rand(0, width), y: rand(0, height), r: rand(1.4, 3.2), v: 0, wait: rand(1, 8) };
+    }
+
+    function newLeaf(initial) {
+        return {
+            x: rand(0, width),
+            y: initial ? rand(0, height) : rand(-60, -20),
+            size: rand(12, 30),
+            rot: rand(0, Math.PI * 2),
+            spin: rand(-.35, .35),
+            fall: rand(10, 24),
+            sway: rand(0, Math.PI * 2),
+            alpha: rand(.16, .34)
         };
     }
 
     function resize() {
-        w = Math.ceil(window.innerWidth * SCALE);
-        h = Math.ceil(window.innerHeight * SCALE);
-        canvas.width = w; canvas.height = h;
-        const count = Math.round(Math.min(window.innerWidth < 700 ? 55 : 130, (window.innerWidth * window.innerHeight) / 9000));
-        drops = Array.from({ length: count }, () => makeDrop(true));
+
+        if (!canvas) return;
+
+        const scale = lowPower || window.innerWidth < 700 ? .4 : .55;
+
+        width = Math.ceil(window.innerWidth * scale);
+        height = Math.ceil(window.innerHeight * scale);
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const wide = Math.min(1, window.innerWidth / 1400);
+
+        streaks = Array.from({ length: Math.round((lowPower ? 36 : 70) * (.5 + .5 * wide)) }, () => newStreak(true));
+        beads = Array.from({ length: lowPower ? 7 : 13 }, newBead);
+        leaves = Array.from({ length: lowPower ? 4 : 8 }, () => newLeaf(true));
+
     }
 
-    function frame(now) {
-        raf = requestAnimationFrame(frame);
-        const dt = Math.min(now - last, 60) / 1000;
-        if (lowPower && now - last < 33) return;      // cap at ~30fps on weak devices
-        last = now;
-        ctx.clearRect(0, 0, w, h);
-        ctx.lineCap = "round";
-        for (const d of drops) {
-            d.y += d.speed * SCALE * dt;
-            d.x -= d.speed * SCALE * dt * SLANT;
-            if (d.y - d.len > h || d.x < -40) { Object.assign(d, makeDrop(false)); continue; }
-            ctx.strokeStyle = "rgba(205,218,232," + d.alpha + ")";
-            ctx.lineWidth = d.width;
-            ctx.beginPath();
-            ctx.moveTo(d.x, d.y);
-            ctx.lineTo(d.x + d.len * SLANT, d.y - d.len);
-            ctx.stroke();
+    function drawLeaf(l) {
+
+        const s = l.size;
+
+        ctx.save();
+        ctx.translate(l.x, l.y);
+        ctx.rotate(l.rot);
+
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, s);
+
+        gradient.addColorStop(0, `rgba(${leaf},${l.alpha})`);
+        gradient.addColorStop(1, `rgba(${leaf},${l.alpha * .25})`);
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(0, -s);
+        ctx.bezierCurveTo(s * .9, -s * .4, s * .7, s * .7, 0, s);
+        ctx.bezierCurveTo(-s * .7, s * .7, -s * .9, -s * .4, 0, -s);
+        ctx.fill();
+        ctx.restore();
+
+    }
+
+    function loop(time) {
+
+        frame = requestAnimationFrame(loop);
+
+        if (time - lastTime < 33) return;
+
+        const dt = Math.min(.1, (time - lastTime) / 1000);
+
+        lastTime = time;
+
+        ctx.clearRect(0, 0, width, height);
+
+        // leaves: slow, out of focus
+        for (const l of leaves) {
+
+            l.y += l.fall * dt;
+            l.sway += dt * .6;
+            l.x += Math.sin(l.sway) * 8 * dt;
+            l.rot += l.spin * dt;
+
+            if (l.y > height + 40) Object.assign(l, newLeaf(false));
+
+            drawLeaf(l);
+
         }
+
+        // glass beads that slide now and then
+        for (const b of beads) {
+
+            b.wait -= dt;
+
+            if (b.wait <= 0) { b.v = rand(14, 50); b.wait = rand(3, 9); }
+
+            b.y += b.v * dt;
+            b.v = Math.max(0, b.v - 36 * dt);
+
+            if (b.y > height + 10) Object.assign(b, newBead(), { y: -6 });
+
+            const glow = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r * 2.2);
+
+            glow.addColorStop(0, `rgba(${rain},.34)`);
+            glow.addColorStop(1, `rgba(${rain},0)`);
+
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r * 2.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (b.v > 1) {
+                ctx.strokeStyle = `rgba(${rain},.07)`;
+                ctx.lineWidth = b.r * .8;
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y - b.v * .5);
+                ctx.lineTo(b.x, b.y);
+                ctx.stroke();
+            }
+
+        }
+
+        // fine rain streaks
+        ctx.lineWidth = 1;
+
+        for (const s of streaks) {
+
+            s.y += s.speed * dt;
+            s.x -= s.speed * dt * .12;
+
+            if (s.y > height + 40 || s.x < -40) Object.assign(s, newStreak(false), { x: rand(0, width + 60) });
+
+            ctx.strokeStyle = `rgba(${rain},${s.alpha})`;
+            ctx.beginPath();
+            ctx.moveTo(s.x, s.y);
+            ctx.lineTo(s.x - s.len * .12, s.y + s.len);
+            ctx.stroke();
+
+        }
+
     }
 
-    function start() { if (!raf && !document.hidden) { last = performance.now(); raf = requestAnimationFrame(frame); } }
-    function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; }
+    function start() {
 
-    let t;
-    window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(resize, 200); });
-    document.addEventListener("visibilitychange", () => document.hidden ? stop() : start());   // no work in background tabs
-    resize(); start();
+        if (running || !ctx) return;
+
+        running = true;
+        lastTime = performance.now();
+        frame = requestAnimationFrame(loop);
+
+    }
+
+    function stop() {
+
+        running = false;
+        cancelAnimationFrame(frame);
+
+        if (ctx) ctx.clearRect(0, 0, width, height);
+
+    }
+
+    function refresh() {
+
+        if (fxIsOn() && !document.hidden) start();
+        else stop();
+
+    }
+
+    function init() {
+
+        if (!canvas || !ctx) return;
+
+        readColors();
+        resize();
+        refresh();
+
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resize, 200);
+        });
+
+        document.addEventListener("visibilitychange", refresh);
+
+    }
+
+    return { init, refresh };
+
 })();
-</script>
 
-<script>
-/* Download -> @RegaSpotify_bot (inline bot).
-   Telegram has no official link that opens "Saved Messages" with text inserted (Saved Messages has
-   no username), and a website can't type into the Telegram app. The official mechanism is the
-   share link: it opens Telegram with a ready-made draft and lets the user pick the chat. The draft
-   starts with "@RegaSpotify_bot", which is how Telegram triggers an inline bot's results, so the user
-   picks Saved Messages, sees the bot's results for the song, taps the right one and presses Send.
-   No bot token or Telegram API is used. */
-/* Change ONLY this line to switch the download bot (username without @) */
-const TG_BOT_USERNAME = "fmusbot";
-const TG_BOT_URL = "https://t.me/" + TG_BOT_USERNAME;
+function setFx(on) {
 
-/* The exact draft: "@RegaSpotify_Bot Title - Artist" */
-function tgQuery(title, artist) {
-    const t = (title || "").trim(), a = (artist || "").trim();
-    return `${t}${a ? " - " + a : ""}`;
-}
-function tgShareUrl(query) {
-    return "https://t.me/share/url?url=%20&text=" + encodeURIComponent(query);
-}
+    document.documentElement.dataset.fx = on ? "on" : "off";
 
-function tgDownloadAttrs(title, artist, spotifyUrl) {
-    const url = /^https?:\/\//.test(spotifyUrl || "") ? spotifyUrl : "";
-    return `href="${escapeHtml(TG_BOT_URL + "?text=" + encodeURIComponent(tgQuery(title, artist)))}" target="_blank" rel="noopener" data-tg-title="${escapeHtml(title || "")}" data-tg-artist="${escapeHtml(artist || "")}" data-tg-url="${escapeHtml(url)}"`;
-}
-
-async function copyText(text) {
-    try { await navigator.clipboard.writeText(text); return true; } catch {}
     try {
-        const ta = document.createElement("textarea");
-        ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
-        document.body.appendChild(ta); ta.select();
-        const ok = document.execCommand("copy");
-        ta.remove(); return ok;
-    } catch { return false; }
+        localStorage.setItem(FX_KEY, on ? "on" : "off");
+    } catch {}
+
+    updateFxMenuLabel();
+    Atmosphere.refresh();
+
 }
 
-function showTelegramPanel(query, copied) {
-    let panel = document.getElementById("tgPanel");
-    if (!panel) {
-        panel = document.createElement("div");
-        panel.id = "tgPanel"; panel.className = "tgPanel"; panel.setAttribute("role", "dialog"); panel.setAttribute("aria-label", "Download with Telegram");
-        document.body.appendChild(panel);
-    }
-    panel.innerHTML = `
-        <h4>Download via @${TG_BOT_USERNAME}</h4>
-        <p id="tgNote">Telegram should open @${TG_BOT_USERNAME} with the song name ready — press Send. If it did not open or the text is missing, tap <b>Open bot</b> below.</p>
-        <div class="tgText" id="tgText">${escapeHtml(query)}</div>
-        <div class="tgButtons">
-            <a class="smallBtn primary" style="font-weight:800;" href="${escapeHtml(TG_BOT_URL + "?text=" + encodeURIComponent(query))}" target="_blank" rel="noopener"><b>Open bot</b></a>
-            <button class="smallBtn" type="button" id="tgCopy">Copy</button>
-            <button class="smallBtn" type="button" id="tgClose">Close</button>
-        </div>`;
-    document.getElementById("tgCopy").onclick = async e => { e.target.textContent = (await copyText(query)) ? "Copied ✓" : "Select the text above"; };
-    document.getElementById("tgClose").onclick = () => panel.classList.remove("open");
-    requestAnimationFrame(() => panel.classList.add("open"));
+function toggleFx() {
+    setFx(!fxIsOn());
 }
 
-/* Download buttons are plain links to the bot chat (t.me/fmusbot?text=...), so Telegram opens natively on desktop and Android. */
+(function initAtmosphere() {
+
+    let saved = null;
+
+    try {
+        saved = localStorage.getItem(FX_KEY);
+    } catch {}
+
+    // Animated effects start OFF for people who asked their system for reduced motion
+    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const on = saved ? saved === "on" : !reduced;
+
+    document.documentElement.dataset.fx = on ? "on" : "off";
+
+    updateFxMenuLabel();
+    Atmosphere.init();
+
+})();
+
 </script>
+
 </body>
 </html>

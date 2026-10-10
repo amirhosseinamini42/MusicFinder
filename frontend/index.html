@@ -1126,6 +1126,26 @@ main {
     min-height: 40px;
 }
 
+.authAreaGoogle {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 50%;
+}
+
+.authAreaGoogle > div,
+.authAreaGoogle iframe {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    overflow: hidden;
+}
+
 .authUser {
     display: flex;
     align-items: center;
@@ -1908,6 +1928,15 @@ body {
     .hero {
         min-height: clamp(280px, 52svh, 350px);
         padding-block: 12px 22px;
+    }
+
+    .hero h1 {
+        width: 100%;
+        max-width: 100%;
+        font-size: clamp(30px, 10.5vw, 64px);
+        line-height: .98;
+        letter-spacing: -.055em;
+        overflow-wrap: anywhere;
     }
 
     .searchBox {
@@ -5187,6 +5216,7 @@ function renderGoogleButton() {
     if (!area || currentUser || !window.google?.accounts?.id) return;
 
     area.innerHTML = "";
+    area.classList.add("authAreaGoogle");
 
     google.accounts.id.renderButton(area, {
         type: "icon",
@@ -5233,6 +5263,7 @@ function renderAuth() {
 
     if (currentUser) {
 
+        area.classList.remove("authAreaGoogle");
         const firstName = (currentUser.name || "").split(" ")[0];
 
         area.innerHTML = `
@@ -5266,6 +5297,7 @@ function renderAuth() {
     }
 
     area.innerHTML = "";
+    area.classList.add("authAreaGoogle");
 
     initGoogleLogin();
 
@@ -5426,7 +5458,7 @@ function showTelegramPanel(query, copied) {
         "MusicFinder is a personal music discovery project, created by Amirhossein Amini.":"MusicFinder یک پروژه شخصی برای کشف موسیقی است که توسط امیرحسین امینی ساخته شده است.",
         "Music metadata and artwork are provided through Spotify.":"اطلاعات و تصاویر موسیقی از طریق Spotify تأمین می‌شود.",
         "MusicFinder · Personal Music Discovery":"MusicFinder · کشف شخصی موسیقی",
-        "About this song":"درباره این آهنگ","ARTIST":"هنرمند","SONG":"آهنگ","Artist":"هنرمند",
+        "About this song":"درباره این آهنگ","ARTIST":"هنرمند","SONG":"��هنگ","Artist":"هنرمند",
         "Check that the MusicFinder server is running.":"بررسی کنید که سرور MusicFinder در حال اجراست.",
         "Close":"بستن","Copy":"کپی","Could not load artist information.":"اطلاعات هنرمند بارگذاری نشد.",
         "Details":"جزئیات","Discography":"آثار و آلبوم‌ها","Download":"دانلود","Download Search":"جستجوی دانلود",

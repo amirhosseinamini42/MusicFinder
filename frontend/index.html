@@ -5,9 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-<title>MusicFinder — Find your next favorite</title>
-<meta name="description" content="Discover songs, artists, and albums with MusicFinder. Find your next favorite track and explore new sounds." />
-<meta name="theme-color" content="#0b0c0f" />
+<title>MusicFinder</title>
 <link rel="preconnect" href="https://musicfinder-api.vercel.app" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1800,182 +1798,17 @@ html[dir="rtl"] .playerInfo, html[dir="rtl"] .playerTitle, html[dir="rtl"] .play
 html[dir="rtl"] .searchBox input { text-align: start; }
 html[dir="rtl"] .cardTitle, html[dir="rtl"] .cardArtist, html[dir="rtl"] .artistName, html[dir="rtl"] .albumName { unicode-bidi: plaintext; text-align: start; }
 
-/* Landing page visual system inspired by the supplied reference. */
-:root {
-    --bg: #0b0c0f;
-    --glass: rgba(255,255,255,.045);
-    --glass-strong: rgba(255,255,255,.085);
-    --border: rgba(255,255,255,.11);
-    --text: #f4f3f0;
-    --muted: rgba(226,226,224,.62);
-    --accent: #f07845;
-    --ember: 240,120,69;
-    --dynamic-color: rgba(240,120,69,.12);
-    --dynamic-color-2: rgba(47,64,76,.10);
-    --dynamic-color-3: rgba(80,40,32,.08);
-}
-
-html { scroll-padding-top: 88px; }
-body {
-    min-height: 100vh;
-    color: var(--text);
-    background: #0b0c0f;
-    background-image: radial-gradient(ellipse 56% 47% at 84% 19%, rgba(240,120,69,.09), transparent 72%), linear-gradient(180deg, #0b0c0f 0%, #0d0e11 54%, #0b0c0f 100%);
-    line-height: 1.6;
-}
-body::before, body::after, html::after, #backgroundArt, .backgroundOverlay, #rainCanvas { display: none !important; }
-main { position: relative; z-index: 1; width: min(1180px, calc(100% - 64px)); }
-.navbar {
-    height: 76px;
-    padding: 0 max(32px, calc((100vw - 1180px) / 2));
-    background: rgba(11,12,15,.78);
-    border-bottom: 1px solid rgba(255,255,255,.055);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-}
-.navbar::before { display: none; }
-.logo { color: #f5f3ef; font-size: 19px; font-weight: 800; letter-spacing: -.7px; white-space: nowrap; }
-.logo span { color: #f07845; opacity: 1; }
-.navLinks { display: flex; align-items: center; gap: clamp(20px, 3vw, 38px); margin-left: auto; margin-right: 44px; }
-.navLinks a { color: rgba(243,243,241,.62); font-size: 13px; font-weight: 550; transition: color .2s ease; }
-.navLinks a:hover, .navLinks a:focus-visible { color: #fff; }
-.navRight { gap: 14px; }
-.navCta { display: inline-flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 17px; border-radius: 10px; background: linear-gradient(135deg,#f1814b,#d95c32); color: #fff; font-size: 12px; font-weight: 750; box-shadow: 0 8px 25px rgba(225,96,53,.2); transition: transform .2s ease, box-shadow .2s ease; }
-.navCta:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(225,96,53,.3); }
-.navCta span { font-size: 15px; }
-.authArea:empty { display: none; }
-.menuButton { display: none; width: 42px; height: 42px; border-radius: 11px; border: 1px solid var(--border); background: rgba(255,255,255,.04); color: white; }
-.hero {
-    min-height: min(680px, calc(100svh - 76px));
-    display: grid;
-    grid-template-columns: minmax(0, .95fr) minmax(380px, 1.05fr);
-    align-items: center;
-    gap: clamp(38px, 7vw, 92px);
-    padding: 70px 0 82px;
-    text-align: left;
-}
-.heroCopy { max-width: 560px; }
-.heroEyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; color: #f18a59; font-size: 10px; font-weight: 800; letter-spacing: .18em; }
-.heroEyebrow > span, .heroNoteDot { width: 7px; height: 7px; border-radius: 50%; background: #f07845; box-shadow: 0 0 14px rgba(240,120,69,.72); }
-.hero h1 {
-    margin: 0;
-    max-width: 620px;
-    color: #f4f3f0;
-    font-family: var(--head);
-    font-size: clamp(50px, 6.1vw, 78px);
-    font-weight: 700;
-    letter-spacing: -.065em;
-    line-height: .99;
-    filter: none;
-    background: none;
-    -webkit-text-fill-color: currentColor;
-}
-.hero h1 em { color: #f07845; font-style: normal; }
-.hero p { max-width: 470px; margin: 23px 0 28px; color: rgba(226,226,224,.67); font-size: clamp(15px, 1.5vw, 17px); line-height: 1.75; }
-.searchBox {
-    width: min(100%, 545px);
-    margin: 0;
-    padding: 6px;
-    gap: 8px;
-    border: 1px solid rgba(255,255,255,.13);
-    border-radius: 12px;
-    background: rgba(22,23,27,.9);
-    box-shadow: 0 20px 60px rgba(0,0,0,.24);
-    backdrop-filter: none;
-}
-.searchBox:focus-within { border-color: rgba(240,120,69,.7); box-shadow: 0 0 0 4px rgba(240,120,69,.1), 0 20px 60px rgba(0,0,0,.28); }
-.searchBox input { min-height: 48px; padding: 12px 14px; color: #f4f3f0; font-size: 13px; }
-.searchBox input::placeholder { color: rgba(226,226,224,.4); }
-.searchBtn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 46px; padding: 0 17px; border-radius: 8px; background: linear-gradient(135deg,#f1814b,#d95c32); color: #fff; font-size: 12px; font-weight: 750; white-space: nowrap; }
-.searchBtn:hover { transform: translateY(-1px); background: linear-gradient(135deg,#ff9564,#e66d43); }
-.heroNote { display: flex; align-items: center; gap: 9px; margin-top: 17px; color: rgba(226,226,224,.44); font-size: 11px; }
-.heroNoteDot { width: 5px; height: 5px; }
-.heroVisual { position: relative; width: 100%; max-width: 520px; justify-self: end; padding: 19px; }
-.visualGlow { position: absolute; inset: 16% 8% 5%; z-index: -1; border-radius: 50%; background: rgba(222,94,55,.2); filter: blur(70px); }
-.visualCard { position: relative; overflow: hidden; padding: 17px; border: 1px solid rgba(255,255,255,.12); border-radius: 20px; background: linear-gradient(145deg,rgba(31,32,36,.97),rgba(18,19,22,.97)); box-shadow: 0 32px 90px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.035); }
-.visualTopline, .visualFooter { display: flex; align-items: center; justify-content: space-between; }
-.visualLive { display: flex; align-items: center; gap: 8px; color: rgba(245,243,239,.74); font-size: 9px; font-weight: 750; letter-spacing: .13em; }
-.visualLive > span { width: 6px; height: 6px; border-radius: 50%; background: #f07845; box-shadow: 0 0 10px rgba(240,120,69,.8); }
-.visualCount { color: rgba(245,243,239,.43); font-size: 10px; font-variant-numeric: tabular-nums; }
-.visualCount i { padding: 0 4px; color: rgba(245,243,239,.23); font-style: normal; }
-.visualArtwork { position: relative; display: grid; place-items: center; height: clamp(230px, 28vw, 330px); margin: 16px 0; overflow: hidden; border: 1px solid rgba(255,255,255,.07); border-radius: 13px; background: radial-gradient(ellipse at 52% 72%,rgba(230,99,53,.2),transparent 50%), linear-gradient(150deg,#29201d 0%,#191719 48%,#111316 100%); }
-.artHalo { position: absolute; width: 67%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle,rgba(240,120,69,.2) 0%,rgba(213,80,48,.08) 43%,transparent 70%); filter: blur(7px); }
-.artOrbit { position: absolute; width: 69%; aspect-ratio: 1; border: 1px solid rgba(247,164,112,.18); border-radius: 50%; transform: rotate(-25deg) scaleY(.48); box-shadow: 0 0 30px rgba(231,104,61,.11); }
-.artOrbitTwo { width: 83%; border-color: rgba(255,195,147,.11); transform: rotate(32deg) scaleY(.55); }
-.artVinyl { position: relative; display: grid; place-items: center; width: min(58%, 245px); aspect-ratio: 1; border-radius: 50%; background: repeating-radial-gradient(circle at center,#292a2e 0 2px,#1a1b1e 3px 5px,#232428 6px 7px); border: 1px solid rgba(255,255,255,.1); box-shadow: 0 20px 50px rgba(0,0,0,.4),0 0 55px rgba(215,87,49,.18); transform: rotate(-13deg); }
-.vinylLabel { width: 28%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 34% 28%,#ffbd8b,#e7754c 60%,#a63c29); box-shadow: 0 0 30px rgba(240,120,69,.36); }
-.artSpark { position: absolute; width: 8px; height: 8px; border-radius: 2px; background: #f6a675; box-shadow: 0 0 20px rgba(246,166,117,.7); transform: rotate(45deg); }
-.artSparkOne { top: 23%; right: 22%; }
-.artSparkTwo { left: 22%; bottom: 24%; width: 5px; height: 5px; opacity: .65; }
-.artCaption { position: absolute; left: 17px; bottom: 15px; color: rgba(245,243,239,.54); font-size: 8px; font-weight: 700; letter-spacing: .16em; }
-.artCaption span { padding: 0 4px; color: #f07845; }
-.visualPlayer { display: flex; align-items: center; gap: 12px; padding: 5px 2px 14px; }
-.visualPlay { display: grid; place-items: center; width: 37px; height: 37px; flex: 0 0 auto; border-radius: 50%; background: #f07845; color: #1b100c; }
-.visualPlayerText { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 3px; }
-.visualPlayerText span { color: rgba(226,226,224,.43); font-size: 8px; font-weight: 750; letter-spacing: .12em; }
-.visualPlayerText strong { overflow: hidden; color: #f4f3f0; font-size: 12px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
-.visualWave { display: flex; align-items: center; gap: 3px; height: 27px; }
-.visualWave i { display: block; width: 2px; height: 36%; border-radius: 3px; background: #e97c4d; opacity: .78; }
-.visualWave i:nth-child(3n) { height: 78%; }.visualWave i:nth-child(4n) { height: 52%; }.visualWave i:nth-child(5n) { height: 94%; }.visualWave i:nth-child(7n) { height: 28%; }
-.visualFooter { justify-content: flex-start; gap: 8px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.075); }
-.visualFooter span { padding: 5px 8px; border: 1px solid rgba(255,255,255,.075); border-radius: 6px; color: rgba(226,226,224,.53); font-size: 8px; font-weight: 700; letter-spacing: .1em; }
-.section { margin: 68px 0; scroll-margin-top: 98px; }
-.sectionTitle { color: #f4f3f0; font-family: var(--head); font-weight: 700; }
-.sectionTitle::before { width: 4px; background: linear-gradient(180deg,#f69a6d,#d95532); }
-.glass, .tasteBox, .historyItem { border-color: rgba(255,255,255,.1); background: linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.02)); box-shadow: 0 24px 60px rgba(0,0,0,.18); }
-.resultCard, .artistCard { border-color: rgba(255,255,255,.09); background: linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018)); }
-.topResult { border-color: rgba(240,120,69,.28); background: linear-gradient(135deg,rgba(240,120,69,.12),rgba(255,255,255,.025) 65%); }
-.smallBtn.primary, .featureArtist button { border: 0; background: linear-gradient(135deg,#f1814b,#d95c32); color: #fff; }
-.smallBtn.primary:hover, .featureArtist button:hover { background: linear-gradient(135deg,#ff9564,#e66d43); }
-footer { color: rgba(226,226,224,.38); }
-:where(a,button,input):focus-visible { outline: 2px solid #f07845; outline-offset: 3px; }
-
-@media (max-width: 900px) {
-    .navbar { padding: 0 24px; }
-    .navLinks { gap: 20px; margin-right: 24px; }
-    .hero { grid-template-columns: minmax(0,1fr) minmax(300px,.9fr); gap: 28px; }
-    .heroVisual { padding: 10px; }
-}
-@media (max-width: 700px) {
-    main { width: min(100% - 32px, 560px); }
-    .navbar { height: 68px; padding: 0 16px; }
-    .navLinks, .navCta { display: none; }
-    .menuButton { display: block; }
-    .navRight { gap: 9px; }
-    .hero { min-height: 0; grid-template-columns: 1fr; gap: 22px; padding: 58px 0 46px; }
-    .heroCopy { max-width: none; }
-    .heroEyebrow { margin-bottom: 17px; font-size: 9px; }
-    .hero h1 { font-size: clamp(45px, 12vw, 66px); line-height: 1.02; }
-    .hero p { margin: 17px 0 22px; font-size: 15px; }
-    .heroNote { margin-top: 13px; font-size: 10px; }
-    .heroVisual { width: min(100%, 480px); max-width: none; justify-self: center; padding: 5px; }
-    .visualCard { padding: 13px; border-radius: 16px; }
-    .visualArtwork { height: clamp(205px, 65vw, 285px); }
-    .section { margin: 54px 0; }
-    .sectionHeader { align-items: flex-start; }
-}
-@media (max-width: 420px) {
-    .searchBox { flex-direction: column; border-radius: 12px; }
-    .searchBox input { min-height: 44px; }
-    .searchBtn { min-height: 44px; }
-    .visualWave { gap: 2px; }
-}
-html[dir="rtl"] .hero { text-align: right; }
 @media (prefers-reduced-motion: no-preference) {
     @keyframes musicfinder-intro {
         from { opacity: 0; transform: translate3d(0, 16px, 0) scale(.99); }
         to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
     }
 
-    .hero .heroCopy > * {
+    .hero > * {
         animation: musicfinder-intro .78s cubic-bezier(.22, 1, .36, 1) both;
     }
-    .hero .heroCopy > *:nth-child(2) { animation-delay: 70ms; }
-    .hero .heroCopy > *:nth-child(3) { animation-delay: 130ms; }
-    .hero .heroCopy > *:nth-child(4) { animation-delay: 190ms; }
-    .hero .heroVisual {
-        animation: musicfinder-intro .95s cubic-bezier(.22, 1, .36, 1) 100ms both;
-    }
+    .hero > *:nth-child(2) { animation-delay: 70ms; }
+    .hero > *:nth-child(3) { animation-delay: 130ms; }
 
     html.motion-ready .motion-reveal {
         opacity: 0;
@@ -2179,23 +2012,15 @@ html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
 
 </div>
 
-<nav class="navbar" aria-label="Main navigation">
+<nav class="navbar">
 
-    <a class="logo" href="#home" aria-label="MusicFinder home">
+    <div class="logo">
         Music<span>Finder</span>
-    </a>
-
-    <div class="navLinks">
-        <a href="#home">Discover</a>
-        <a href="#forYou">For you</a>
-        <a href="#artists">Artists</a>
-        <a href="#about">About</a>
     </div>
 
     <div class="navRight">
         <div class="authArea" id="authArea"></div>
-        <a class="navCta" href="#searchSection">Start exploring <span aria-hidden="true">↗</span></a>
-        <button class="menuButton" type="button" onclick="openMenu()" aria-label="Open navigation menu">☰</button>
+        <button class="menuButton" onclick="openMenu()">☰</button>
     </div>
 
 </nav>
@@ -2255,51 +2080,23 @@ html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
 
 <section class="hero" id="home">
 
-    <div class="heroCopy">
-        <div class="heroEyebrow"><span aria-hidden="true"></span> MUSIC, FOUND YOUR WAY</div>
-        <h1>Find a sound<br>that feels like <em>you.</em></h1>
-        <p>Search songs, artists, and albums. Follow the sounds you love, and let your next favorite find you.</p>
+    <h1>MusicFinder</h1>
 
-        <div class="searchBox" id="searchSection">
-            <label class="sr-only" for="searchInput">Search songs, artists, or albums</label>
-            <input
-                id="searchInput"
-                type="text"
-                placeholder="What are you in the mood for?"
-                autocomplete="off"
-            >
-            <button class="searchBtn" type="button" onclick="performSearch()">
-                <span>Search music</span>
-                <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16 16 4 4"></path></svg>
-            </button>
-        </div>
+    <p>Discover songs, artists and albums.</p>
 
-        <div class="heroNote"><span class="heroNoteDot" aria-hidden="true"></span> Songs, artists, albums — one place to explore.</div>
-    </div>
+    <div class="searchBox" id="searchSection">
 
-    <div class="heroVisual" role="img" aria-label="A MusicFinder discovery card with a warm abstract record illustration">
-        <div class="visualGlow" aria-hidden="true"></div>
-        <div class="visualCard">
-            <div class="visualTopline">
-                <span class="visualLive"><span aria-hidden="true"></span> YOUR SOUND, IN MOTION</span>
-                <span class="visualCount">01 <i>/</i> 03</span>
-            </div>
-            <div class="visualArtwork" aria-hidden="true">
-                <div class="artHalo"></div>
-                <div class="artOrbit artOrbitOne"></div>
-                <div class="artOrbit artOrbitTwo"></div>
-                <div class="artVinyl"><div class="vinylLabel"></div></div>
-                <div class="artSpark artSparkOne"></div>
-                <div class="artSpark artSparkTwo"></div>
-                <div class="artCaption">SIDE A <span>·</span> NEW DISCOVERIES</div>
-            </div>
-            <div class="visualPlayer">
-                <div class="visualPlay" aria-hidden="true"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg></div>
-                <div class="visualPlayerText"><span>MADE FOR THE MOMENT</span><strong>Find your next favorite</strong></div>
-                <div class="visualWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-            </div>
-            <div class="visualFooter"><span>SONGS</span><span>ARTISTS</span><span>ALBUMS</span></div>
-        </div>
+        <input
+            id="searchInput"
+            type="text"
+            placeholder="Search for a song, artist or album..."
+            autocomplete="off"
+        >
+
+        <button class="searchBtn" onclick="performSearch()">
+            Search
+        </button>
+
     </div>
 
 </section>
@@ -5421,14 +5218,6 @@ function showTelegramPanel(query, copied) {
         "Discover songs, artists and albums.":"آهنگ‌ها، هنرمندان و آلبوم‌ها را کشف کنید.",
         "Search for a song, artist or album...":"جستجوی آهنگ، هنرمند یا آلبوم...",
         "Search Results":"نتایج جستجو",
-        "Discover":"کشف موسیقی","For you":"برای شما","Start exploring":"شروع کاوش",
-        "Find a sound":"صدایی پیدا کن","that feels like":"که با حال‌وهوای","you.":"تو جور است.",
-        "Search songs, artists, and albums. Follow the sounds you love, and let your next favorite find you.":"آهنگ‌ها، هنرمندان و آلبوم‌ها را جستجو کن. صداهایی را که دوست داری دنبال کن و بگذار آهنگ بعدی محبوبت خودش پیدایت کند.",
-        "Search songs, artists, or albums":"جستجوی آهنگ‌ها، هنرمندان یا آلبوم‌ها",
-        "What are you in the mood for?":"امروز چه آهنگی حال‌وهوایت را می‌سازد؟",
-        "Search music":"جستجوی موسیقی",
-        "Songs, artists, albums — one place to explore.":"آهنگ‌ها، هنرمندان و آلبوم‌ها — همه برای کاوش.",
-        "A MusicFinder discovery card with a warm abstract record illustration":"کارت کشف موسیقی MusicFinder با تصویر انتزاعی صفحه گرامافون",
         "Based on the music you explore on MusicFinder.":"بر اساس موسیقی‌ای که در MusicFinder کاوش می‌کنید.",
         "MusicFinder remembers what you interact with.":"MusicFinder به یاد می‌سپارد با چه چیزی تعامل داشته‌اید.",
         "Clear Taste":"پاک کردن سلیقه","Clear":"پاک کردن",
@@ -5442,7 +5231,7 @@ function showTelegramPanel(query, copied) {
         "Check that the MusicFinder server is running.":"بررسی کنید که سرور MusicFinder در حال اجراست.",
         "Close":"بستن","Copy":"کپی","Could not load artist information.":"اطلاعات هنرمند بارگذاری نشد.",
         "Details":"جزئیات","Discography":"آثار و آلبوم‌ها","Download":"دانلود","Download Search":"جستجوی دانلود",
-        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق تلگرام",
+        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق ت��گرام",
         "Explore":"کاوش","Explore Artist":"کاوش هنرمند",
         "Loading artist information...":"در حال بارگذاری اطلاعات هنرمند...","Loading...":"در حال بارگذاری...",
         "Loading results":"در حال بارگذاری نتایج","Album cover":"جلد آلبوم",

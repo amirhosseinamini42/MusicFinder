@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 <style>
 
 * {
@@ -1144,6 +1145,29 @@ main {
     border: 0 !important;
     border-radius: 50% !important;
     overflow: hidden;
+}
+
+.supabaseGoogleButton {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 50%;
+    background: #fff;
+    color: #4285f4;
+    font-family: Arial, sans-serif;
+    font-size: 27px;
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: 0 8px 22px rgba(0,0,0,.25);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.supabaseGoogleButton:hover,
+.supabaseGoogleButton:focus-visible {
+    transform: translateY(-1px) scale(1.04);
+    box-shadow: 0 10px 26px rgba(0,0,0,.34);
 }
 
 .authUser {
@@ -2500,9 +2524,12 @@ const GOOGLE_CLIENT_ID = "923068000834-e2e11vqgul2jeqipsels4vbbf5ltauo5.apps.goo
 
 let TASTE_KEY = BASE_TASTE_KEY;
 let HISTORY_KEY = BASE_HISTORY_KEY;
-let currentUser = null;
+  let currentUser = null;
+  let supabaseClient = null;
+  let supabaseReady = false;
+  let cloudHistoryPromise = null;
 
-try {
+  try {
     currentUser = JSON.parse(localStorage.getItem(USER_KEY) || "null");
 } catch {
     currentUser = null;
@@ -2518,330 +2545,201 @@ if (currentUser && currentUser.sub) {
    API
 ========================= */
 
-const API_BASE = "https://musicfinder-api.vercel.app";
+  const API_BASE = "https://musicfinder-api.vercel.app";
 
-/* encodeURIComponent leaves ' untouched, which breaks inline onclick="f('...')" */
+  async function initSupabase() {
+      if (!window.supabase?.createClient) {
+          setTimeout(initSupabase, 250);
+          return;
+      }
+
+      try {
+          const response = await fetch(`${API_BASE}/config/supabase`);
+          if (!response.ok) throw new Error("Supabase configuration unavailable");
+          const config = await response.json();
+          supabaseClient = window.supabase.createClient(config.url, config.publishableKey);
+          supabaseReady = true;
+
+          const { data: { session } } = await supabaseClient.auth.getSession();
+          if (session?.user) applySupabaseUser(session.user);
+          supabaseClient.auth.onAuthStateChange((_event, sessionState) => {
+              if (sessionState?.user) applySupabaseUser(sessionState.user);
+              else if (!sessionState) signOutUser(false);
+          });
+      } catch (error) {
+          console.warn("[v0] Supabase initialization skipped:", error.message);
+      }
+  }
+
+  function applySupabaseUser(user) {
+      const metadata = user.user_metadata || {};
+      currentUser = {
+          sub: user.id,
+          name: metadata.full_name || metadata.name || user.email || "User",
+          email: user.email || "",
+          picture: metadata.avatar_url || ""
+      };
+      TASTE_KEY = `${BASE_TASTE_KEY}_${user.id}`;
+      HISTORY_KEY = `${BASE_HISTORY_KEY}_${user.id}`;
+      renderAuth();
+      refreshAccountData();
+      loadCloudHistory();
+  }
+
+  async function signInWithSupabase() {
+      if (!supabaseReady || !supabaseClient) {
+          renderAuth();
+          return;
+      }
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: window.location.origin }
+      });
+      if (error) console.warn("[v0] Supabase sign-in failed:", error.message);
+  }
+
+  async function loadCloudHistory() {
+      if (!supabaseClient || !currentUser) return;
+      cloudHistoryPromise = supabaseClient
+          .from("listening_history")
+          .select("external_id,title,artist,artwork_url,metadata,played_at")
+          .order("played_at", { ascending: false })
+          .limit(30);
+      const { data, error } = await cloudHistoryPromise;
+      if (error || !data) return;
+      const searches = data.map(item => item.metadata?.search_query).filter(Boolean);
+      if (searches.length) {
+          saveHistory([...new Set([...searches, ...getHistory()])].slice(0, 30));
+          renderHistory();
+      }
+  }
+
+  async function persistTrackHistory(track, searchQuery = "") {
+      if (!supabaseClient || !currentUser || !track) return;
+      await supabaseClient.from("listening_history").insert({
+          user_id: currentUser.sub,
+          external_id: String(track.id || track.name || crypto.randomUUID()),
+          title: track.name || "Unknown track",
+          artist: track.artists?.[0]?.name || null,
+          artwork_url: track.album?.images?.[0]?.url || null,
+          metadata: { search_query: searchQuery }
+      });
+  }
+
+  /* =========================
+  DATA
+  ========================= */
+
 function encodeSafe(text) {
     return encodeURIComponent(text).replace(/'/g, "%27");
 }
 
-
 function getTasteData() {
-
-    const saved = localStorage.getItem(TASTE_KEY);
-
-    if (!saved) {
-
-        return {
-            searches: [],
-            artists: {},
-            tracks: {}
-        };
-
-    }
-
     try {
-
-        return JSON.parse(saved);
-
+        return JSON.parse(localStorage.getItem(TASTE_KEY) || '{"searches":[],"artists":{},"tracks":{}}');
     } catch {
-
-        return {
-            searches: [],
-            artists: {},
-            tracks: {}
-        };
-
+        return { searches: [], artists: {}, tracks: {} };
     }
-
 }
-
 
 function saveTasteData(data) {
-
-    localStorage.setItem(
-        TASTE_KEY,
-        JSON.stringify(data)
-    );
-
+    localStorage.setItem(TASTE_KEY, JSON.stringify(data));
 }
-
 
 function getHistory() {
-
     try {
-
-        return JSON.parse(
-            localStorage.getItem(HISTORY_KEY) || "[]"
-        );
-
+        return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
     } catch {
-
         return [];
-
     }
-
 }
-
 
 function saveHistory(history) {
-
-    localStorage.setItem(
-        HISTORY_KEY,
-        JSON.stringify(history)
-    );
-
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
 }
-
 
 function openMenu() {
-
-    document
-        .getElementById("menuOverlay")
-        .classList.add("open");
-
-    document
-        .getElementById("menuDrawer")
-        .classList.add("open");
-
+    document.getElementById("menuOverlay").classList.add("open");
+    document.getElementById("menuDrawer").classList.add("open");
 }
-
 
 function closeMenu() {
-
-    document
-        .getElementById("menuOverlay")
-        .classList.remove("open");
-
-    document
-        .getElementById("menuDrawer")
-        .classList.remove("open");
-
+    document.getElementById("menuOverlay").classList.remove("open");
+    document.getElementById("menuDrawer").classList.remove("open");
 }
-
 
 function goTo(id) {
-
     closeMenu();
-
-    setTimeout(() => {
-
-        document
-            .getElementById(id)
-            ?.scrollIntoView({
-                behavior: "smooth"
-            });
-
-    }, 150);
-
+    setTimeout(() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }), 150);
 }
-
 
 function escapeHtml(value) {
-
-    if (value === null || value === undefined) {
-        return "";
-    }
-
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-
+    if (value === null || value === undefined) return "";
+    return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 }
-
 
 function rememberSearch(query) {
-
-    const history = getHistory();
-
     const clean = query.trim();
-
     if (!clean) return;
-
-    const filtered = history.filter(
-        item => item.toLowerCase() !== clean.toLowerCase()
-    );
-
+    const filtered = getHistory().filter(item => item.toLowerCase() !== clean.toLowerCase());
     filtered.unshift(clean);
-
-    saveHistory(
-        filtered.slice(0, 30)
-    );
-
+    saveHistory(filtered.slice(0, 30));
     renderHistory();
-
 }
-
 
 function renderHistory() {
-
-    const container =
-        document.getElementById("historyList");
-
+    const container = document.getElementById("historyList");
     const history = getHistory();
-
     if (!history.length) {
-
-        container.innerHTML = `
-            <div class="empty">
-                No searches yet.
-            </div>
-        `;
-
+        container.innerHTML = '<div class="empty">No searches yet.</div>';
         return;
-
     }
-
-    container.innerHTML = history
-        .map(query => `
-            <button
-                class="historyItem"
-                onclick="searchFromHistory(${JSON.stringify(query)})"
-            >
-                🔎 ${escapeHtml(query)}
-            </button>
-        `)
-        .join("");
-
+    container.innerHTML = history.map(query => `<button class="historyItem" onclick="searchFromHistory(${JSON.stringify(query)})">🔎 ${escapeHtml(query)}</button>`).join("");
 }
-
 
 function searchFromHistory(query) {
-
     document.getElementById("searchInput").value = query;
-
     performSearch();
-
 }
-
 
 function clearHistory() {
-
     localStorage.removeItem(HISTORY_KEY);
-
     renderHistory();
-
 }
-
 
 function rememberTrack(track) {
-
     if (!track) return;
-
+    persistTrackHistory(track, document.getElementById("searchInput")?.value || "");
     const data = getTasteData();
-
-    const id =
-        track.id ||
-        `${track.name}-${track.artists?.[0]?.name}`;
-
+    const id = track.id || `${track.name}-${track.artists?.[0]?.name}`;
     if (!id) return;
-
     if (!data.tracks[id]) {
-
-        data.tracks[id] = {
-
-            id: track.id || "",
-            name: track.name || "",
-            artist:
-                track.artists?.[0]?.name || "",
-            image:
-                track.album?.images?.[0]?.url || "",
-            spotify:
-                track.external_urls?.spotify || "",
-            clicks: 0
-
-        };
-
+        data.tracks[id] = { id: track.id || "", name: track.name || "", artist: track.artists?.[0]?.name || "", image: track.album?.images?.[0]?.url || "", spotify: track.external_urls?.spotify || "", clicks: 0 };
     }
-
     data.tracks[id].clicks++;
-
     saveTasteData(data);
-
 }
-
 
 function rememberArtist(artist) {
-
     if (!artist) return;
-
     const data = getTasteData();
-
-    const id =
-        artist.id ||
-        artist.name;
-
+    const id = artist.id || artist.name;
     if (!id) return;
-
-    if (!data.artists[id]) {
-
-        data.artists[id] = {
-
-            id: artist.id || "",
-            name: artist.name || "",
-            image: artist.image || "",
-            spotify: artist.spotify || "",
-            genres: artist.genres || [],
-            clicks: 0,
-            firstSeen: new Date().toISOString(),
-            lastSeen: new Date().toISOString()
-
-        };
-
-    }
-
+    if (!data.artists[id]) data.artists[id] = { id: artist.id || "", name: artist.name || "", image: artist.image || "", spotify: artist.spotify || "", genres: artist.genres || [], clicks: 0, firstSeen: new Date().toISOString(), lastSeen: new Date().toISOString() };
     data.artists[id].clicks++;
-
-    data.artists[id].lastSeen =
-        new Date().toISOString();
-
-    if (artist.image) {
-        data.artists[id].image = artist.image;
-    }
-
-    if (artist.spotify) {
-        data.artists[id].spotify = artist.spotify;
-    }
-
+    data.artists[id].lastSeen = new Date().toISOString();
+    if (artist.image) data.artists[id].image = artist.image;
+    if (artist.spotify) data.artists[id].spotify = artist.spotify;
     saveTasteData(data);
-
 }
 
-
 function registerTrackClick(track) {
-
     rememberTrack(track);
-
-    if (track.artists) {
-
-        track.artists.forEach(artist => {
-
-            rememberArtist({
-
-                id: artist.id,
-                name: artist.name,
-                spotify:
-                    artist.external_urls?.spotify || ""
-
-            });
-
-        });
-
-    }
-
+    track.artists?.forEach(artist => rememberArtist({ id: artist.id, name: artist.name, spotify: artist.external_urls?.spotify || "" }));
     renderTaste();
     renderArtists();
     renderForYou();
-
 }
-
-
-/* =========================
-   SEARCH
-========================= */
 
 /* ---- speed: search cache, request cancelling, skeletons ---- */
 const searchCache = new Map();
@@ -5209,21 +5107,14 @@ function signOutUser() {
 
 }
 
-function renderGoogleButton() {
+  function renderGoogleButton() {
 
-    const area = document.getElementById("authArea");
+  const area = document.getElementById("authArea");
 
-    if (!area || currentUser || !window.google?.accounts?.id) return;
+  if (!area || currentUser) return;
 
-    area.innerHTML = "";
-    area.classList.add("authAreaGoogle");
-
-    google.accounts.id.renderButton(area, {
-        type: "icon",
-        theme: "filled_black",
-        size: "large",
-        shape: "circle"
-    });
+  area.classList.add("authAreaGoogle");
+  area.innerHTML = `<button class="supabaseGoogleButton" type="button" aria-label="Sign in with Google" onclick="signInWithSupabase()"><span aria-hidden="true">G</span></button>`;
 
 }
 
@@ -5304,8 +5195,8 @@ function renderAuth() {
 }
 
 renderAuth();
-
-window.addEventListener("load", () => initGoogleLogin());
+initSupabase();
+window.addEventListener("load", () => initSupabase());
 
 </script>
 
@@ -5453,7 +5344,7 @@ function showTelegramPanel(query, copied) {
         "MusicFinder remembers what you interact with.":"MusicFinder به یاد می‌سپارد با چه چیزی تعامل داشته‌اید.",
         "Clear Taste":"پاک کردن سلیقه","Clear":"پاک کردن",
         "🎵 Most Explored Songs":"🎵 پربازدیدترین آهنگ‌ها","👤 Most Explored Artists":"👤 پربازدیدترین هنرمندان",
-        "Your recent searches on MusicFinder.":"جستجوهای اخیر شما در MusicFinder.",
+        "Your recent searches on MusicFinder.":"جستجوهای اخیر ش��ا در MusicFinder.",
         "Artists you've discovered through MusicFinder.":"هنرمندانی که در MusicFinder کشف کرده‌اید.",
         "MusicFinder is a personal music discovery project, created by Amirhossein Amini.":"MusicFinder یک پروژه شخصی برای کشف موسیقی است که توسط امیرحسین امینی ساخته شده است.",
         "Music metadata and artwork are provided through Spotify.":"اطلاعات و تصاویر موسیقی از طریق Spotify تأمین می‌شود.",

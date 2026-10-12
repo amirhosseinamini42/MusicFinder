@@ -100,6 +100,17 @@ def test():
         "message": "MusicFinder backend is working!"
     }
 
+
+@app.get("/config/supabase")
+def supabase_config():
+    url = os.getenv("SUPABASE_URL")
+    publishable_key = os.getenv("SUPABASE_PUBLISHABLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+
+    if not url or not publishable_key:
+        raise HTTPException(status_code=503, detail="Supabase is not configured.")
+
+    return {"url": url, "publishableKey": publishable_key}
+
 # =========================
 # JAMENDO TEST / SEARCH
 # =========================

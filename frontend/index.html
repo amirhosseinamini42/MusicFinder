@@ -6,11 +6,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
 <title>MusicFinder</title>
-<link rel="preconnect" href="https://musicfinder-api.vercel.app" crossorigin>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
-
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1126,26 +1121,6 @@ main {
     min-height: 40px;
 }
 
-.authAreaGoogle {
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
-    flex: 0 0 44px;
-    justify-content: center;
-    overflow: hidden;
-    border-radius: 50%;
-}
-
-.authAreaGoogle > div,
-.authAreaGoogle iframe {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    border: 0 !important;
-    border-radius: 50% !important;
-    overflow: hidden;
-}
-
 .authUser {
     display: flex;
     align-items: center;
@@ -1638,7 +1613,7 @@ html::after {
 .logo span { color: #e0a45a; opacity: .75; }
 
 @media (prefers-reduced-motion: reduce) {
-    body::after { animation: none; z-index: -1; }
+    body::after { animation: none; }
 }
 
 
@@ -1683,120 +1658,6 @@ html::after {
 .tgButtons { display: flex; gap: 8px; flex-wrap: wrap; }
 .tgButtons .smallBtn { cursor: pointer; }
 
-.tgConfirm {
-    position: fixed; inset: 0; z-index: 500;
-    display: flex; align-items: center; justify-content: center; padding: 16px;
-    background: rgba(8,4,2,.65);
-}
-.tgConfirmBox {
-    width: min(440px, 100%);
-    padding: 22px;
-    border-radius: 22px;
-    background: rgba(24,14,9,.97);
-    border: 1px solid var(--border);
-    box-shadow: 0 30px 80px rgba(0,0,0,.6);
-}
-.tgConfirmBox p { margin: 0 0 12px; font-size: 15px; line-height: 1.7; }
-.tgConfirmBox p[dir="rtl"] { color: var(--muted); }
-.tgConfirmBox .tgButtons { margin-top: 16px; }
-
-/* =====================================================================
-   DARK WOOD THEME: deep warm autumn, bold type, faster paint.
-   (Visual layer only. Telegram panel and download buttons are not touched.)
-===================================================================== */
-:root {
-    --bg: #1a120d; --text: #f3e7d3; --muted: rgba(243,231,211,.72);
-    --border: rgba(243,231,211,.14); --accent: #d9a05a;
-    --ember: 226,150,60;
-    --head: "Archivo", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --dynamic-color: rgba(190,110,50,.14);
-    --dynamic-color-2: rgba(120,70,35,.12);
-    --dynamic-color-3: rgba(90,50,25,.12);
-}
-html { color-scheme: dark; }
-body {
-    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; line-height: 1.55;
-    background-color: #1a120d;
-    background-image:
-        radial-gradient(900px 560px at 50% -8%, rgba(226,150,60,.22), transparent 66%),
-        radial-gradient(700px 520px at 100% 60%, rgba(160,80,30,.14), transparent 66%),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='700' height='700'><filter id='w' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='0.006 0.42' numOctaves='4' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.33  0 0 0 0 0.16  0 0 0 0.7 -0.2'/></filter><rect width='100%25' height='100%25' filter='url(%23w)'/></svg>"),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='900' height='900'><filter id='k' x='0' y='0' width='100%25' height='100%25'><feTurbulence type='fractalNoise' baseFrequency='0.003 0.09' numOctaves='3' seed='21' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.0 -0.42'/></filter><rect width='100%25' height='100%25' filter='url(%23k)'/></svg>"),
-        linear-gradient(180deg, #24180f 0%, #1a120d 50%, #100a07 100%);
-    background-attachment: fixed;
-}
-/* speed: remove full-screen blur layers and the always-animating glow */
-body::before { display: none; }
-body::after { animation: none; }
-#backgroundArt { opacity: .14; filter: blur(50px); }
-.backgroundOverlay { background: linear-gradient(180deg, rgba(16,10,6,.4), rgba(16,10,6,.62)); }
-.glass { background: linear-gradient(160deg, rgba(255,226,190,.07), rgba(255,226,190,.03)); -webkit-backdrop-filter: none; backdrop-filter: none; }
-.resultCard, .artistCard, .tasteRow { -webkit-backdrop-filter: none; backdrop-filter: none; }
-
-/* type */
-.hero h1, .sectionTitle, .logo, h2, h3, .resultGroupTitle {
-    font-family: var(--head); font-style: normal; text-transform: none;
-}
-.hero h1 {
-    font-weight: 800; font-size: clamp(44px, 12.5vw, 150px); line-height: .92; letter-spacing: -.05em;
-    background: linear-gradient(180deg, #fff3de 0%, #f3e0bd 50%, #d9a05a 125%);
-    -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none;
-    filter: drop-shadow(0 12px 44px rgba(226,150,60,.28));
-}
-.hero p { font-size: clamp(17px, 2.2vw, 21px); font-weight: 450; color: var(--muted); }
-.sectionTitle { font-weight: 800; font-size: clamp(28px, 4vw, 40px); letter-spacing: -.035em; display: flex; align-items: center; gap: 14px; }
-.sectionTitle::before { content: ""; width: 5px; height: .9em; border-radius: 3px; background: linear-gradient(180deg, #e6b06a, #a8642a); }
-.resultGroupTitle { font-weight: 800; letter-spacing: -.03em; }
-.logo { font-weight: 800; letter-spacing: -.02em; }
-.logo span { color: #e0a45a; opacity: 1; font-style: normal; }
-
-/* search + buttons */
-.searchBox { background: rgba(18,11,7,.72); border: 1px solid rgba(226,150,60,.5); box-shadow: 0 24px 70px rgba(0,0,0,.4); transition: border-color .3s, box-shadow .3s; }
-.searchBox:focus-within { border-color: rgba(226,150,60,.95); box-shadow: 0 24px 80px rgba(226,150,60,.18), 0 0 0 5px rgba(226,150,60,.12); }
-.searchBox input { color: #f3e7d3; font-weight: 500; }
-.searchBox input::placeholder { color: rgba(243,231,211,.5); }
-.searchBtn, .smallBtn.primary { background: linear-gradient(135deg, #e6b06a, #c47f35); color: #1e1208; font-weight: 800; border-color: transparent; }
-.searchBtn:hover, .smallBtn.primary:hover { background: linear-gradient(135deg, #efbd7c, #cf8a40); }
-.smallBtn { font-weight: 650; }
-.smallBtn:hover { border-color: rgba(226,150,60,.6); }
-
-/* cards: image-first, fixed ratios */
-.resultCard, .artistCard {
-    border: 1px solid rgba(243,231,211,.10); border-radius: 20px;
-    background: linear-gradient(180deg, rgba(243,231,211,.07), rgba(243,231,211,.03));
-    transition: transform .35s cubic-bezier(.2,.8,.2,1), border-color .3s, box-shadow .35s;
-}
-.resultCard .cover, .artistCard .artistImage { transition: transform .6s cubic-bezier(.2,.8,.2,1); }
-@media (hover: hover) {
-    .resultCard:hover, .artistCard:hover { transform: translateY(-6px); border-color: rgba(226,150,60,.45); box-shadow: 0 26px 50px rgba(0,0,0,.4); }
-    .resultCard:hover .cover { transform: scale(1.045); }
-    .artistCard:hover .artistImage { transform: scale(1.04); }
-}
-.cardTitle { font-weight: 700; letter-spacing: -.01em; }
-.topResult { border: 1px solid rgba(226,150,60,.3); background: linear-gradient(135deg, rgba(226,150,60,.16), rgba(120,70,35,.12) 60%, rgba(243,231,211,.03)); }
-.cover, .topResultCover { aspect-ratio: 1; object-fit: cover; background: rgba(243,231,211,.08); }
-.artistImage { aspect-ratio: 1; object-fit: cover; }
-.musicPlayer { background: linear-gradient(180deg, rgba(40,27,18,.97), rgba(24,16,11,.98)); }
-.playerPlay { background: linear-gradient(135deg, #f0c27a, #d98d3a); color: #2a1a06; }
-
-/* placeholders (only when an image is missing) */
-div.cover, div.topResultCover, .cover.imgPlaceholder, .topResultCover.imgPlaceholder {
-    background: rgba(243,231,211,.08) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0a046' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'><path d='M9 18V6l10-2v12'/><circle cx='6.5' cy='18' r='2.5'/><circle cx='16.5' cy='16' r='2.5'/></svg>") center / 34% no-repeat;
-}
-div.artistImage, .artistImage.imgPlaceholder {
-    background: rgba(243,231,211,.08) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0a046' stroke-width='1.4' stroke-linecap='round'><circle cx='12' cy='8' r='3.5'/><path d='M5 20c0-3.6 3.1-6 7-6s7 2.4 7 6'/></svg>") center / 38% no-repeat;
-}
-
-/* skeletons */
-.skeletonGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 18px; }
-.skelCard { padding: 12px; border-radius: 20px; background: rgba(243,231,211,.05); }
-.skel { background: linear-gradient(90deg, rgba(243,231,211,.07) 25%, rgba(243,231,211,.14) 50%, rgba(243,231,211,.07) 75%); background-size: 200% 100%; animation: skelShine 1.3s linear infinite; border-radius: 10px; }
-.skelCover { aspect-ratio: 1; }
-.skelLine { height: 12px; margin-top: 12px; }
-.skelLine.short { width: 60%; }
-@keyframes skelShine { to { background-position: -200% 0; } }
-@media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
-@media (max-width: 640px) { .hero h1 { font-size: clamp(40px, 12.5vw, 64px); } .searchBox { border-radius: 28px; } }
 
 /* ---------- Language switcher + RTL ---------- */
 .langSwitch { display: flex; gap: 6px; padding: 4px; margin: -8px 0 18px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid var(--border); }
@@ -1818,6 +1679,7 @@ html[dir="rtl"] .playerInfo, html[dir="rtl"] .playerTitle, html[dir="rtl"] .play
 html[dir="rtl"] .searchBox input { text-align: start; }
 html[dir="rtl"] .cardTitle, html[dir="rtl"] .cardArtist, html[dir="rtl"] .artistName, html[dir="rtl"] .albumName { unicode-bidi: plaintext; text-align: start; }
 
+/* ---------- Motion: intro, scroll reveal, menu / modal / player transitions ---------- */
 @media (prefers-reduced-motion: no-preference) {
     @keyframes musicfinder-intro {
         from { opacity: 0; transform: translate3d(0, 16px, 0) scale(.99); }
@@ -1901,217 +1763,6 @@ html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
 }
-
-/* Responsive refinements preserve the existing palette, surfaces, and motion timings. */
-html {
-    overflow-x: clip;
-    scroll-padding-block-start: calc(78px + env(safe-area-inset-top));
-}
-
-body {
-    min-height: 100vh;
-    min-height: 100dvh;
-    overscroll-behavior-x: none;
-}
-
-@media (max-width: 700px) {
-    .navbar {
-        height: calc(78px + env(safe-area-inset-top));
-        padding: env(safe-area-inset-top) calc(14px + env(safe-area-inset-right)) 0 calc(14px + env(safe-area-inset-left));
-    }
-
-    main {
-        width: calc(100% - 24px - env(safe-area-inset-left) - env(safe-area-inset-right));
-        max-width: 1250px;
-    }
-
-    .hero {
-        min-height: clamp(280px, 52svh, 350px);
-        padding-block: 12px 22px;
-    }
-
-    .hero h1 {
-        width: 100%;
-        max-width: 100%;
-        font-size: clamp(30px, 10.5vw, 64px);
-        line-height: .98;
-        letter-spacing: -.055em;
-        overflow-wrap: anywhere;
-    }
-
-    .searchBox {
-        max-width: 100%;
-        gap: 6px;
-    }
-
-    .searchBox input {
-        min-height: 48px;
-        font-size: 16px;
-    }
-
-    .searchBtn,
-    .menuButton,
-    .closeMenu,
-    .modalClose {
-        min-height: 44px;
-    }
-
-    .menuDrawer {
-        height: 100vh;
-        height: 100dvh;
-        padding: calc(28px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .section {
-        margin-block: 56px;
-        scroll-margin-top: calc(88px + env(safe-area-inset-top));
-    }
-
-    .sectionHeader {
-        align-items: flex-start;
-        gap: 10px;
-    }
-
-    .resultGrid,
-    .artistGrid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
-    }
-
-    .resultCard,
-    .artistCard {
-        min-width: 0;
-        padding: 12px;
-    }
-
-    .cardTitle,
-    .cardArtist,
-    .artistName,
-    .artistSummary {
-        overflow-wrap: anywhere;
-    }
-
-    .cardActions {
-        gap: 6px;
-    }
-
-    .smallBtn {
-        min-width: 0;
-        min-height: 44px;
-        padding-inline: 5px;
-        font-size: 11px;
-        overflow-wrap: anywhere;
-    }
-
-    .featureArtist {
-        gap: 16px;
-        padding: 20px;
-    }
-
-    .tasteBox {
-        min-width: 0;
-        padding: 18px;
-    }
-
-    .historyItem,
-    .topResultActions button,
-    .modalButtons a,
-    .modalButtons button {
-        min-height: 44px;
-    }
-
-    .modalOverlay {
-        padding: calc(12px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
-    }
-
-    .modal {
-        width: 100%;
-        max-height: calc(100vh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-        max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-        padding: 20px 16px;
-        border-radius: 24px;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .modalHero {
-        min-width: 0;
-        gap: 16px;
-    }
-
-    .modalHero h2 {
-        font-size: clamp(25px, 7vw, 35px);
-        overflow-wrap: anywhere;
-    }
-
-    .modalButtons {
-        gap: 8px;
-    }
-
-    .musicPlayer {
-        left: calc(10px + env(safe-area-inset-left));
-        right: calc(10px + env(safe-area-inset-right));
-        bottom: calc(10px + env(safe-area-inset-bottom));
-        padding: 12px;
-    }
-
-    .playerInfo {
-        flex: 1;
-    }
-
-    .playerControls {
-        gap: 6px;
-    }
-
-    .playerButton {
-        width: 44px;
-        height: 44px;
-    }
-
-    .playerPlay {
-        width: 46px;
-        height: 46px;
-    }
-
-    .fullPlayer {
-        right: calc(12px + env(safe-area-inset-right));
-        left: calc(12px + env(safe-area-inset-left));
-        bottom: calc(12px + env(safe-area-inset-bottom));
-        width: auto;
-        max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .tgPanel {
-        bottom: calc(18px + env(safe-area-inset-bottom));
-    }
-
-    footer {
-        padding-bottom: calc(140px + env(safe-area-inset-bottom));
-    }
-}
-
-@media (max-width: 359px) {
-    .resultGrid,
-    .artistGrid {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .resultCard,
-    .artistCard {
-        padding: 14px;
-    }
-
-    .navbar {
-        padding-inline: calc(10px + env(safe-area-inset-left)) calc(10px + env(safe-area-inset-right));
-    }
-}
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -2127,7 +1778,7 @@ body {
 
 <div class="musicPlayer" id="musicPlayer">
 
-    <img loading="lazy" decoding="async"
+    <img
         class="playerCover"
         id="playerCover"
         src=""
@@ -2272,7 +1923,7 @@ body {
 
     </div>
 
-    <div class="langSwitch" role="group" aria-label="Language" data-no-i18n>
+        <div class="langSwitch" role="group" aria-label="Language" data-no-i18n>
         <button type="button" data-lang="en" onclick="setLanguage('en')" aria-pressed="true">English</button>
         <button type="button" data-lang="fa" onclick="setLanguage('fa')" aria-pressed="false">فارسی</button>
     </div>
@@ -2313,7 +1964,10 @@ body {
 
     <h1>MusicFinder</h1>
 
-    <p>Discover songs, artists and albums.</p>
+    <p>
+        Discover songs, artists and albums.
+        Search your favorite music and explore your personal taste.
+    </p>
 
     <div class="searchBox" id="searchSection">
 
@@ -2461,7 +2115,6 @@ body {
         <p class="modalMuted">
             Music metadata and artwork are provided through Spotify.
         </p>
-
 
     </div>
 
@@ -2843,45 +2496,6 @@ function registerTrackClick(track) {
    SEARCH
 ========================= */
 
-/* ---- speed: search cache, request cancelling, skeletons ---- */
-const searchCache = new Map();
-let searchController = null;
-
-async function cachedSearch(query) {
-    const key = query.toLowerCase();
-    if (searchCache.has(key)) return searchCache.get(key);
-    if (searchController) searchController.abort();
-    const controller = searchController = new AbortController();
-    try {
-        const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
-        if (!response.ok) throw new Error("Search failed");
-        const data = await response.json();
-        searchCache.set(key, data);
-        if (searchCache.size > 30) searchCache.delete(searchCache.keys().next().value);
-        return data;
-    } catch (err) {
-        if (err.name === "AbortError") return null;
-        throw err;
-    }
-}
-
-function skeletonCards(count) {
-    return '<div class="skeletonGrid" aria-busy="true" aria-label="Loading results">' +
-        '<div class="skelCard"><div class="skel skelCover"></div><div class="skel skelLine"></div><div class="skel skelLine short"></div></div>'.repeat(count) +
-        '</div>';
-}
-
-/* broken images -> clean placeholder (never a wrong picture) */
-document.addEventListener("error", e => {
-    const img = e.target;
-    if (!(img instanceof HTMLImageElement) || img.dataset.failed) return;
-    if (!/(cover|artistImage|topResultCover)/.test(img.className) && !img.closest(".featureArtist")) return;
-    img.dataset.failed = "1";
-    const ph = document.createElement("div");
-    ph.className = img.className + " imgPlaceholder";
-    img.replaceWith(ph);
-}, true);
-
 async function performSearch() {
 
     const input =
@@ -2912,7 +2526,21 @@ status.innerHTML = `
     </span>
 `;
 
-results.innerHTML = skeletonCards(8);
+results.innerHTML = `
+    <div class="empty glass searchLoadingBox">
+
+        <span class="loadingText">
+            Finding your music
+        </span>
+
+        <span class="searchLoading">
+            <span></span>
+            <span></span>
+            <span></span>
+        </span>
+
+    </div>
+`;
 
 
 
@@ -2920,8 +2548,15 @@ results.innerHTML = skeletonCards(8);
 
     try {
 
-        const data = await cachedSearch(query);
-        if (data === null) return;   // superseded by a newer search
+        const response = await fetch(
+            `${API_BASE}/search?q=${encodeURIComponent(query)}`
+        );
+
+        if (!response.ok) {
+            throw new Error("Search failed");
+        }
+
+        const data = await response.json();
 
         renderSearchResults(data, query);
 
@@ -3086,7 +2721,7 @@ function trackCard(track) {
 
             ${
                 image
-                ? `<img loading="lazy" decoding="async"
+                ? `<img
                     class="cover"
                     src="${image}"
                     alt=""
@@ -3180,7 +2815,7 @@ function topResultCard(track) {
 
             ${
                 image
-                ? `<img loading="lazy" decoding="async" class="topResultCover" src="${image}" alt="">`
+                ? `<img class="topResultCover" src="${image}" alt="">`
                 : `<div class="topResultCover"></div>`
             }
 
@@ -3259,7 +2894,7 @@ function artistSearchCard(artist) {
 
             ${
                 image
-                ? `<img loading="lazy" decoding="async"
+                ? `<img
                     class="cover"
                     src="${image}"
                     alt=""
@@ -3318,7 +2953,7 @@ function albumCard(album) {
 
             ${
                 image
-                ? `<img loading="lazy" decoding="async"
+                ? `<img
                     class="cover"
                     src="${image}"
                     alt=""
@@ -3642,7 +3277,7 @@ function openTrackFromEncoded(encoded) {
 
             ${
                 image
-                ? `<img loading="lazy" decoding="async" src="${image}" alt="">`
+                ? `<img src="${image}" alt="">`
                 : ""
             }
 
@@ -3887,7 +3522,7 @@ function renderArtistModal(
 
             ${
                 image
-                ? `<img loading="lazy" decoding="async" src="${image}" alt="">`
+                ? `<img src="${image}" alt="">`
                 : ""
             }
 
@@ -4009,7 +3644,7 @@ function renderArtistModal(
                             ${
                                 album.images?.[0]?.url
                                 ? `
-                                    <img loading="lazy" decoding="async"
+                                    <img
                                         src="${album.images[0].url}"
                                         alt=""
                                     >
@@ -4115,7 +3750,7 @@ function renderArtists() {
                     ${
                         image
                         ? `
-                            <img loading="lazy" decoding="async"
+                            <img
                                 class="artistImage"
                                 src="${image}"
                                 alt=""
@@ -4211,7 +3846,7 @@ function renderForYou() {
                 ${
                     artist.image
                     ? `
-                        <img loading="lazy" decoding="async"
+                        <img
                             src="${artist.image}"
                             alt=""
                         >
@@ -4304,7 +3939,7 @@ function renderForYou() {
                                         ${
                                             track.image
                                             ? `
-                                                <img loading="lazy" decoding="async"
+                                                <img
                                                     class="cover"
                                                     src="${track.image}"
                                                     alt=""
@@ -5215,14 +4850,16 @@ function renderGoogleButton() {
 
     if (!area || currentUser || !window.google?.accounts?.id) return;
 
+    const small = window.innerWidth < 700;
+
     area.innerHTML = "";
-    area.classList.add("authAreaGoogle");
 
     google.accounts.id.renderButton(area, {
-        type: "icon",
+        type: small ? "icon" : "standard",
         theme: "filled_black",
         size: "large",
-        shape: "circle"
+        shape: small ? "circle" : "pill",
+        text: "signin_with"
     });
 
 }
@@ -5263,7 +4900,6 @@ function renderAuth() {
 
     if (currentUser) {
 
-        area.classList.remove("authAreaGoogle");
         const firstName = (currentUser.name || "").split(" ")[0];
 
         area.innerHTML = `
@@ -5271,7 +4907,7 @@ function renderAuth() {
 
                 ${
                     currentUser.picture
-                    ? `<img loading="lazy" decoding="async"
+                    ? `<img
                             class="authAvatar"
                             src="${escapeHtml(currentUser.picture)}"
                             alt=""
@@ -5297,7 +4933,6 @@ function renderAuth() {
     }
 
     area.innerHTML = "";
-    area.classList.add("authAreaGoogle");
 
     initGoogleLogin();
 
@@ -5378,18 +5013,14 @@ window.addEventListener("load", () => initGoogleLogin());
 </script>
 
 <script>
-/* Download -> @RegaSpotify_bot (inline bot).
-   Telegram has no official link that opens "Saved Messages" with text inserted (Saved Messages has
-   no username), and a website can't type into the Telegram app. The official mechanism is the
-   share link: it opens Telegram with a ready-made draft and lets the user pick the chat. The draft
-   starts with "@RegaSpotify_bot", which is how Telegram triggers an inline bot's results, so the user
-   picks Saved Messages, sees the bot's results for the song, taps the right one and presses Send.
-   No bot token or Telegram API is used. */
+/* Download -> Telegram bot. Each Download button is a plain link to the bot chat with the
+   song ("Title - Artist") pre-filled as the message text, so Telegram opens natively on desktop
+   and mobile. No bot token or Telegram API is used. */
 /* Change ONLY this line to switch the download bot (username without @) */
 const TG_BOT_USERNAME = "fmusbot";
 const TG_BOT_URL = "https://t.me/" + TG_BOT_USERNAME;
 
-/* The exact draft: "@RegaSpotify_Bot Title - Artist" */
+/* The message text: "Title - Artist" */
 function tgQuery(title, artist) {
     const t = (title || "").trim(), a = (artist || "").trim();
     return `${t}${a ? " - " + a : ""}`;
@@ -5453,7 +5084,7 @@ function showTelegramPanel(query, copied) {
         "MusicFinder remembers what you interact with.":"MusicFinder به یاد می‌سپارد با چه چیزی تعامل داشته‌اید.",
         "Clear Taste":"پاک کردن سلیقه","Clear":"پاک کردن",
         "🎵 Most Explored Songs":"🎵 پربازدیدترین آهنگ‌ها","👤 Most Explored Artists":"👤 پربازدیدترین هنرمندان",
-        "Your recent searches on MusicFinder.":"جستجوهای اخیر شما در MusicFinder.",
+        "Your recent searches on MusicFinder.":"جستجوهای اخیر ش  ا در MusicFinder.",
         "Artists you've discovered through MusicFinder.":"هنرمندانی که در MusicFinder کشف کرده‌اید.",
         "MusicFinder is a personal music discovery project, created by Amirhossein Amini.":"MusicFinder یک پروژه شخصی برای کشف موسیقی است که توسط امیرحسین امینی ساخته شده است.",
         "Music metadata and artwork are provided through Spotify.":"اطلاعات و تصاویر موسیقی از طریق Spotify تأمین می‌شود.",
@@ -5577,7 +5208,6 @@ function showTelegramPanel(query, copied) {
     setLang(saved, false);
 })();
 </script>
-
 <script>
 (() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -5633,6 +5263,5 @@ function showTelegramPanel(query, copied) {
     });
 })();
 </script>
-
 </body>
 </html>

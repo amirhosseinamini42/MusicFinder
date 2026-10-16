@@ -344,21 +344,4 @@ def get_artist_bio(name: str):
         "extract": "",
         "thumbnail": None,
         "url": None,
-    }           "desktop",
-                        {}
-                    )
-                    .get("page")
-                ),
-            }
-
-    except requests.RequestException as error:
-
-        print("Wikipedia error:", error)
-
-    return {
-        "title": name,
-        "description": "",
-        "extract": "",
-        "thumbnail": None,
-        "url": None,
     }

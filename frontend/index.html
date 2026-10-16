@@ -5458,23 +5458,23 @@ function showTelegramPanel(query, copied) {
     /* Add heart / + buttons to search cards, top result and the song modal; translate song blurb */
     function inject() {
         document.querySelectorAll("#searchResults .resultCard .cardActions").forEach(box => {
-            if (box.dataset.mf) return;
+            if (box.dataset.mfDone) return;
             const btn = box.querySelector('[onclick*="currentTracks.find"]'); if (!btn) return;
             const m = (btn.getAttribute("onclick") || "").match(/t\.id === '([^']+)'/); if (!m) return;
             const tr = (window.currentTracks || []).find(x => x.id === m[1]); if (!tr) return;
-            box.dataset.mf = "1";
+            box.dataset.mfDone = "1";
             box.insertAdjacentHTML("beforeend", actionsHtml(tr, "card"));
         });
         document.querySelectorAll("#searchResults .topResultActions").forEach(box => {
-            if (box.dataset.mf) return;
+            if (box.dataset.mfDone) return;
             const tr = (window.currentTracks || [])[0]; if (!tr) return;
-            box.dataset.mf = "1";
+            box.dataset.mfDone = "1";
             box.insertAdjacentHTML("beforeend", actionsHtml(tr, "btn"));
         });
         document.querySelectorAll("#modalBody .modalButtons").forEach(box => {
-            if (box.dataset.mf || !box.querySelector(".playBtn")) return;
+            if (box.dataset.mfDone || !box.querySelector(".playBtn")) return;
             if (typeof currentModalTrack === "undefined" || !currentModalTrack) return;
-            box.dataset.mf = "1";
+            box.dataset.mfDone = "1";
             box.insertAdjacentHTML("beforeend", actionsHtml(currentModalTrack, "btn"));
         });
         document.querySelectorAll("#modalBody .modalText").forEach(p => {

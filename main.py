@@ -8,6 +8,8 @@ import base64
 
 load_dotenv()
 
+from library import router as library_router
+
 app = FastAPI(title="MusicFinder API")
 
 
@@ -23,6 +25,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+app.include_router(library_router)
 
 # =========================
 # SPOTIFY CONFIG
@@ -324,6 +328,23 @@ def get_artist_bio(name: str):
                     )
                     .get(
                         "desktop",
+                        {}
+                    )
+                    .get("page")
+                ),
+            }
+
+    except requests.RequestException as error:
+
+        print("Wikipedia error:", error)
+
+    return {
+        "title": name,
+        "description": "",
+        "extract": "",
+        "thumbnail": None,
+        "url": None,
+    }           "desktop",
                         {}
                     )
                     .get("page")

@@ -1767,6 +1767,34 @@ html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
+<style>
+/* MF-EXTRAS-START */
+/* Keep logo / title branding identical in Persian */
+html[lang="fa"] .logo, html[lang="fa"] .menuTitle { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; direction: ltr; }
+html[lang="fa"] .logo { letter-spacing: -.5px !important; }
+html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style", Georgia, serif; letter-spacing: -2px; direction: ltr; }
+
+.mfIco { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.mfRow { display: flex; gap: 7px; flex: 1 1 100%; }
+.mfRow .smallBtn { flex: 1; }
+.mfFav.on { color: #ff7a90 !important; border-color: rgba(255,122,144,.6) !important; background: rgba(255,90,120,.14) !important; }
+.mfCreate { margin: 0 0 24px; }
+.mfPl { padding: 20px; border-radius: 24px; margin-bottom: 20px; }
+.mfPlHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.mfPlName { font-size: 20px; font-weight: 750; }
+.mfPlMeta { color: var(--muted); font-size: 13px; margin-top: 3px; }
+.mfPlBtns { display: flex; gap: 8px; }
+.mfPlBtns .smallBtn { flex: none; padding: 10px 14px; }
+.mfOverlay { position: fixed; inset: 0; z-index: 1500; background: rgba(0,0,0,.55); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.mfPicker { width: min(420px, 100%); max-height: 80vh; overflow: auto; padding: 22px; border-radius: 24px; background: rgba(24,14,9,.96); border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.mfPicker h4 { margin: 0 0 14px; font-size: 17px; }
+.mfPickItem { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; margin-bottom: 8px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255,255,255,.05); color: var(--text); text-align: start; }
+.mfPickItem.on { border-color: #e0a45a; background: rgba(224,164,90,.16); }
+.mfPickCreate { display: flex; gap: 8px; margin-top: 12px; }
+.mfPickCreate input { flex: 1; min-width: 0; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,.07); color: var(--text); }
+.mfMail { direction: ltr; unicode-bidi: isolate; color: #e0a45a; text-decoration: underline; }
+/* MF-EXTRAS-END */
+</style>
 </head>
 
 <body>
@@ -5074,7 +5102,7 @@ function showTelegramPanel(query, copied) {
 ========================= */
 (function () {
     const KEY = "musicFinderLang";
-    const FA = {
+    const FA = window.MF_FA = {
         "Home":"خانه","Search":"جستجو","For You":"برای شما","Your Music Taste":"سلیقه موسیقی شما",
         "Search History":"تاریخچه جستجو","Artists":"هنرمندان","About MusicFinder":"درباره MusicFinder",
         "Discover songs, artists and albums.":"آهنگ‌ها، هنرمندان و آلبوم‌ها را کشف کنید.",
@@ -5261,6 +5289,389 @@ function showTelegramPanel(query, copied) {
         reveal.classList.add("is-visible");
         revealObserver.unobserve(reveal);
     });
+})();
+</script>
+<script>
+/* MF-EXTRAS-START: Persian fixes, Favorites, Playlists, About email */
+(function () {
+    const MF_EMAIL = "musicfinder.web00@gmail.com";   /* exactly as provided */
+
+    const isFa = () => document.documentElement.lang === "fa";
+    const dig = n => isFa() ? String(n).replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]) : String(n);
+    const esc = v => escapeHtml(v);
+
+    const S = {
+        navFav: ["Favorites", "علاقه‌مندی‌ها"], navPl: ["Playlists", "پلی‌لیست‌ها"],
+        favTitle: ["Favorite Songs", "آهنگ‌های مورد علاقه"],
+        favSub: ["Songs you've saved with the heart button.", "آهنگ‌هایی که با دکمه قلب ذخیره کرده‌اید."],
+        favEmpty: ["No favorite songs yet. Tap the heart on any song.", "هنوز آهنگ مورد علاقه‌ای ندارید. روی قلب کنار هر آهنگ بزنید."],
+        plTitle: ["Playlists", "پلی‌لیست‌ها"],
+        plSub: ["Create playlists and organize your songs.", "پلی‌لیست بسازید و آهنگ‌هایتان را مرتب کنید."],
+        plNewPh: ["New playlist name", "نام پلی‌لیست جدید"], plCreate: ["Create", "ایجاد"],
+        plEmpty: ["No playlists yet. Create your first one above.", "هنوز پلی‌لیستی ندارید. اولین پلی‌لیست را بالا بسازید."],
+        plSongs: [n => n + " songs", n => dig(n) + " آهنگ"],
+        plNoSongs: ["This playlist is empty. Use the + button on a song to add it.", "این پلی‌لیست خالی است. با دکمه + روی هر آهنگ آن را اضافه کنید."],
+        rename: ["Rename", "تغییر نام"], del: ["Delete", "حذف"], remove: ["Remove", "حذف"],
+        playPrev: ["Play Preview", "پخش پیش‌نمایش"], play: ["Play", "پخش"], details: ["Details", "جزئیات"],
+        confirmDel: ["Delete this playlist?", "این پلی‌لیست حذف شود؟"],
+        renamePrompt: ["Playlist name", "نام پلی‌لیست"],
+        favAdd: ["Add to favorites", "افزودن به علاقه‌مندی‌ها"], favRem: ["Remove from favorites", "حذف از علاقه‌مندی‌ها"],
+        addPl: ["Add to playlist", "افزودن به پلی‌لیست"],
+        noPl: ["No playlists yet — create one below.", "هنوز پلی‌لیستی نیست — یکی بسازید."],
+        favSearch: ["Search favorites", "جستجو در علاقه‌مندی‌ها"], sRecent: ["Recently added", "تازه‌ترین"], sTitle: ["Title", "نام آهنگ"], sArtist: ["Artist", "هنرمند"], shuffle: ["Shuffle", "پخش تصادفی"], copyList: ["Copy track list", "کپی فهرست آهنگ‌ها"], copied: ["Copied", "کپی شد"],
+        close: ["Close", "بستن"], contact: ["Contact", "ایمیل"]
+    };
+    const t = (k, ...a) => { const v = S[k][isFa() ? 1 : 0]; return typeof v === "function" ? v(...a) : v; };
+
+    /* ---------- 1. Persian dictionary fixes (extends the existing FA table) ---------- */
+    if (window.MF_FA) {
+        Object.assign(window.MF_FA, {
+            "Discover songs, artists and albums. Search your favorite music and explore your personal taste.": "آهنگ‌ها، هنرمندان و آلبوم‌ها را کشف کنید. موسیقی مورد علاقه‌تان را جستجو کنید و سلیقه موسیقایی خود را بشناسید.",
+            "SONG": "آهنگ",
+            "Download via Telegram": "دانلود از طریق تلگرام",
+            "Your recent searches on MusicFinder.": "جستجوهای اخیر شما در MusicFinder.",
+            "No biography was found for this artist.": "برای این هنرمند زندگی‌نامه‌ای پیدا نشد.",
+            "Wikipedia": "ویکی‌پدیا",
+            "Unknown album": "آلبوم ناشناس"
+        });
+    }
+
+    /* native alerts */
+    const AL = {
+        "Couldn't reach the preview service. Please try again in a minute.": "دسترسی به سرویس پیش‌نمایش ممکن نشد. لطفاً یک دقیقه دیگر دوباره تلاش کنید.",
+        "No preview available for this song": "برای این آهنگ پیش‌نمایشی موجود نیست"
+    };
+    const _alert = window.alert.bind(window);
+    window.alert = m => _alert(isFa() && AL[m] ? AL[m] : m);
+
+    /* Persian artist biography: use fa.wikipedia (exact Persian title via English page langlinks) */
+    const _fetch = window.fetch.bind(window);
+    async function faBio(name) {
+        const j = async u => { const r = await _fetch(u); if (!r.ok) throw new Error("http"); return r.json(); };
+        let title = null;
+        try {
+            const d = await j("https://en.wikipedia.org/w/api.php?action=query&redirects=1&prop=langlinks&lllang=fa&format=json&origin=*&titles=" + encodeURIComponent(name));
+            const pg = Object.values(d.query.pages)[0];
+            title = pg && pg.langlinks && pg.langlinks[0] && pg.langlinks[0]["*"];
+        } catch (e) {}
+        if (!title) return null;
+        try {
+            const s = await j("https://fa.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title.replace(/ /g, "_")));
+            if (!s.extract || s.type === "disambiguation") return null;
+            return {
+                title: s.title, description: s.description || "", extract: s.extract,
+                thumbnail: s.thumbnail && s.thumbnail.source || null,
+                url: s.content_urls && s.content_urls.desktop && s.content_urls.desktop.page || null
+            };
+        } catch (e) { return null; }
+    }
+    window.fetch = async function (input, init) {
+        const url = typeof input === "string" ? input : (input && input.url) || "";
+        if (isFa() && url.includes("/artist-bio?name=")) {
+            try {
+                const name = new URL(url).searchParams.get("name") || "";
+                const bio = await faBio(name);
+                if (bio) return new Response(JSON.stringify(bio), { status: 200, headers: { "Content-Type": "application/json" } });
+            } catch (e) {}
+        }
+        return _fetch(input, init);
+    };
+
+    /* ---------- 2. Storage ---------- */
+    const sfx = () => (typeof currentUser !== "undefined" && currentUser && currentUser.sub) ? "_" + currentUser.sub : "";
+    const FK = () => "musicFinderFavorites" + sfx();
+    const PK = () => "musicFinderPlaylists" + sfx();
+    const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return Array.isArray(v) ? v : d; } catch (e) { return d; } };
+    const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+    const reg = new Map();
+    const keyOf = tr => tr.id || `${tr.name}-${tr.artists && tr.artists[0] && tr.artists[0].name || ""}`;
+    function slim(tr) {
+        if (!tr) return null;
+        const s = {
+            id: tr.id || "", key: keyOf(tr), name: tr.name || "",
+            artists: (tr.artists || []).map(a => ({ id: a.id || "", name: a.name || "" })),
+            album: { name: tr.album && tr.album.name || "", images: (tr.album && tr.album.images && tr.album.images[0] && tr.album.images[0].url) ? [{ url: tr.album.images[0].url }] : [] },
+            external_urls: { spotify: tr.external_urls && tr.external_urls.spotify || "" }
+        };
+        reg.set(s.key, s);
+        return s;
+    }
+
+    function toggleFav(s) {
+        const favs = load(FK(), []);
+        const i = favs.findIndex(x => x.key === s.key);
+        if (i >= 0) favs.splice(i, 1); else favs.unshift(s);
+        save(FK(), favs);
+    }
+    function createPlaylist(name) {
+        name = (name || "").trim().slice(0, 60);
+        if (!name) return null;
+        const pls = load(PK(), []);
+        const pl = { id: "pl" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, songs: [] };
+        pls.push(pl); save(PK(), pls);
+        return pl;
+    }
+    function togglePlSong(plId, key) {
+        const pls = load(PK(), []);
+        const pl = pls.find(p => p.id === plId); const s = reg.get(key);
+        if (!pl || !s) return;
+        const i = pl.songs.findIndex(x => x.key === key);
+        if (i >= 0) pl.songs.splice(i, 1); else pl.songs.push(s);
+        save(PK(), pls);
+    }
+
+    /* ---------- 3. UI building blocks ---------- */
+    const heartSvg = on => `<svg width="16" height="16" viewBox="0 0 24 24" fill="${on ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.5-9.2C1.2 8.6 3 5 6.5 5c2 0 3.5 1.1 5.5 3 2-1.9 3.5-3 5.5-3C21 5 22.8 8.6 21.5 11.8 19.5 16.4 12 21 12 21z"/></svg>`;
+    const plusSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`;
+
+    function actionsHtml(tr, mode) {
+        const s = slim(tr); if (!s) return "";
+        const k = esc(s.key);
+        if (mode === "card") {
+            return `<div class="mfRow"><button type="button" class="smallBtn mfIco mfFav" data-mf="fav" data-key="${k}"></button><button type="button" class="smallBtn mfIco" data-mf="addpl" data-key="${k}"></button></div>`;
+        }
+        return `<button type="button" class="mfIco mfFav" data-mf="fav" data-label="1" data-key="${k}"></button><button type="button" class="mfIco" data-mf="addpl" data-label="1" data-key="${k}"></button>`;
+    }
+
+    function refreshHearts() {
+        const set = new Set(load(FK(), []).map(s => s.key));
+        document.querySelectorAll('[data-mf="fav"]').forEach(b => {
+            const on = set.has(b.dataset.key), sig = (isFa() ? "fa" : "en") + on;
+            if (b.dataset.s === sig) return;
+            b.dataset.s = sig;
+            b.classList.toggle("on", on);
+            const lbl = t(on ? "favRem" : "favAdd");
+            b.innerHTML = heartSvg(on) + (b.dataset.label ? `<span>${lbl}</span>` : "");
+            b.title = lbl; b.setAttribute("aria-label", lbl);
+        });
+        document.querySelectorAll('[data-mf="addpl"]').forEach(b => {
+            const sig = isFa() ? "fa" : "en";
+            if (b.dataset.s === sig) return;
+            b.dataset.s = sig;
+            const lbl = t("addPl");
+            b.innerHTML = plusSvg + (b.dataset.label ? `<span>${lbl}</span>` : "");
+            b.title = lbl; b.setAttribute("aria-label", lbl);
+        });
+    }
+
+    /* Add heart / + buttons to search cards, top result and the song modal; translate song blurb */
+    function inject() {
+        document.querySelectorAll("#searchResults .resultCard .cardActions").forEach(box => {
+            if (box.dataset.mf) return;
+            const btn = box.querySelector('[onclick*="currentTracks.find"]'); if (!btn) return;
+            const m = (btn.getAttribute("onclick") || "").match(/t\.id === '([^']+)'/); if (!m) return;
+            const tr = (window.currentTracks || []).find(x => x.id === m[1]); if (!tr) return;
+            box.dataset.mf = "1";
+            box.insertAdjacentHTML("beforeend", actionsHtml(tr, "card"));
+        });
+        document.querySelectorAll("#searchResults .topResultActions").forEach(box => {
+            if (box.dataset.mf) return;
+            const tr = (window.currentTracks || [])[0]; if (!tr) return;
+            box.dataset.mf = "1";
+            box.insertAdjacentHTML("beforeend", actionsHtml(tr, "btn"));
+        });
+        document.querySelectorAll("#modalBody .modalButtons").forEach(box => {
+            if (box.dataset.mf || !box.querySelector(".playBtn")) return;
+            if (typeof currentModalTrack === "undefined" || !currentModalTrack) return;
+            box.dataset.mf = "1";
+            box.insertAdjacentHTML("beforeend", actionsHtml(currentModalTrack, "btn"));
+        });
+        document.querySelectorAll("#modalBody .modalText").forEach(p => {
+            const raw = p.dataset.mfOrig || p.textContent;
+            const m = raw.replace(/\s+/g, " ").trim().match(/^(.+) is a track by (.+) from the album (.+)\.$/);
+            if (!m) return;
+            if (!p.dataset.mfOrig) p.dataset.mfOrig = raw;
+            const want = isFa() ? `«${m[1]}» اثری از ${m[2]} در آلبوم «${m[3]}» است.` : raw;
+            if (p.textContent !== want) p.textContent = want;
+        });
+        refreshHearts();
+    }
+
+    function songCard(s, ctx, plId) {
+        reg.set(s.key, s);
+        const img = s.album && s.album.images && s.album.images[0] && s.album.images[0].url || "";
+        const k = esc(s.key), c = esc(ctx), p = esc(plId || "");
+        const sp = /^https?:\/\//.test(s.external_urls && s.external_urls.spotify || "") ? s.external_urls.spotify : "";
+        return `<div class="resultCard glass">
+            ${img ? `<img class="cover" src="${esc(img)}" alt="">` : `<div class="cover"></div>`}
+            <div class="cardTitle">${esc(s.name)}</div>
+            <div class="cardArtist">${esc((s.artists || []).map(a => a.name).join(", "))}</div>
+            <div class="cardMeta">${esc(s.album && s.album.name || "")}</div>
+            <div class="cardActions">
+                <button type="button" class="smallBtn primary full" data-mf="play" data-ctx="${c}" data-pl="${p}" data-key="${k}">${t("playPrev")}</button>
+                <button type="button" class="smallBtn" data-mf="details" data-key="${k}">${t("details")}</button>
+                ${sp ? `<a class="smallBtn" href="${esc(sp)}" target="_blank" rel="noopener">Spotify</a>` : ""}
+                <div class="mfRow">
+                    <button type="button" class="smallBtn mfIco mfFav" data-mf="fav" data-key="${k}"></button>
+                    ${ctx === "pl" ? `<button type="button" class="smallBtn" data-mf="rempl" data-pl="${p}" data-key="${k}">${t("remove")}</button>` : `<button type="button" class="smallBtn mfIco" data-mf="addpl" data-key="${k}"></button>`}
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function renderLists() {
+        const favBox = document.getElementById("mfFavList"), plBox = document.getElementById("mfPlList");
+        if (!favBox || !plBox) return;
+        const favs = load(FK(), []);
+        const view = viewFavs(favs);
+        favBox.innerHTML = view.length
+            ? `<div class="resultGrid">${view.map(s => songCard(s, "fav")).join("")}</div>`
+            : `<div class="empty glass">${t("favEmpty")}</div>`;
+        const pls = load(PK(), []);
+        plBox.innerHTML = pls.length ? pls.map(pl => `
+            <div class="mfPl glass">
+                <div class="mfPlHead">
+                    <div><div class="mfPlName">${esc(pl.name)}</div><div class="mfPlMeta">${t("plSongs", pl.songs.length)}</div></div>
+                    <div class="mfPlBtns">
+                        <button type="button" class="smallBtn" data-mf="plshuffle" data-pl="${esc(pl.id)}">${t("shuffle")}</button><button type="button" class="smallBtn" data-mf="plcopy" data-pl="${esc(pl.id)}">${t("copyList")}</button><button type="button" class="smallBtn" data-mf="plren" data-pl="${esc(pl.id)}">${t("rename")}</button>
+                        <button type="button" class="smallBtn" data-mf="pldel" data-pl="${esc(pl.id)}">${t("del")}</button>
+                    </div>
+                </div>
+                ${pl.songs.length ? `<div class="resultGrid">${pl.songs.map(s => songCard(s, "pl", pl.id)).join("")}</div>` : `<div class="empty">${t("plNoSongs")}</div>`}
+            </div>`).join("") : `<div class="empty glass">${t("plEmpty")}</div>`;
+        refreshHearts();
+    }
+
+    /* ---------- 4. Picker (add song to playlist) ---------- */
+    let pickerKey = null;
+    function renderPicker() {
+        const ov = document.getElementById("mfOverlay"); if (!ov) return;
+        const pls = load(PK(), []);
+        const sel = new Set(pls.filter(p => p.songs.some(s => s.key === pickerKey)).map(p => p.id));
+        ov.innerHTML = `<div class="mfPicker glass" role="dialog" aria-label="${t("addPl")}">
+            <h4>${t("addPl")}</h4>
+            ${pls.length ? pls.map(p => `<button type="button" class="mfPickItem ${sel.has(p.id) ? "on" : ""}" data-mf="pltoggle" data-pl="${esc(p.id)}"><span>${esc(p.name)}</span><span>${sel.has(p.id) ? "✓" : "+"}</span></button>`).join("") : `<p class="modalMuted">${t("noPl")}</p>`}
+            <div class="mfPickCreate"><input id="mfPickIn" maxlength="60" placeholder="${t("plNewPh")}"><button type="button" class="smallBtn primary" style="flex:none;padding:0 16px" data-mf="pickcreate">${t("plCreate")}</button></div>
+            <div style="margin-top:12px"><button type="button" class="smallBtn" style="width:100%" data-mf="pickclose">${t("close")}</button></div>
+        </div>`;
+    }
+    function openPicker(key) {
+        pickerKey = key;
+        let ov = document.getElementById("mfOverlay");
+        if (!ov) { ov = document.createElement("div"); ov.id = "mfOverlay"; ov.className = "mfOverlay"; ov.dataset.mf = "overlay"; document.body.appendChild(ov); }
+        renderPicker();
+        const inp = document.getElementById("mfPickIn"); if (inp) inp.focus();
+    }
+    function closePicker() { const ov = document.getElementById("mfOverlay"); if (ov) ov.remove(); pickerKey = null; }
+
+    /* ---------- 5. Events ---------- */
+    const update = () => { renderLists(); refreshHearts(); };
+    document.addEventListener("click", e => {
+        const b = e.target.closest("[data-mf]"); if (!b) return;
+        const a = b.dataset.mf, key = b.dataset.key, plId = b.dataset.pl;
+        if (a === "overlay") { if (e.target === b) closePicker(); return; }
+        e.stopPropagation();
+        const song = key ? reg.get(key) : null;
+        if (a === "pickclose") closePicker();
+        else if (a === "fav" && song) { toggleFav(song); update(); }
+        else if (a === "addpl" && song) openPicker(key);
+        else if (a === "pltoggle") { togglePlSong(plId, pickerKey); renderPicker(); update(); }
+        else if (a === "pickcreate") {
+            const inp = document.getElementById("mfPickIn"); const pl = createPlaylist(inp && inp.value);
+            if (pl) { togglePlSong(pl.id, pickerKey); renderPicker(); update(); }
+        }
+        else if (a === "plcreate") {
+            const inp = document.getElementById("mfPlName");
+            if (createPlaylist(inp && inp.value)) { inp.value = ""; update(); }
+        }
+        else if (a === "plren") {
+            const pls = load(PK(), []); const pl = pls.find(p => p.id === plId); if (!pl) return;
+            const name = (prompt(t("renamePrompt"), pl.name) || "").trim().slice(0, 60);
+            if (name) { pl.name = name; save(PK(), pls); update(); }
+        }
+        else if (a === "pldel") {
+            if (!confirm(t("confirmDel"))) return;
+            save(PK(), load(PK(), []).filter(p => p.id !== plId)); update();
+        }
+        else if (a === "rempl") { togglePlSong(plId, key); update(); }
+        else if (a === "plshuffle" || a === "plcopy") {
+            const songs = ((load(PK(), []).find(p => p.id === plId) || {}).songs || []);
+            if (!songs.length) return;
+            if (a === "plshuffle") {
+                const q = songs.slice(); for (let i = q.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [q[i], q[j]] = [q[j], q[i]]; }
+                playMusicFinderSong(q[0], q);
+            } else {
+                const txt = songs.map((x, i) => `${i + 1}. ${x.name} - ${(x.artists || []).map(a => a.name).join(", ")}`).join("\n");
+                Promise.resolve(typeof copyText === "function" ? copyText(txt) : navigator.clipboard.writeText(txt)).then(() => { const o = b.textContent; b.textContent = t("copied"); setTimeout(() => { b.textContent = o; }, 1500); });
+            }
+        }
+        else if ((a === "play" || a === "fullplay" || a === "details") && song) {
+            if (a === "details") { openTrackFromEncoded(encodeSafe(JSON.stringify(song))); return; }
+            const list = b.dataset.ctx === "pl" ? ((load(PK(), []).find(p => p.id === plId) || {}).songs || [song]) : load(FK(), []);
+            playMusicFinderSong(song, list.length ? list : [song]);
+        }
+    }, true);
+    function viewFavs(favs) {
+        const q = ((document.getElementById("mfFavQ") || {}).value || "").trim().toLowerCase();
+        const mode = (document.getElementById("mfFavSort") || {}).value || "recent";
+        const nm = x => (x.artists || []).map(a => a.name).join(", ");
+        let out = q ? favs.filter(x => (x.name + " " + nm(x)).toLowerCase().includes(q)) : favs.slice();
+        if (mode === "title") out.sort((a, b) => a.name.localeCompare(b.name));
+        else if (mode === "artist") out.sort((a, b) => nm(a).localeCompare(nm(b)));
+        return out;
+    }
+    document.addEventListener("input", e => { if (e.target.id === "mfFavQ") renderLists(); });
+    document.addEventListener("change", e => { if (e.target.id === "mfFavSort") renderLists(); });
+    document.addEventListener("keydown", e => {
+        if (e.key !== "Enter") return;
+        if (e.target.id === "mfPlName") document.querySelector('[data-mf="plcreate"]').click();
+        else if (e.target.id === "mfPickIn") document.querySelector('[data-mf="pickcreate"]').click();
+    });
+
+    /* ---------- 6. Sections, menu, About email ---------- */
+    function build() {
+        if (document.getElementById("favorites")) return;
+        const hist = document.getElementById("history");
+        const fav = document.createElement("section");
+        fav.className = "section"; fav.id = "favorites";
+        fav.innerHTML = `<div class="sectionHeader"><div><h2 class="sectionTitle" data-t="favTitle"></h2><p class="sectionSubtitle" data-t="favSub"></p></div></div><div class="searchBox mfCreate"><input id="mfFavQ" data-tph="favSearch" autocomplete="off"><select id="mfFavSort" style="background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:0 12px"><option value="recent" data-t="sRecent"></option><option value="title" data-t="sTitle"></option><option value="artist" data-t="sArtist"></option></select></div><div id="mfFavList"></div>`;
+        const pl = document.createElement("section");
+        pl.className = "section"; pl.id = "playlists";
+        pl.innerHTML = `<div class="sectionHeader"><div><h2 class="sectionTitle" data-t="plTitle"></h2><p class="sectionSubtitle" data-t="plSub"></p></div></div>
+            <div class="searchBox mfCreate"><input id="mfPlName" maxlength="60" data-tph="plNewPh" autocomplete="off"><button type="button" class="searchBtn" data-mf="plcreate" data-t="plCreate"></button></div>
+            <div id="mfPlList"></div>`;
+        hist.before(fav, pl);
+
+        const after = [...document.querySelectorAll(".menuItem")].find(x => (x.getAttribute("onclick") || "").includes("'taste'"));
+        if (after) {
+            const mk = (id, target, key) => { const x = document.createElement("button"); x.className = "menuItem"; x.id = id; x.setAttribute("onclick", `goTo('${target}')`); x.dataset.t = key; return x; };
+            const f = mk("mfMenuFav", "favorites", "navFav"), p = mk("mfMenuPl", "playlists", "navPl");
+            after.after(f); f.after(p);
+        }
+    }
+    function renderEmail() {
+        const host = document.querySelector("#about .glass"); if (!host) return;
+        let p = document.getElementById("mfEmail");
+        if (!p) { p = document.createElement("p"); p.id = "mfEmail"; p.className = "modalMuted"; host.appendChild(p); }
+        p.innerHTML = `${t("contact")}: <a class="mfMail" href="mailto:${esc(MF_EMAIL)}">${esc(MF_EMAIL)}</a>`;
+    }
+    function applyStatic() {
+        document.querySelectorAll("[data-t]").forEach(x => { x.textContent = t(x.dataset.t); });
+        document.querySelectorAll("[data-tph]").forEach(x => { x.placeholder = t(x.dataset.tph); });
+    }
+    function renderAll() {
+        applyStatic(); renderEmail(); renderLists(); inject();
+        if (document.getElementById("mfOverlay")) renderPicker();
+    }
+
+    build();
+    renderAll();
+
+    new MutationObserver(renderAll).observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+    ["searchResults", "modalBody"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) new MutationObserver(inject).observe(el, { childList: true, subtree: true });
+    });
+
+    /* per-account data: re-render when the user signs in / out */
+    if (typeof window.refreshAccountData === "function") {
+        const orig = window.refreshAccountData;
+        window.refreshAccountData = function () { orig(); renderAll(); };
+    }
+
+    /* re-run translation so the dictionary fixes apply if the page loaded in Persian */
+    if (isFa() && typeof window.setLanguage === "function") window.setLanguage("fa");
 })();
 </script>
 </body>

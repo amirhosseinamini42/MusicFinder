@@ -4719,7 +4719,8 @@ function playFullSong(song) {
 
     if (!song) return;
 
-    // One player at a time: stop and hide the preview player
+    // One audio source at a time: cancel any preview still loading, then stop and hide the preview player
+    playerLoadId++;
     musicAudio.pause();
     musicPlayer.classList.remove("active");
 
@@ -5765,6 +5766,7 @@ function showTelegramPanel(query, copied) {
         };
         list.unshift(entry);
         jset(LK(), list.slice(0, 300));
+        if (window.mfCloud && window.mfCloud.logListen) window.mfCloud.logListen(entry);
         renderRecent();
         renderTaste();
         renderForYou();
@@ -5921,10 +5923,10 @@ function showTelegramPanel(query, copied) {
     window.clearTaste = function () {
         _clear();
         if (localStorage.getItem(TASTE_KEY) === null) { try { localStorage.removeItem(LK()); } catch (e) {} recSig = ""; renderRecent(); renderTaste(); renderForYou(); }
+        if (window.mfCloud && window.mfCloud.clearHistory) window.mfCloud.clearHistory();
     };
 
     /* ================= One shared player: every "Full"/Play path uses the same controller ================= */
-    window.playFullSong = function (song) { if (song) playMusicFinderSong(song, [song]); };
     try { closeFullPlayer(); } catch (e) {}
 
     /* ================= Cloud library (library.py) ================= */
@@ -5953,7 +5955,7 @@ function showTelegramPanel(query, copied) {
         try { sessionStorage.setItem("mfIdTok", JSON.stringify({ t, exp })); } catch (e) {}
         setTimeout(sync, 0);
     };
-    window.mfClearToken = () => { tok = null; tokExp = 0; ready = false; favIds = new Set(); plSnap = new Map(); try { sessionStorage.removeItem("mfIdTok"); } catch (e) {} };
+    window.mfClearToken = () => { tok = null; tokExp = 0; ready = false; histReady = false; favIds = new Set(); plSnap = new Map(); try { sessionStorage.removeItem("mfIdTok"); } catch (e) {} };
 
     async function api(method, path, body) {
         const r = await fetch(`${API_BASE}/library${path}`, {
@@ -5978,6 +5980,34 @@ function showTelegramPanel(query, copied) {
         if (code === "session_expired" || code === "auth_required") { ready = false; tok = null; }
         setDirty(true);
         note(MSG[code] || `Couldn't reach the cloud library (${code}). Changes are saved on this device and will retry.`);
+    }
+
+    /* ----- listening history (library.py /history). Local stays the fallback if the cloud is unavailable ----- */
+    let histReady = false;
+    const hKey = e => e.id + "|" + Date.parse(e.at);
+    const toListen = e => ({ id: e.id, name: e.name || "", artists: (e.artists || []).map(a => ({ id: a.id || "", name: a.name || "" })), image: e.image || "", spotify: e.spotify || "", at: e.at });
+    const clearKey = () => "mfClearPending_" + sub();
+    async function syncHistory() {
+        histReady = false;
+        try {
+            if (localStorage.getItem(clearKey())) { await api("DELETE", "/history"); localStorage.removeItem(clearKey()); }
+            let cloud = (await api("GET", "/history?limit=300")).history || [];
+            const have = new Set(cloud.map(hKey));
+            const missing = listens().filter(e => e && e.id && e.at && !have.has(hKey(e)));
+            if (missing.length) {
+                await api("POST", "/history/merge", { history: missing.slice(0, 300).map(toListen) });
+                cloud = (await api("GET", "/history?limit=300")).history || [];
+            }
+            const cloudKeys = new Set(cloud.map(hKey));
+            const extra = listens().filter(e => e && e.id && e.at && !cloudKeys.has(hKey(e)));   // played while syncing
+            jset(LK(), cloud.concat(extra).sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 300));
+            histReady = true;
+            renderRecent(); renderTaste(); renderForYou();
+        } catch (e) {
+            note(e.code === "storage_failed" || e.code === "http_404"
+                ? "Listening history can't be saved to the cloud yet (the mf_listens table or /library/history route is missing on the server). It is kept on this device."
+                : (MSG[e.code] || "Couldn't sync listening history (" + (e.code || "network") + "). It is kept on this device."));
+        }
     }
 
     async function sync() {
@@ -6008,6 +6038,7 @@ function showTelegramPanel(query, copied) {
             favIds = new Set(cf.map(s => s.id));
             plSnap = new Map(cp.map(pl => [pl.id, plHash(pl)]));
             ready = true; state = "ok";
+            await syncHistory();
             if (typeof window.refreshAccountData === "function") window.refreshAccountData();
         } catch (e) { fail(e); }
         syncing = false;
@@ -6033,6 +6064,15 @@ function showTelegramPanel(query, copied) {
     }
 
     window.mfCloud = {
+        logListen(entry) {
+            if (!ready || !histReady || !valid()) return;      // stays local; merged on the next sync
+            chain = chain.then(() => api("POST", "/history", toListen(entry)).catch(() => {}));
+        },
+        clearHistory() {
+            if (!sub()) return;
+            if (ready && histReady && valid()) chain = chain.then(() => api("DELETE", "/history").catch(() => { try { localStorage.setItem(clearKey(), "1"); } catch (e) {} }));
+            else { try { localStorage.setItem(clearKey(), "1"); } catch (e) {} }
+        },
         onSave(key) {
             if (!sub() || (key !== FKEY() && key !== PKEY())) return;
             if (ready) { clearTimeout(pt); pt = setTimeout(() => { chain = chain.then(push); }, 400); }

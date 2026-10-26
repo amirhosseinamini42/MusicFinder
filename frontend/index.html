@@ -2188,6 +2188,26 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 
 
 
+/* Safety net: no network request may hang forever (infinite loading states) */
+(function () {
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+        init = init || {};
+        if (init.signal) return nativeFetch(input, init);
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 25000);
+        return nativeFetch(input, Object.assign({}, init, { signal: ctl.signal })).finally(() => clearTimeout(timer));
+    };
+    /* Missing or broken artwork: hide the broken-image icon instead of showing it */
+    document.addEventListener("error", e => { if (e.target && e.target.tagName === "IMG") e.target.style.visibility = "hidden"; }, true);
+    document.addEventListener("load", e => { if (e.target && e.target.tagName === "IMG") e.target.style.visibility = ""; }, true);
+})();
+
+async function okJson(response) {
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    return response.json();
+}
+
 const BASE_TASTE_KEY = "musicFinderTasteV3";
 const BASE_HISTORY_KEY = "musicFinderSearchHistory";
 const USER_KEY = "musicFinderUser";
@@ -3447,7 +3467,7 @@ async function openArtist(artist) {
             );
 
         const artistData =
-            await artistResponse.json();
+            await okJson(artistResponse);
 
 
         const albumsResponse =
@@ -3456,7 +3476,7 @@ async function openArtist(artist) {
             );
 
         const albumsData =
-            await albumsResponse.json();
+            await okJson(albumsResponse);
 
 
         const bioResponse =

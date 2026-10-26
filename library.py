@@ -13,6 +13,7 @@ Listening history ("Your Music Taste", Recently Played, For You) is stored per u
 
 Env: GOOGLE_CLIENT_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
 """
+import json
 import os
 import re
 import time
@@ -23,7 +24,7 @@ from typing import Any, List, Optional
 
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 router = APIRouter(prefix="/library", tags=["library"])
 
@@ -101,6 +102,13 @@ class Song(BaseModel):
     external_urls: dict = Field(default_factory=dict)
     preview_url: Optional[str] = None
     added_at: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _bounded(self):
+        # artists/album/external_urls are free-form dicts: cap the stored size per song
+        if len(json.dumps(self.model_dump(), default=str)) > 8000:
+            raise ValueError("song payload too large")
+        return self
 
 
 class PlaylistIn(BaseModel):

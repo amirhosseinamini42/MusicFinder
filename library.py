@@ -32,6 +32,7 @@ MAX_TRACKS = 500
 MAX_FAVORITES = 5000
 MAX_HISTORY = 1000            # listens kept per user (oldest are trimmed)
 _token_cache: dict = {}
+_http = requests.Session()      # pooled connections to Google / Supabase (avoids a new TLS handshake per call)
 
 
 def err(status: int, code: str):
@@ -51,7 +52,7 @@ def current_user(authorization: Optional[str] = Header(default=None)) -> str:
     if hit and hit[1] > time.time():
         return hit[0]
     try:
-        r = requests.get("https://oauth2.googleapis.com/tokeninfo", params={"id_token": token}, timeout=10)
+        r = _http.get("https://oauth2.googleapis.com/tokeninfo", params={"id_token": token}, timeout=10)
     except requests.RequestException:
         raise err(502, "auth_unavailable")
     if r.status_code != 200:
@@ -80,7 +81,7 @@ def _db(method: str, table: str, params: Optional[dict] = None, json: Any = None
     if not base or not key:
         raise err(503, "cloud_not_configured")
     try:
-        r = requests.request(
+        r = _http.request(
             method, f"{base.rstrip('/')}/rest/v1/{table}", params=params, json=json, timeout=15,
             headers={"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json", "Prefer": prefer},
         )

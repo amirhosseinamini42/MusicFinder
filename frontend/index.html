@@ -69,7 +69,6 @@ body::before {
     position: fixed;
     inset: 0;
     pointer-events: none;
-    backdrop-filter: blur(35px);
     z-index: -1;
 }
 
@@ -109,7 +108,7 @@ a {
         opacity 1s ease,
         transform 1.2s ease;
 
-    will-change: background-image, opacity, transform;
+    will-change: opacity, transform;
 }
 
 .backgroundOverlay {
@@ -382,7 +381,7 @@ main {
 .glass {
     background: rgba(255,255,255,.065);
     border: 1px solid var(--border);
-    backdrop-filter: blur(25px);
+    backdrop-filter: blur(10px);
     box-shadow: 0 25px 80px rgba(0,0,0,.15);
 }
 
@@ -1576,6 +1575,7 @@ body::after {
         radial-gradient(ellipse 60% 45% at 92% 108%, rgba(160,56,56,.30), transparent 72%),
         radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0,0,0,.4) 100%);
     animation: lampBreathe 14s ease-in-out infinite;
+    will-change: opacity;
 }
 
 body::selection, ::selection { background: rgba(214,138,58,.4); }
@@ -2560,6 +2560,9 @@ function registerTrackClick(track) {
    SEARCH
 ========================= */
 
+let _searchCtl = null;
+const _searchCache = new Map();      // query -> Spotify JSON (public data only, session lifetime)
+
 async function performSearch() {
 
     const input =
@@ -2568,6 +2571,9 @@ async function performSearch() {
     const query = input.value.trim();
 
     if (!query) return;
+
+    if (_searchCtl) _searchCtl.abort();          // a newer search supersedes any in-flight one
+    const ctl = _searchCtl = new AbortController();
 
     const resultsSection =
         document.getElementById("resultsSection");
@@ -2612,15 +2618,26 @@ results.innerHTML = `
 
     try {
 
-        const response = await fetch(
-            `${API_BASE}/search?q=${encodeURIComponent(query)}`
-        );
+        const ckey = query.toLowerCase();
+        let data = _searchCache.get(ckey);
 
-        if (!response.ok) {
-            throw new Error("Search failed");
+        if (!data) {
+            const response = await fetch(
+                `${API_BASE}/search?q=${encodeURIComponent(query)}`,
+                { signal: ctl.signal }
+            );
+
+            if (!response.ok) {
+                throw new Error("Search failed");
+            }
+
+            data = await response.json();
+
+            if (_searchCache.size >= 30) _searchCache.delete(_searchCache.keys().next().value);
+            _searchCache.set(ckey, data);
         }
 
-        const data = await response.json();
+        if (ctl !== _searchCtl) return;          // stale response, drop it
 
         renderSearchResults(data, query);
 
@@ -2630,6 +2647,8 @@ results.innerHTML = `
         });
 
     } catch (error) {
+
+        if (error && error.name === "AbortError" && ctl !== _searchCtl) return;   // superseded, not a failure
 
         console.error(error);
 
@@ -2785,7 +2804,7 @@ function trackCard(track) {
 
             ${
                 image
-                ? `<img
+                ? `<img loading="lazy" decoding="async"
                     class="cover"
                     src="${image}"
                     alt=""
@@ -2879,7 +2898,7 @@ function topResultCard(track) {
 
             ${
                 image
-                ? `<img class="topResultCover" src="${image}" alt="">`
+                ? `<img class="topResultCover" decoding="async" src="${image}" alt="">`
                 : `<div class="topResultCover"></div>`
             }
 
@@ -2958,7 +2977,7 @@ function artistSearchCard(artist) {
 
             ${
                 image
-                ? `<img
+                ? `<img loading="lazy" decoding="async"
                     class="cover"
                     src="${image}"
                     alt=""
@@ -3017,7 +3036,7 @@ function albumCard(album) {
 
             ${
                 image
-                ? `<img
+                ? `<img loading="lazy" decoding="async"
                     class="cover"
                     src="${image}"
                     alt=""
@@ -3708,7 +3727,7 @@ function renderArtistModal(
                             ${
                                 album.images?.[0]?.url
                                 ? `
-                                    <img
+                                    <img loading="lazy" decoding="async"
                                         src="${album.images[0].url}"
                                         alt=""
                                     >
@@ -3814,7 +3833,7 @@ function renderArtists() {
                     ${
                         image
                         ? `
-                            <img
+                            <img loading="lazy" decoding="async"
                                 class="artistImage"
                                 src="${image}"
                                 alt=""
@@ -3911,7 +3930,7 @@ function renderForYou() {
                 ${
                     artist.image
                     ? `
-                        <img
+                        <img loading="lazy" decoding="async"
                             src="${artist.image}"
                             alt=""
                         >
@@ -4004,7 +4023,7 @@ function renderForYou() {
                                         ${
                                             track.image
                                             ? `
-                                                <img
+                                                <img loading="lazy" decoding="async"
                                                     class="cover"
                                                     src="${track.image}"
                                                     alt=""
@@ -5545,7 +5564,7 @@ function showTelegramPanel(query, copied) {
         const k = esc(s.key), c = esc(ctx), p = esc(plId || "");
         const sp = /^https?:\/\//.test(s.external_urls && s.external_urls.spotify || "") ? s.external_urls.spotify : "";
         return `<div class="resultCard glass">
-            ${img ? `<img class="cover" src="${esc(img)}" alt="">` : `<div class="cover"></div>`}
+            ${img ? `<img loading="lazy" decoding="async" class="cover" src="${esc(img)}" alt="">` : `<div class="cover"></div>`}
             <div class="cardTitle">${esc(s.name)}</div>
             <div class="cardArtist">${esc((s.artists || []).map(a => a.name).join(", "))}</div>
             <div class="cardMeta">${esc(s.album && s.album.name || "")}</div>
@@ -5933,7 +5952,7 @@ function showTelegramPanel(query, copied) {
         box.innerHTML = (title ? `<p class="sectionSubtitle" style="margin-bottom:12px">${esc(title)}</p>` : "") + `<div class="forYouGrid">` + out.map((o, i) => {
             const t = o.x, img = t.album?.images?.[0]?.url || "", artist = (t.artists || []).map(a => a.name).join(", ");
             const enc = encodeSafe(JSON.stringify({ id: t.id, name: t.name, artist: t.artists?.[0]?.name || "", image: img, external_urls: { spotify: t.external_urls?.spotify || "" }, artists: (t.artists || []).map(a => ({ id: a.id, name: a.name })), album: { images: img ? [{ url: img }] : [] } }));
-            return `<div class="resultCard glass" onclick="openTrackFromEncoded('${enc}')">${img ? `<img class="cover" src="${esc(img)}" alt="">` : ""}<div class="cardTitle">${esc(t.name)}</div><div class="cardArtist">${esc(artist)}</div><div class="cardMeta">${esc(o.why)}</div><button class="smallBtn mfRecPlay" onclick="event.stopPropagation();mfPlayRec(${i})">▶ Play</button></div>`;
+            return `<div class="resultCard glass" onclick="openTrackFromEncoded('${enc}')">${img ? `<img loading="lazy" decoding="async" class="cover" src="${esc(img)}" alt="">` : ""}<div class="cardTitle">${esc(t.name)}</div><div class="cardArtist">${esc(artist)}</div><div class="cardMeta">${esc(o.why)}</div><button class="smallBtn mfRecPlay" onclick="event.stopPropagation();mfPlayRec(${i})">▶ Play</button></div>`;
         }).join("") + `</div>`;
     };
     window.mfPlayRec = i => { const q = window.mfRecs || []; if (q[i]) playMusicFinderSong(q[i], q); };

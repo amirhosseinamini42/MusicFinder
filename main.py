@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from dotenv import load_dotenv
 from urllib.parse import quote
 import os
@@ -7,6 +8,7 @@ import requests
 import base64
 import re
 import time
+import threading
 
 load_dotenv()
 
@@ -28,6 +30,8 @@ app.add_middleware(
 )
 
 
+app.add_middleware(GZipMiddleware, minimum_size=800)   # JSON search/library payloads compress well
+
 app.include_router(library_router)
 
 # =========================
@@ -39,6 +43,46 @@ CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
 
 _spotify_token = {"value": None, "expires": 0.0}      # reuse the token instead of fetching one per request
 _SPOTIFY_ID = re.compile(r"^[A-Za-z0-9]{1,40}$")
+
+
+# =========================
+# PERFORMANCE HELPERS
+# =========================
+# One pooled HTTP session: reuses TCP/TLS connections to Spotify/Jamendo/Wikipedia
+# instead of a fresh handshake per request.
+_http = requests.Session()
+_http.headers.update({"Accept-Encoding": "gzip, deflate"})
+
+# Small in-memory TTL cache for PUBLIC provider data only (search, artist, albums, bio).
+# Never used for user-specific data or anything containing secrets.
+_cache = {}
+_cache_lock = threading.Lock()
+_CACHE_MAX = 500
+
+
+def _cache_get(key):
+    with _cache_lock:
+        hit = _cache.get(key)
+        if hit and hit[0] > time.time():
+            return hit[1]
+        if hit:
+            _cache.pop(key, None)
+    return None
+
+
+def _cache_set(key, value, ttl):
+    with _cache_lock:
+        if len(_cache) >= _CACHE_MAX:
+            now = time.time()
+            for k in [k for k, v in _cache.items() if v[0] <= now]:
+                _cache.pop(k, None)
+            if len(_cache) >= _CACHE_MAX:
+                _cache.clear()
+        _cache[key] = (time.time() + ttl, value)
+    return value
+
+
+_token_lock = threading.Lock()
 
 
 def _upstream_error(error, message):
@@ -53,6 +97,15 @@ def get_access_token():
 
     if _spotify_token["value"] and _spotify_token["expires"] > time.time():
         return _spotify_token["value"]
+
+    with _token_lock:
+        # another request may have refreshed the token while we waited
+        if _spotify_token["value"] and _spotify_token["expires"] > time.time():
+            return _spotify_token["value"]
+        return _fetch_access_token()
+
+
+def _fetch_access_token():
 
     if not CLIENT_ID or not CLIENT_SECRET:
         raise HTTPException(
@@ -70,7 +123,7 @@ def get_access_token():
 
     try:
 
-        response = requests.post(
+        response = _http.post(
             "https://accounts.spotify.com/api/token",
             headers={
                 "Authorization": f"Basic {auth_base64}",
@@ -159,9 +212,14 @@ def jamendo_search(q: str):
     if not JAMENDO_CLIENT_ID:
         raise HTTPException(status_code=503, detail="Jamendo is not configured.")
 
+    ckey = ("jamendo", query.lower())
+    cached = _cache_get(ckey)
+    if cached is not None:
+        return cached
+
     try:
 
-        response = requests.get(
+        response = _http.get(
             "https://api.jamendo.com/v3.0/tracks/",
             params={
                 "client_id": JAMENDO_CLIENT_ID,
@@ -175,7 +233,7 @@ def jamendo_search(q: str):
 
         response.raise_for_status()
 
-        return response.json()
+        return _cache_set(ckey, response.json(), 300)
 
     except (requests.RequestException, ValueError) as error:
 
@@ -200,11 +258,16 @@ def search_music(q: str):
             detail="Search query cannot be empty."
         )
 
+    ckey = ("search", q.strip().lower())
+    cached = _cache_get(ckey)
+    if cached is not None:
+        return cached
+
     token = get_access_token()
 
     try:
 
-        response = requests.get(
+        response = _http.get(
             "https://api.spotify.com/v1/search",
             headers={
                 "Authorization": f"Bearer {token}"
@@ -219,7 +282,7 @@ def search_music(q: str):
 
         response.raise_for_status()
 
-        return response.json()
+        return _cache_set(ckey, response.json(), 300)
 
     except requests.RequestException as error:
 
@@ -238,12 +301,16 @@ def get_artist(artist_id: str):
     if not _SPOTIFY_ID.match(artist_id):
         raise HTTPException(status_code=400, detail="Invalid artist id.")
 
+    ckey = ("artist", artist_id)
+    cached = _cache_get(ckey)
+    if cached is not None:
+        return cached
 
     token = get_access_token()
 
     try:
 
-        response = requests.get(
+        response = _http.get(
             f"https://api.spotify.com/v1/artists/{artist_id}",
             headers={
                 "Authorization": f"Bearer {token}"
@@ -257,7 +324,7 @@ def get_artist(artist_id: str):
 
         images = data.get("images", [])
 
-        return {
+        return _cache_set(ckey, {
             "id": data.get("id"),
             "name": data.get("name"),
             "genres": data.get("genres", []),
@@ -272,7 +339,7 @@ def get_artist(artist_id: str):
                     {}
                 ).get("spotify")
             ),
-        }
+        }, 3600)
 
     except requests.RequestException as error:
 
@@ -291,12 +358,16 @@ def get_artist_albums(artist_id: str):
     if not _SPOTIFY_ID.match(artist_id):
         raise HTTPException(status_code=400, detail="Invalid artist id.")
 
+    ckey = ("albums", artist_id)
+    cached = _cache_get(ckey)
+    if cached is not None:
+        return cached
 
     token = get_access_token()
 
     try:
 
-        response = requests.get(
+        response = _http.get(
             f"https://api.spotify.com/v1/artists/{artist_id}/albums",
             headers={
                 "Authorization": f"Bearer {token}"
@@ -310,7 +381,7 @@ def get_artist_albums(artist_id: str):
 
         response.raise_for_status()
 
-        return response.json()
+        return _cache_set(ckey, response.json(), 1800)
 
     except requests.RequestException as error:
 
@@ -326,6 +397,11 @@ def get_artist_albums(artist_id: str):
 @app.get("/artist-bio")
 def get_artist_bio(name: str):
 
+    ckey = ("bio", name.strip()[:200].lower())
+    cached = _cache_get(ckey)
+    if cached is not None:
+        return cached
+
     wikipedia_url = (
         "https://en.wikipedia.org/api/rest_v1/page/summary/"
         + quote(name.strip()[:200].replace(" ", "_"))
@@ -333,7 +409,7 @@ def get_artist_bio(name: str):
 
     try:
 
-        response = requests.get(
+        response = _http.get(
             wikipedia_url,
             headers={
                 "User-Agent": "MusicFinder/1.0"
@@ -345,7 +421,7 @@ def get_artist_bio(name: str):
 
             data = response.json()
 
-            return {
+            return _cache_set(ckey, {
                 "title": data.get("title"),
                 "description": data.get("description"),
                 "extract": data.get("extract"),
@@ -366,7 +442,7 @@ def get_artist_bio(name: str):
                     )
                     .get("page")
                 ),
-            }
+            }, 21600)
 
     except requests.RequestException as error:
 

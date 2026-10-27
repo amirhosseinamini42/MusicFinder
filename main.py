@@ -391,6 +391,81 @@ def get_artist_albums(artist_id: str):
 
 
 # =========================
+# ALBUM (details + full tracklist)
+# =========================
+
+@app.get("/album/{album_id}")
+def get_album(album_id: str):
+
+    if not _SPOTIFY_ID.match(album_id):
+        raise HTTPException(status_code=400, detail="Invalid album id.")
+
+    ckey = ("album", album_id)
+    cached = _cache_get(ckey)
+    if cached is not None:
+        return cached
+
+    token = get_access_token()
+    headers = {"Authorization": f"Bearer {token}"}
+
+    try:
+
+        response = _http.get(
+            f"https://api.spotify.com/v1/albums/{album_id}",
+            headers=headers,
+            timeout=20,
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        page = data.get("tracks") or {}
+        items = list(page.get("items") or [])
+        nxt = page.get("next")
+        pages = 0
+
+        # albums with more than 50 tracks are paginated; only follow Spotify's own URLs
+        while nxt and pages < 6 and nxt.startswith("https://api.spotify.com/"):
+            more = _http.get(nxt, headers=headers, timeout=20)
+            more.raise_for_status()
+            body = more.json()
+            items += body.get("items") or []
+            nxt = body.get("next")
+            pages += 1
+
+        def _artists(lst):
+            return [{"id": a.get("id"), "name": a.get("name")} for a in (lst or [])]
+
+        return _cache_set(ckey, {
+            "id": data.get("id"),
+            "name": data.get("name"),
+            "album_type": data.get("album_type"),
+            "release_date": data.get("release_date"),
+            "total_tracks": data.get("total_tracks"),
+            "label": data.get("label"),
+            "images": [{"url": i.get("url")} for i in (data.get("images") or [])[:3]],
+            "artists": _artists(data.get("artists")),
+            "external_urls": data.get("external_urls") or {},
+            "tracks": [{
+                "id": t.get("id"),
+                "name": t.get("name"),
+                "track_number": t.get("track_number"),
+                "disc_number": t.get("disc_number"),
+                "duration_ms": t.get("duration_ms"),
+                "explicit": t.get("explicit", False),
+                "preview_url": t.get("preview_url"),
+                "artists": _artists(t.get("artists")),
+                "external_urls": t.get("external_urls") or {},
+            } for t in items if t and t.get("id")],
+        }, 3600)
+
+    except (requests.RequestException, ValueError) as error:
+
+        print("Spotify album error:", error)
+
+        raise _upstream_error(error, "Could not load album.")
+
+
+# =========================
 # ARTIST BIO
 # =========================
 

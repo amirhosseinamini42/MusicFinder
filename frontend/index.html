@@ -1795,6 +1795,19 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 .mfMail { direction: ltr; unicode-bidi: isolate; color: #e0a45a; text-decoration: underline; }
 /* MF-EXTRAS-END */
 </style>
+<style>
+/* Phase 5.1: player launcher + empty / busy states */
+.navButton{display:inline-flex;align-items:center;justify-content:center;padding:0;position:relative}
+.navButton.live::after{content:"";position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;background:#e0a45a}
+html[dir=rtl] .navButton.live::after{right:auto;left:9px}
+.navButton:focus-visible{outline:2px solid #e0a45a;outline-offset:3px}
+.np.empty .npFrame{display:none}
+.np.empty .npBody{margin:26px 0}
+.np.empty .npTitle{font-size:clamp(20px,3.4vw,30px);font-weight:650;color:var(--muted)}
+.lq:disabled{opacity:.45;cursor:default;pointer-events:none}
+.npBars input:disabled{cursor:default}
+.np[aria-busy="true"] .npBars{opacity:.55}
+</style>
 </head>
 
 <body>
@@ -1930,6 +1943,7 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 
     <div class="navRight">
         <div class="authArea" id="authArea"></div>
+        <button class="navButton" id="npOpen" type="button" aria-label="Player" title="Player" aria-haspopup="dialog" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
         <button class="menuButton" onclick="openMenu()">☰</button>
     </div>
 
@@ -4485,6 +4499,15 @@ async function getPreviewSources(song) {
 const SILENT_AUDIO =
     "data:audio/wav;base64,UklGRoQJAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWAJAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA=";
 
+/* Single status flag for the CURRENT load (loading | ready | error | unavailable).
+   Playing / paused / ended are always derived from the real audio element. */
+function mfSetStatus(s, why) {
+    const c = window.__mfCurrent;
+    if (!c) return;
+    c.status = s; c.why = why || "";
+    if (window.mfPlayerSync) window.mfPlayerSync();
+}
+
 let playerLoadId = 0;
 
 async function loadPlayerSong(song, autoPlay = false) {
@@ -4492,7 +4515,7 @@ async function loadPlayerSong(song, autoPlay = false) {
 
     const loadId = ++playerLoadId;
     musicAudio.pause();
-    window.__mfCurrent = { song, loadId, logged: false };
+    window.__mfCurrent = { song, loadId, logged: false, status: "loading", why: "" };
 
     /*
        iOS Safari only allows audio.play() when it is called
@@ -4511,6 +4534,8 @@ async function loadPlayerSong(song, autoPlay = false) {
         song.artists?.map(a => a.name).join(", ") || "Unknown Artist";
     playerCover.src = song.album?.images?.[0]?.url || "";
     musicPlayer.classList.add("active");
+    playerProgress.value = 0; playerCurrentTime.textContent = "0:00"; playerDuration.textContent = "0:00";
+    if (window.mfPlayerSync) window.mfPlayerSync();
 
     const sources = await getPreviewSources(song);
 
@@ -4518,6 +4543,7 @@ async function loadPlayerSong(song, autoPlay = false) {
     if (loadId !== playerLoadId) return;
 
     if (!sources.length) {
+        mfSetStatus("unavailable", lastPreviewError || "nomatch");
         musicAudio.pause();
         setPlayerPlaying(false);
         alert(
@@ -4538,8 +4564,11 @@ async function loadPlayerSong(song, autoPlay = false) {
         musicAudio.play()
             .then(() => { setPlayerPlaying(true); })
             .catch(error => {
+                if (loadId !== playerLoadId) return;      // superseded by a newer song
                 console.error("Playback failed:", error);
                 setPlayerPlaying(false);
+                const blocked = error && (error.name === "NotAllowedError" || error.name === "AbortError");
+                mfSetStatus(blocked ? "ready" : "error", "play_rejected");
             });
     } else {
         setPlayerPlaying(false);
@@ -4550,6 +4579,9 @@ async function loadPlayerSong(song, autoPlay = false) {
 /* Play / Pause */
 
 playerPlay.addEventListener("click", () => {
+
+    const _c = window.__mfCurrent;
+    if (_c && (_c.status === "error" || _c.status === "unavailable")) { loadPlayerSong(_c.song, true); return; }   // retry
 
     if (!musicAudio.src || isUnlockSound()) {
         return;
@@ -4590,6 +4622,7 @@ musicAudio.addEventListener("error", () => {
     }
 
     console.error("Audio failed to load:", musicAudio.error);
+    mfSetStatus("error", "audio");
 
     setPlayerPlaying(false);
     playerArtist.textContent = "Couldn't play this preview";
@@ -4607,6 +4640,7 @@ musicAudio.addEventListener("timeupdate", () => {
 
     const progress =
         (musicAudio.currentTime / musicAudio.duration) * 100;
+    if (isUnlockSound()) return;
 
     playerProgress.value = progress;
 
@@ -4619,6 +4653,7 @@ musicAudio.addEventListener("timeupdate", () => {
 /* Duration */
 
 musicAudio.addEventListener("loadedmetadata", () => {
+    if (isUnlockSound()) return;
 
     playerDuration.textContent =
         formatPlayerTime(musicAudio.duration);
@@ -4768,6 +4803,8 @@ function playFullSong(song) {
     playerLoadId++;
     musicAudio.pause();
     musicPlayer.classList.remove("active");
+    window.__mfCurrent = null;                     // the Spotify embed is separate; do not show stale preview metadata
+    if (window.mfPlayerSync) window.mfPlayerSync();
 
     const panel = document.getElementById("fullPlayer");
     const body = document.getElementById("fullPlayerBody");
@@ -6273,7 +6310,11 @@ html[dir=rtl] .alHdr .alD{text-align:start}
   if (window.MF_FA) Object.assign(window.MF_FA, {
     "ALBUM": "آلبوم", "Back": "بازگشت", "Shuffle": "پخش تصادفی", "Repeat": "تکرار", "Previous": "قبلی", "Next": "بعدی", "Seek": "جابه‌جایی",
     "PLAYING": "در حال پخش", "PAUSED": "متوقف", "Open album": "باز کردن آلبوم", "Title": "عنوان", "Loading album...": "در حال بارگذاری آلبوم...",
-    "Could not load this album.": "بارگذاری این آلبوم ممکن نشد.", "Retry": "تلاش دوباره", "Now playing": "در حال پخش", "About the artist": "درباره هنرمند"
+    "Could not load this album.": "بارگذاری این آلبوم ممکن نشد.", "Retry": "تلاش دوباره", "Now playing": "در حال پخش", "About the artist": "درباره هنرمند",
+    "Not Playing": "در حال پخش نیست", "Loading…": "در حال بارگذاری…", "Playing": "در حال پخش", "Paused": "متوقف", "Ended": "پایان یافت",
+    "Playback Error": "خطای پخش", "Preview Unavailable": "پیش‌نمایش در دسترس نیست", "Nothing selected yet": "هنوز آهنگی انتخاب نشده", "Player": "پخش‌کننده",
+    "No preview is available for this song.": "برای این آهنگ پیش‌نمایشی موجود نیست.", "Couldn't reach the preview service.": "دسترسی به سرویس پیش‌نمایش ممکن نشد.",
+    "This preview couldn't be played.": "این پیش‌نمایش پخش نشد."
   });
 
   /* ---------- album link helper used by cards / modal ---------- */
@@ -6374,7 +6415,7 @@ html[dir=rtl] .alHdr .alD{text-align:start}
   }
 
   function markPlaying() {
-    const s = cur(), playing = !musicAudio.paused;
+    const s = cur(), playing = pstate() === "playing";
     document.querySelectorAll("#alList .alRow").forEach(r => { const on = !!s && r.dataset.id === s.id; r.classList.toggle("on", on); r.classList.toggle("playing", on && playing); });
   }
 
@@ -6389,23 +6430,52 @@ html[dir=rtl] .alHdr .alD{text-align:start}
     let v = .5; barEls = [];
     for (let i = 0; i < BN; i++) { v = Math.min(1, Math.max(.15, v + (rnd() - .5) * .45)); const b = document.createElement("i"); b.style.height = Math.round(v * 100) + "%"; bars.insertBefore(b, range); barEls.push(b); }
   }
+  const LBL = { idle: "Not Playing", loading: "Loading…", playing: "Playing", paused: "Paused", ended: "Ended", error: "Playback Error", unavailable: "Preview Unavailable" };
+  function pstate() {
+    const c = window.__mfCurrent;
+    if (!c || !c.song) return "idle";
+    if (c.status === "loading" || c.status === "error" || c.status === "unavailable") return c.status;
+    if (musicAudio.ended) return "ended";
+    return musicAudio.paused ? "paused" : "playing";
+  }
+  window.mfPlayerState = pstate;
   function syncNP() {
-    const s = cur(); if (!s) return;
-    const playing = !musicAudio.paused;
-    np.classList.toggle("playing", playing);
-    $("npState").textContent = playing ? "PLAYING" : "PAUSED";
-    $("npPlay").innerHTML = playing ? PAUSE : PLAY; $("npPlay").setAttribute("aria-label", playing ? "Pause" : "Play");
-    $("npTitle").textContent = s.name || ""; $("npArtist").textContent = (s.artists || []).map(a => a.name).join(", ");
-    const img = s.album?.images?.[0]?.url || ""; if ($("npArt").getAttribute("src") !== img) $("npArt").src = img;
-    $("npAlbum").innerHTML = mfAlbumLink(s.album);
-    $("npOpenAlbum").hidden = !s.album?.id; $("npOpenAlbum").dataset.id = s.album?.id || "";
-    makeBars(s.id || s.name);
-    const d = musicAudio.duration, t = musicAudio.currentTime || 0, ok = Number.isFinite(d) && d > 0;
+    const st = pstate(), c = window.__mfCurrent, s = st === "idle" ? null : c.song;
+    const lb = $("npOpen"); if (lb) lb.classList.toggle("live", st === "playing");
+    if (!np.classList.contains("open")) return;
+    const live = !!s, busy = st === "loading", seekable = st === "playing" || st === "paused" || st === "ended";
+    np.classList.toggle("playing", st === "playing"); np.classList.toggle("empty", !live);
+    np.setAttribute("aria-busy", String(busy));
+    $("npState").textContent = LBL[st];
+    const pl = $("npPlay");
+    pl.innerHTML = st === "playing" ? PAUSE : PLAY; pl.setAttribute("aria-label", st === "playing" ? "Pause" : "Play");
+    pl.disabled = !live || busy; $("npPrev").disabled = $("npNext").disabled = !live;
+    $("npTitle").textContent = s ? (s.name || "") : "Nothing selected yet";
+    $("npArtist").textContent = s ? (s.artists || []).map(a => a.name).join(", ") : "";
+    const img = (s && s.album?.images?.[0]?.url) || "";
+    if (img) { if ($("npArt").getAttribute("src") !== img) $("npArt").src = img; } else $("npArt").removeAttribute("src");
+    const msg = st === "unavailable" ? (c.why === "network" ? "Couldn't reach the preview service." : "No preview is available for this song.")
+      : st === "error" ? "This preview couldn't be played." : "";
+    const key = msg || (s ? "a:" + (s.album?.id || "") + (s.album?.name || "") : "");
+    const al = $("npAlbum");
+    if (al.dataset.k !== key) { al.dataset.k = key; if (msg) al.textContent = msg; else al.innerHTML = s ? mfAlbumLink(s.album) : ""; }
+    $("npOpenAlbum").hidden = !(s && s.album?.id); $("npOpenAlbum").dataset.id = (s && s.album?.id) || "";
+    makeBars(s ? (s.id || s.name) : "idle");
+    const d = musicAudio.duration, ok = seekable && Number.isFinite(d) && d > 0, t = seekable ? (musicAudio.currentTime || 0) : 0;
     const p = ok ? t / d : 0, n = Math.round(p * BN);
     barEls.forEach((b, i) => b.classList.toggle("on", i < n));
+    range.disabled = !ok;
     if (document.activeElement !== range) range.value = Math.round(p * 1000);
     $("npCur").textContent = formatPlayerTime(t); $("npRem").textContent = ok ? "-" + formatPlayerTime(d - t) : "-0:00";
   }
+  window.mfPlayerSync = () => { markPlaying(); syncNP(); };
+  /* real audio events drive the state (the silent iOS unlock clip is ignored) */
+  const silent = () => (musicAudio.getAttribute("src") || "").startsWith("data:");
+  const realReady = () => !silent() && musicAudio.readyState >= 3;
+  musicAudio.addEventListener("playing", () => { const c = window.__mfCurrent; if (c && c.status === "loading" && realReady()) mfSetStatus("ready"); else syncNP(); });
+  musicAudio.addEventListener("canplay", () => { const c = window.__mfCurrent; if (c && c.status === "loading" && musicAudio.paused && realReady()) mfSetStatus("ready"); });
+  musicAudio.addEventListener("waiting", () => { const c = window.__mfCurrent; if (c && c.status === "ready" && !silent() && !musicAudio.paused) mfSetStatus("loading"); });
+  ["play", "pause", "ended", "emptied"].forEach(ev => musicAudio.addEventListener(ev, () => window.mfPlayerSync()));
   function favBtn() {
     const s = cur(), slot = $("npFavSlot"); if (!s || !window.mfSlim) { slot.innerHTML = ""; return; }
     const sl = window.mfSlim({ id: s.id, name: s.name, artists: s.artists, album: s.album, external_urls: s.external_urls });
@@ -6413,12 +6483,14 @@ html[dir=rtl] .alHdr .alD{text-align:start}
     window.mfRefreshHearts && window.mfRefreshHearts();
   }
   function openNP() {
-    if (!cur()) return;
-    lastNPFocus = document.activeElement; favBtn(); syncNP(); setOpen(np, true); lockScroll(); $("npClose").focus({ preventScroll: true });
+    
+    lastNPFocus = document.activeElement; favBtn(); syncNP(); setOpen(np, true); lockScroll(); $("npClose").focus({ preventScroll: true }); { const b = $("npOpen"); if (b) b.setAttribute("aria-expanded", "true"); }
   }
   let lastNPFocus = null;
-  function closeNP() { if (!np.classList.contains("open")) return; setOpen(np, false); lockScroll(); try { lastNPFocus && lastNPFocus.focus({ preventScroll: true }); } catch (e) {} }
+  function closeNP() { if (!np.classList.contains("open")) return; setOpen(np, false); lockScroll(); { const b = $("npOpen"); if (b) b.setAttribute("aria-expanded", "false"); } try { lastNPFocus && lastNPFocus.focus({ preventScroll: true }); } catch (e) {} }
   $("npClose").onclick = closeNP;
+  $("npOpen").onclick = () => np.classList.contains("open") ? closeNP() : openNP();
+  np.addEventListener("click", e => { if (e.target === np) closeNP(); });
   $("npPlay").onclick = () => playerPlay.click();
   $("npPrev").onclick = () => playerPrevious.click();
   $("npNext").onclick = () => playerNext.click();
@@ -6445,7 +6517,7 @@ html[dir=rtl] .alHdr .alD{text-align:start}
     if (!top) return;
     if (e.key === "Escape") { e.preventDefault(); top === np ? closeNP() : closeAlbum(false); return; }
     if (e.key === "Tab") {
-      const f = [...top.querySelectorAll("button:not([hidden]),a[href],input,[tabindex='0']")].filter(x => x.offsetParent !== null);
+      const f = [...top.querySelectorAll("button:not([hidden]):not([disabled]),a[href],input:not([disabled]),[tabindex='0']")].filter(x => x.offsetParent !== null);
       if (!f.length) return;
       const first = f[0], last = f[f.length - 1];
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
@@ -6454,7 +6526,7 @@ html[dir=rtl] .alHdr .alD{text-align:start}
   });
   /* artist-modal discography cards -> album page (keyboard + mouse) */
   document.addEventListener("keydown", e => { const c = e.target.closest && e.target.closest(".albumCard[role=button]"); if (c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); c.click(); } });
-  syncToggles();
+  syncToggles(); syncNP();
 })();
 </script>
 

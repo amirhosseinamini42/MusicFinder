@@ -258,6 +258,7 @@ a {
 }
 
 .menuItem {
+    position: relative;
     width: 100%;
     padding: 16px;
     margin-bottom: 10px;
@@ -267,6 +268,29 @@ a {
     background: rgba(255,255,255,.045);
     color: white;
     transition: .2s;
+}
+
+.menuItem::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 7px;
+    height: 2px;
+    border-radius: 999px;
+    background: #9a5b35;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform .28s ease;
+}
+
+.menuItem:hover::after,
+.menuItem:focus-visible::after {
+    transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .menuItem::after { transition: none; }
 }
 
 .menuItem:hover {
@@ -1213,10 +1237,24 @@ main {
     margin-top: 15px;
 }
 
-.albumCard {  
-  padding: 10px;
+.albumCard {
+    padding: 10px;
     border-radius: 16px;
     background: rgba(255,255,255,.045);
+    cursor: pointer;
+    transition: transform .25s ease, background .25s ease, box-shadow .25s ease;
+}
+
+.albumCard:hover,
+.albumCard:focus-visible {
+    transform: translateY(-5px);
+    background: rgba(255,255,255,.11);
+    box-shadow: 0 15px 30px rgba(0,0,0,.24);
+    outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .albumCard { transition: none; }
 }
 
 .albumCard img {
@@ -2024,6 +2062,10 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
         Artists
     </button>
 
+    <button class="menuItem" onclick="goTo('albums')">
+        Albums
+    </button>
+
     <button class="menuItem" onclick="goTo('about')">
         About MusicFinder
     </button>
@@ -2171,6 +2213,21 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 
 </section>
 
+<section class="section" id="albums">
+
+    <div class="sectionHeader">
+        <div>
+            <h2 class="sectionTitle">Albums</h2>
+            <p class="sectionSubtitle">Albums you discover through MusicFinder.</p>
+        </div>
+    </div>
+
+    <div class="albumGrid" id="albumGrid">
+        <div class="empty glass">Search for music to build your album library.</div>
+    </div>
+
+</section>
+
 <section class="section" id="about">
 
     <div class="glass" style="padding:30px;border-radius:28px;">
@@ -2210,6 +2267,13 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 
     </div>
 
+</div>
+
+<div class="modalOverlay" id="albumOverlay" onclick="closeAlbum(event)">
+    <div class="modal" id="albumModal">
+        <button class="modalClose" type="button" onclick="closeAlbum()" aria-label="Close">×</button>
+        <div id="albumBody"></div>
+    </div>
 </div>
 
 <script>
@@ -2756,12 +2820,19 @@ function renderSearchResults(data, query) {
 
     }
 
-    container.innerHTML = html;
+  container.innerHTML = html;
+  renderAlbumLibrary(albums);
 
-}
+  }
+
+  function renderAlbumLibrary(albums) {
+    const container = document.getElementById("albumGrid");
+    if (!container) return;
+    container.innerHTML = albums.length ? albums.map(albumCard).join("") : `<div class="empty glass">Search for music to build your album library.</div>`;
+  }
 
 
-function trackCard(track) {
+  function trackCard(track) {
 
     const image =
         track.album?.images?.[0]?.url ||
@@ -3021,11 +3092,11 @@ function albumCard(album) {
 
     return `
 
-        <div class="resultCard glass">
+        <div class="resultCard glass" style="cursor:pointer" tabindex="0" role="button" onclick="openAlbum('${escapeHtml(album.id || "")}')" onkeydown="if(event.key==='Enter' || event.key===' '){event.preventDefault();openAlbum('${escapeHtml(album.id || "")}')}">
 
             ${
                 image
-                ? `<img
+                ? `<img loading="lazy" decoding="async"
                     class="cover"
                     src="${image}"
                     alt=""
@@ -3047,10 +3118,16 @@ function albumCard(album) {
 
             <div class="cardActions">
 
+                <button class="smallBtn primary" type="button" onclick="event.stopPropagation();openAlbum('${escapeHtml(album.id || "")}')">
+                    Details
+                </button>
+
                 <a
-                    class="smallBtn primary"
+                    class="smallBtn"
                     href="${spotify}"
                     target="_blank"
+                    rel="noopener noreferrer"
+                    onclick="event.stopPropagation()"
                 >
                     Open Spotify
                 </a>
@@ -3450,6 +3527,64 @@ function openTrackFromEncoded(encoded) {
 
 
 /* =========================
+   ALBUM DETAILS
+========================= */
+
+async function openAlbum(id) {
+    if (!id) return;
+    const overlay = document.getElementById("albumOverlay");
+    const body = document.getElementById("albumBody");
+    body.innerHTML = `<div class="empty">Loading album details...</div>`;
+    overlay.classList.add("open");
+    try {
+        const response = await fetch(`${API_BASE}/album/${encodeURIComponent(id)}`);
+        if (!response.ok) throw new Error("Album request failed");
+        const album = await response.json();
+        const tracks = album.tracks || [];
+        const image = album.images?.[0]?.url || "";
+        const artistNames = (album.artists || []).map(artist => artist.name).join(", ");
+        const spotify = album.external_urls?.spotify || "#";
+        body.innerHTML = `
+            <div class="modalHero">
+                ${image ? `<img src="${escapeHtml(image)}" alt="">` : ""}
+                <div>
+                    <div class="modalMuted">${escapeHtml((album.album_type || "album").toUpperCase())}</div>
+                    <h2>${escapeHtml(album.name || "Album")}</h2>
+                    <p class="modalMuted">${escapeHtml(artistNames)}${album.release_date ? ` · ${escapeHtml(album.release_date.slice(0, 4))}` : ""}</p>
+                </div>
+            </div>
+            <div class="modalButtons">
+                <button class="primary" type="button" onclick="playAlbumTracks()">Play preview</button>
+                <a href="${spotify}" target="_blank" rel="noopener noreferrer">Open Spotify</a>
+            </div>
+            <div class="albumTrackList">
+                ${tracks.length ? tracks.map((track, index) => `
+                    <button class="albumTrack" type="button" onclick="playAlbumTrack(${index})">
+                        <span>${index + 1}</span><strong>${escapeHtml(track.name)}</strong><small>${escapeHtml((track.artists || []).map(artist => artist.name).join(", "))}</small>
+                    </button>
+                `).join("") : `<div class="empty">No tracks found.</div>`}
+            </div>`;
+        window.currentAlbumTracks = tracks;
+    } catch (error) {
+        body.innerHTML = `<div class="empty">Could not load this album.</div>`;
+    }
+}
+
+function closeAlbum(event) {
+    if (event && event.target !== event.currentTarget) return;
+    document.getElementById("albumOverlay").classList.remove("open");
+}
+
+function playAlbumTrack(index) {
+    const track = window.currentAlbumTracks?.[index];
+    if (track) playTrack(track, window.currentAlbumTracks);
+}
+
+function playAlbumTracks() {
+    if (window.currentAlbumTracks?.length) playTrack(window.currentAlbumTracks[0], window.currentAlbumTracks);
+}
+
+/* =========================
    ARTIST MODAL
 ========================= */
 
@@ -3713,7 +3848,7 @@ function renderArtistModal(
                     albums.length
                     ? albums.map(album => `
 
-                        <div class="albumCard">
+                        <div class="albumCard" role="button" tabindex="0" onclick="openAlbum('${escapeHtml(album.id || "")}')" onkeydown="if(event.key==='Enter' || event.key===' '){event.preventDefault();openAlbum('${escapeHtml(album.id || "")}')}">
 
                             ${
                                 album.images?.[0]?.url
@@ -5177,7 +5312,7 @@ function showTelegramPanel(query, copied) {
         "Check that the MusicFinder server is running.":"بررسی کنید که سرور MusicFinder در حال اجراست.",
         "Close":"بستن","Copy":"کپی","Could not load artist information.":"اطلاعات هنرمند بارگذاری نشد.",
         "Details":"جزئیات","Discography":"آثار و آلبوم‌ها","Download":"دانلود","Download Search":"جستجوی دانلود",
-        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق ت  گرام",
+        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق ت  گرا��",
         "Explore":"کاوش","Explore Artist":"کاوش هنرمند",
         "Loading artist information...":"در حال بارگذاری اطلاعات هنرمند...","Loading...":"در حال بارگذاری...",
         "Loading results":"در حال بارگذاری نتایج","Album cover":"جلد آلبوم",

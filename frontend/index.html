@@ -1371,18 +1371,27 @@ footer {
 
 .musicPlayer::before {
     background:
-        radial-gradient(circle at 8% 115%, rgba(255, 104, 22, .30), transparent 34%),
-        radial-gradient(circle at 92% -20%, rgba(130, 62, 255, .28), transparent 38%),
-        linear-gradient(105deg, rgba(34, 10, 54, .86), rgba(13, 9, 25, .90));
+        linear-gradient(105deg, rgba(10, 7, 14, .42), rgba(10, 7, 14, .88)),
+        url("assets/player-halloween-pumpkins.png") left center / cover no-repeat,
+        linear-gradient(105deg, #2b120b, #0d0919);
+    background-blend-mode: multiply, normal, normal;
+    animation: playerHalloweenGlow 12s ease-in-out infinite alternate;
 }
 
 .musicPlayer::after {
-    opacity: .25;
-    background-image:
-        radial-gradient(circle, rgba(255, 155, 68, .55) 0 1px, transparent 1.5px),
-        radial-gradient(circle, rgba(176, 112, 255, .45) 0 1px, transparent 1.5px);
-    background-position: 0 0, 12px 16px;
-    background-size: 28px 28px, 36px 36px;
+    opacity: .28;
+    background:
+        radial-gradient(circle at 12% 70%, rgba(255, 142, 43, .42), transparent 24%),
+        linear-gradient(90deg, transparent 0 42%, rgba(4, 3, 8, .62) 78%);
+}
+
+@keyframes playerHalloweenGlow {
+    from { filter: saturate(.92) brightness(.84); }
+    to { filter: saturate(1.08) brightness(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .musicPlayer::before { animation: none; }
 }
 
 .playerCover {

@@ -255,6 +255,7 @@ a {
 }
 
 .menuItem {
+    position: relative;
     width: 100%;
     padding: 16px;
     margin-bottom: 10px;
@@ -270,6 +271,33 @@ a {
     background: rgba(255,255,255,.10);
     border-color: var(--border);
     transform: translateX(-3px);
+}
+
+/* Thin animated brown underline under the menu label on hover / keyboard focus */
+.menuItem::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 7px;
+    height: 2px;
+    border-radius: 999px;
+    background: #9a5b35;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform .28s ease;
+    pointer-events: none;
+}
+
+.menuItem:hover::after,
+.menuItem:focus-visible::after {
+    transform: scaleX(1);
+}
+
+html[dir="rtl"] .menuItem::after { transform-origin: right center; }
+
+@media (prefers-reduced-motion: reduce) {
+    .menuItem::after { transition: none; }
 }
 
 /* =========================
@@ -1210,10 +1238,41 @@ main {
     margin-top: 15px;
 }
 
-.albumCard {  
-  padding: 10px;
+.albumCard {
+    padding: 10px;
     border-radius: 16px;
     background: rgba(255,255,255,.045);
+    cursor: pointer;
+    transition: transform .25s ease, background .25s ease, box-shadow .25s ease;
+}
+
+.albumCard:hover,
+.albumCard:focus-visible {
+    background: rgba(255,255,255,.11);
+    box-shadow: 0 15px 30px rgba(0,0,0,.24);
+}
+
+/* Albums section: cards lift on hover like the other result cards */
+#albumGrid .resultCard:hover,
+#albumGrid .resultCard:focus-visible {
+    box-shadow: 0 18px 38px rgba(0,0,0,.28);
+}
+
+/* The scroll-reveal rule (html.motion-ready .motion-reveal.is-visible) outranks the plain
+   .resultCard:hover lift, so re-assert the hover lift for album cards with matching specificity. */
+html.motion-ready #albumGrid .motion-reveal.is-visible:hover,
+html.motion-ready #albumGrid .motion-reveal.is-visible:focus-visible {
+    transform: translate3d(0, -5px, 0) scale(1);
+    transition:
+        transform .25s ease,
+        opacity 700ms cubic-bezier(.22, 1, .36, 1),
+        background .25s ease,
+        box-shadow .25s ease;
+    transition-delay: 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .albumCard { transition: none; }
 }
 
 .albumCard img {
@@ -1347,6 +1406,310 @@ footer {
 .musicPlayer.active {
     transform: translateY(0);
     opacity: 1;
+}
+
+/* Halloween atmosphere: glowing jack-o'-lanterns + warm orange light, clipped inside the player.
+   Pure decoration (pointer-events: none); controls sit above it. */
+.musicPlayer {
+    isolation: isolate;
+    overflow: hidden;
+}
+
+.musicPlayer::before,
+.musicPlayer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.musicPlayer > * {
+    position: relative;
+    z-index: 1;
+}
+
+.musicPlayer::before {
+    background:
+        linear-gradient(90deg, rgba(8,5,12,.78) 0%, rgba(8,5,12,.45) 55%, rgba(8,5,12,.08) 100%),
+        url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MjAgMTIwIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWluWU1pZCBzbGljZSI+CjxkZWZzPgo8cmFkaWFsR3JhZGllbnQgaWQ9InNreSIgY3g9IjIyJSIgY3k9Ijg1JSIgcj0iNzUlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiM3YTJhMDciLz48c3RvcCBvZmZzZXQ9Ii40NSIgc3RvcC1jb2xvcj0iIzJhMTAwOCIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzBhMDcxMCIvPjwvcmFkaWFsR3JhZGllbnQ+CjxyYWRpYWxHcmFkaWVudCBpZD0iYm9keSIgY3g9IjQwJSIgY3k9IjMyJSIgcj0iNzUlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZmIzNDciLz48c3RvcCBvZmZzZXQ9Ii4zNSIgc3RvcC1jb2xvcj0iI2U4NjkxYSIvPjxzdG9wIG9mZnNldD0iLjc1IiBzdG9wLWNvbG9yPSIjOWMzNTA4Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjM2QxMzA0Ii8+PC9yYWRpYWxHcmFkaWVudD4KPHJhZGlhbEdyYWRpZW50IGlkPSJpbm5lciIgY3g9IjUwJSIgY3k9IjU1JSIgcj0iNjAlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZmYzYTAiLz48c3RvcCBvZmZzZXQ9Ii41IiBzdG9wLWNvbG9yPSIjZmZiNTJlIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmY2YTAwIi8+PC9yYWRpYWxHcmFkaWVudD4KPHJhZGlhbEdyYWRpZW50IGlkPSJmbG9vciIgY3g9IjUwJSIgY3k9IjUwJSIgcj0iNTAlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZjhhMmEiIHN0b3Atb3BhY2l0eT0iLjU1Ii8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZmY4YTJhIiBzdG9wLW9wYWNpdHk9IjAiLz48L3JhZGlhbEdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InN0ZW0iIHgxPSIwIiB4Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMmMyNDEwIi8+PHN0b3Agb2Zmc2V0PSIuNSIgc3RvcC1jb2xvcj0iIzViNGEyMiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzFlMTgwYSIvPjwvbGluZWFyR3JhZGllbnQ+CjxmaWx0ZXIgaWQ9Imdsb3ciIHg9Ii02MCUiIHk9Ii02MCUiIHdpZHRoPSIyMjAlIiBoZWlnaHQ9IjIyMCUiPjxmZUdhdXNzaWFuQmx1ciBzdGREZXZpYXRpb249IjMuMiIvPjwvZmlsdGVyPgo8ZmlsdGVyIGlkPSJzb2Z0Ij48ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIxLjEiLz48L2ZpbHRlcj4KCjxsaW5lYXJHcmFkaWVudCBpZD0id2V0IiB4MT0iMCIgeTE9IjAiIHgyPSIwIiB5Mj0iMSI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjMWEwZDBhIiBzdG9wLW9wYWNpdHk9IjAiLz48c3RvcCBvZmZzZXQ9Ii4zIiBzdG9wLWNvbG9yPSIjMTQwYTBjIiBzdG9wLW9wYWNpdHk9Ii44NSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzA3MDUwYiIgc3RvcC1vcGFjaXR5PSIuOTUiLz48L2xpbmVhckdyYWRpZW50Pgo8bGluZWFyR3JhZGllbnQgaWQ9InJlZmwiIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3AtY29sb3I9IiNmZmEwMzAiIHN0b3Atb3BhY2l0eT0iLjciLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZjdhMTAiIHN0b3Atb3BhY2l0eT0iMCIvPjwvbGluZWFyR3JhZGllbnQ+CjxmaWx0ZXIgaWQ9InJibHVyIiB4PSItMzAlIiB5PSItMzAlIiB3aWR0aD0iMTYwJSIgaGVpZ2h0PSIxNjAlIj48ZmVHYXVzc2lhbkJsdXIgc3RkRGV2aWF0aW9uPSIyLjQgNSIvPjwvZmlsdGVyPgo8bGluZWFyR3JhZGllbnQgaWQ9Im1nIiB4MT0iMCIgeDI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZiIgc3RvcC1vcGFjaXR5PSIwIi8+PHN0b3Agb2Zmc2V0PSIuMyIgc3RvcC1jb2xvcj0iI2ZmZiIgc3RvcC1vcGFjaXR5PSIxIi8+PC9saW5lYXJHcmFkaWVudD48bWFzayBpZD0ibWsiPjxyZWN0IHdpZHRoPSI0MjAiIGhlaWdodD0iMTIwIiBmaWxsPSJ1cmwoI21nKSIvPjwvbWFzaz48L2RlZnM+CjxnIG1hc2s9InVybCgjbWspIj48cmVjdCB3aWR0aD0iNDIwIiBoZWlnaHQ9IjEyMCIgZmlsbD0idXJsKCNza3kpIi8+CjxlbGxpcHNlIGN4PSI4NSIgY3k9IjExMiIgcng9IjExMCIgcnk9IjE0IiBmaWxsPSJ1cmwoI2Zsb29yKSIvPgo8ZyBvcGFjaXR5PSIuMTgiIGZpbGw9IiNkOWM5YjUiIGZpbHRlcj0idXJsKCNnbG93KSI+PGVsbGlwc2UgY3g9IjQwIiBjeT0iMTA4IiByeD0iNjAiIHJ5PSI2Ii8+PGVsbGlwc2UgY3g9IjE5MCIgY3k9IjExMiIgcng9IjcwIiByeT0iNSIvPjwvZz4KCgo8cmVjdCB5PSIxMDEiIHdpZHRoPSI0MjAiIGhlaWdodD0iMTkiIGZpbGw9InVybCgjd2V0KSIvPgo8cmVjdCB5PSIxMDMuMiIgd2lkdGg9IjQyMCIgaGVpZ2h0PSIuOCIgZmlsbD0iI2ZmYjg2YSIgb3BhY2l0eT0iLjE2Ii8+CjxnIGZpbHRlcj0idXJsKCNyYmx1cikiPgogPGVsbGlwc2UgY3g9Ijc4IiBjeT0iMTEwIiByeD0iMzQiIHJ5PSI5IiBmaWxsPSJ1cmwoI3JlZmwpIi8+PHJlY3QgeD0iNjIiIHk9IjEwNCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjE0IiBmaWxsPSJ1cmwoI3JlZmwpIiBvcGFjaXR5PSIuNDUiLz4KIDxlbGxpcHNlIGN4PSIxNjgiIGN5PSIxMTEiIHJ4PSIyMCIgcnk9IjYiIGZpbGw9InVybCgjcmVmbCkiIG9wYWNpdHk9Ii44Ii8+CiA8ZWxsaXBzZSBjeD0iMjM2IiBjeT0iMTEzIiByeD0iMTIiIHJ5PSI0IiBmaWxsPSJ1cmwoI3JlZmwpIiBvcGFjaXR5PSIuNyIvPgo8L2c+CjxnIHN0cm9rZT0iI2ZmYzg4YSIgc3Ryb2tlLW9wYWNpdHk9Ii4yMiIgc3Ryb2tlLXdpZHRoPSIuNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIj48cGF0aCBkPSJNNTAgMTA4aDI0TTkyIDExMWgyME0xNTAgMTA5aDE0TTE3NiAxMTJoMTJNMjIyIDExMWgxME0yNDQgMTE0aDgiLz48L2c+CjwvZz4KPCEtLSBiaWcgcHVtcGtpbiAtLT4KPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNzggNjIpIj4KIDxlbGxpcHNlIGN4PSIwIiBjeT0iNDAiIHJ4PSI0OCIgcnk9IjgiIGZpbGw9IiMwMDAiIG9wYWNpdHk9Ii41IiBmaWx0ZXI9InVybCgjc29mdCkiLz4KIDxlbGxpcHNlIGN4PSIwIiBjeT0iNCIgcng9IjU2IiByeT0iNDYiIGZpbGw9IiNmZjdhMWEiIG9wYWNpdHk9Ii4zNSIgZmlsdGVyPSJ1cmwoI2dsb3cpIi8+CiA8cGF0aCBkPSJNLTgtMzRjLTMtOSAwLTE1IDUtMTlsNyAyYy0yIDUtMSAxMSAzIDE3eiIgZmlsbD0idXJsKCNzdGVtKSIvPgogPHBhdGggZD0iTTAtMzhjLTMwIDAtNTYgMTQtNTYgNDJzMjYgNDAgNTYgNDAgNTYtMTIgNTYtNDAtMjYtNDItNTYtNDJ6IiBmaWxsPSJ1cmwoI2JvZHkpIi8+CiA8ZyBmaWxsPSJub25lIiBzdHJva2U9IiMzZDEzMDQiIHN0cm9rZS1vcGFjaXR5PSIuNTUiIHN0cm9rZS13aWR0aD0iMi4yIiBzdHJva2UtbGluZWNhcD0icm91bmQiPjxwYXRoIGQ9Ik0wLTM4Yy0xNiAxMC0yMiA1MCAwIDgyIi8+PHBhdGggZD0iTTAtMzhjMTYgMTAgMjIgNTAgMCA4MiIvPjxwYXRoIGQ9Ik0tNC0zN2MtMzQgOC00MCA1Ni00IDgwIiBvcGFjaXR5PSIuNyIvPjxwYXRoIGQ9Ik00LTM3YzM0IDggNDAgNTYgNCA4MCIgb3BhY2l0eT0iLjciLz48L2c+CiA8ZyBmaWx0ZXI9InVybCgjZ2xvdykiIGZpbGw9IiNmZmMyM2EiIG9wYWNpdHk9Ii45Ij48cGF0aCBkPSJNLTMwLThsMTIgMTAtMTQgNHoiLz48cGF0aCBkPSJNMzAtOGwtMTIgMTAgMTQgNHoiLz48cGF0aCBkPSJNLTI2IDE2bDEwLTYgOCA4IDgtOCA4IDggOC04IDEwIDZjLTYgMTQtMTQgMjAtMjYgMjBzLTIwLTYtMjYtMjB6Ii8+PC9nPgogPHBhdGggZD0iTS0zMC04bDEyIDEwLTE0IDR6IiBmaWxsPSJ1cmwoI2lubmVyKSIvPjxwYXRoIGQ9Ik0zMC04bC0xMiAxMCAxNCA0eiIgZmlsbD0idXJsKCNpbm5lcikiLz4KIDxwYXRoIGQ9Ik0tMjYgMTZsMTAtNiA4IDggOC04IDggOCA4LTggMTAgNmMtNiAxNC0xNCAyMC0yNiAyMHMtMjAtNi0yNi0yMHoiIGZpbGw9InVybCgjaW5uZXIpIi8+CiA8cGF0aCBkPSJNLTM0LTIwYzgtMTAgMjItMTQgMzYtMTMiIHN0cm9rZT0iI2ZmZDlhMCIgc3Ryb2tlLW9wYWNpdHk9Ii41IiBzdHJva2Utd2lkdGg9IjMiIGZpbGw9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgZmlsdGVyPSJ1cmwoI3NvZnQpIi8+CjwvZz4KCjwhLS0gbWVkaXVtIHB1bXBraW4gLS0+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2OCA3OCkgc2NhbGUoLjYyKSI+CiA8ZWxsaXBzZSBjeD0iMCIgY3k9IjQwIiByeD0iNDgiIHJ5PSI3IiBmaWxsPSIjMDAwIiBvcGFjaXR5PSIuNSIgZmlsdGVyPSJ1cmwoI3NvZnQpIi8+CiA8ZWxsaXBzZSBjeD0iMCIgY3k9IjQiIHJ4PSI1NiIgcnk9IjQ2IiBmaWxsPSIjZmY3YTFhIiBvcGFjaXR5PSIuMyIgZmlsdGVyPSJ1cmwoI2dsb3cpIi8+CiA8cGF0aCBkPSJNLTQtMzRjMC0xMCA0LTE1IDEwLTE3bDUgNGMtMyA0LTMgOSAwIDE1eiIgZmlsbD0idXJsKCNzdGVtKSIvPgogPHBhdGggZD0iTTAtMzhjLTMwIDAtNTYgMTQtNTYgNDJzMjYgNDAgNTYgNDAgNTYtMTIgNTYtNDAtMjYtNDItNTYtNDJ6IiBmaWxsPSJ1cmwoI2JvZHkpIi8+CiA8ZyBmaWxsPSJub25lIiBzdHJva2U9IiMzZDEzMDQiIHN0cm9rZS1vcGFjaXR5PSIuNTUiIHN0cm9rZS13aWR0aD0iMi42IiBzdHJva2UtbGluZWNhcD0icm91bmQiPjxwYXRoIGQ9Ik0wLTM4Yy0xNiAxMC0yMiA1MCAwIDgyIi8+PHBhdGggZD0iTTAtMzhjMTYgMTAgMjIgNTAgMCA4MiIvPjwvZz4KIDxnIGZpbHRlcj0idXJsKCNnbG93KSIgZmlsbD0iI2ZmYzIzYSI+PGNpcmNsZSBjeD0iLTIyIiBjeT0iLTIiIHI9IjkiLz48Y2lyY2xlIGN4PSIyMiIgY3k9Ii0yIiByPSI5Ii8+PHBhdGggZD0iTS0yNCAxOHEyNCAyMiA0OCAwcS0yNCA4LTQ4IDB6Ii8+PC9nPgogPGNpcmNsZSBjeD0iLTIyIiBjeT0iLTIiIHI9IjgiIGZpbGw9InVybCgjaW5uZXIpIi8+PGNpcmNsZSBjeD0iMjIiIGN5PSItMiIgcj0iOCIgZmlsbD0idXJsKCNpbm5lcikiLz48cGF0aCBkPSJNLTI0IDE4cTI0IDIyIDQ4IDBxLTI0IDgtNDggMHoiIGZpbGw9InVybCgjaW5uZXIpIi8+CjwvZz4KCjwhLS0gc21hbGwgcHVtcGtpbiAtLT4KPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjM2IDkyKSBzY2FsZSguNCkiPgogPGVsbGlwc2UgY3g9IjAiIGN5PSI0MCIgcng9IjQ4IiByeT0iNyIgZmlsbD0iIzAwMCIgb3BhY2l0eT0iLjUiIGZpbHRlcj0idXJsKCNzb2Z0KSIvPgogPHBhdGggZD0iTS00LTM0YzAtMTAgNC0xNSAxMC0xN2w1IDRjLTMgNC0zIDkgMCAxNXoiIGZpbGw9InVybCgjc3RlbSkiLz4KIDxwYXRoIGQ9Ik0wLTM4Yy0zMCAwLTU2IDE0LTU2IDQyczI2IDQwIDU2IDQwIDU2LTEyIDU2LTQwLTI2LTQyLTU2LTQyeiIgZmlsbD0idXJsKCNib2R5KSIvPgogPGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjM2QxMzA0IiBzdHJva2Utb3BhY2l0eT0iLjU1IiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCI+PHBhdGggZD0iTTAtMzhjLTE2IDEwLTIyIDUwIDAgODIiLz48cGF0aCBkPSJNMC0zOGMxNiAxMCAyMiA1MCAwIDgyIi8+PC9nPgogPGcgZmlsdGVyPSJ1cmwoI2dsb3cpIiBmaWxsPSIjZmZjMjNhIj48cGF0aCBkPSJNLTMwLThsMTQgMTItMTYgMnoiLz48cGF0aCBkPSJNMzAtOGwtMTQgMTIgMTYgMnoiLz48cGF0aCBkPSJNLTIyIDE4aDQ0bC04IDEyaC0yOHoiLz48L2c+CiA8cGF0aCBkPSJNLTMwLThsMTQgMTItMTYgMnoiIGZpbGw9InVybCgjaW5uZXIpIi8+PHBhdGggZD0iTTMwLThsLTE0IDEyIDE2IDJ6IiBmaWxsPSJ1cmwoI2lubmVyKSIvPjxwYXRoIGQ9Ik0tMjIgMThoNDRsLTggMTJoLTI4eiIgZmlsbD0idXJsKCNpbm5lcikiLz4KPC9nPgo8L3N2Zz4K") right center / auto 100% no-repeat,
+        linear-gradient(105deg, #2b120b, #0d0919);
+    animation: playerHalloweenGlow 9s ease-in-out infinite alternate;
+}
+
+.musicPlayer::after {
+    background:
+        radial-gradient(ellipse 22% 120% at 90% 72%, rgba(255,150,40,.30), transparent 70%),
+        radial-gradient(ellipse 45% 100% at 100% 100%, rgba(255,110,20,.22), transparent 70%),
+        radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.35) 100%);
+    mix-blend-mode: screen;
+    animation: playerCandleFlicker 3.4s steps(1, end) infinite;
+}
+
+@keyframes playerHalloweenGlow {
+    from { filter: saturate(.95) brightness(.88); }
+    to   { filter: saturate(1.12) brightness(1.04); }
+}
+
+@keyframes playerCandleFlicker {
+    0%   { opacity: .85; }
+    9%   { opacity: 1; }
+    18%  { opacity: .78; }
+    31%  { opacity: .95; }
+    47%  { opacity: .82; }
+    63%  { opacity: 1; }
+    78%  { opacity: .88; }
+    90%  { opacity: .97; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .musicPlayer::before,
+    .musicPlayer::after { animation: none; }
+}
+
+/* ---- Pumpkin player: autumn-night atmosphere (rain, mist, wet-ground shimmer) ----
+   Everything lives inside the player, is decorative, and animates only transform/opacity.
+   Animations are paused while the player is hidden and disabled for reduced motion. */
+.musicPlayer > .playerAtmos {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: inherit;
+}
+
+.playerAtmos i { position: absolute; display: block; pointer-events: none; }
+
+/* rain: two tiled layers at different size/speed/opacity for depth; fades out over the text side */
+.pa-rain {
+    left: 0;
+    will-change: transform;
+    background-repeat: repeat;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.3) 32%, #000 62%);
+    mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,.3) 32%, #000 62%);
+}
+.pa-far {
+    top: -70px; width: calc(100% + 90px); height: calc(100% + 70px);
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc5MCcgaGVpZ2h0PSc3MCc+PGcgc3Ryb2tlPSdyZ2IoMjAwLDIxNCwyMzIpJyBzdHJva2Utb3BhY2l0eT0nMC41JyBzdHJva2Utd2lkdGg9JzAuNycgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJz48bGluZSB4MT0nMTEnIHkxPSc0JyB4Mj0nOCcgeTI9JzE2Jy8+PGxpbmUgeDE9JzM0JyB5MT0nNDAnIHgyPSczMScgeTI9JzUwJy8+PGxpbmUgeDE9JzU1JyB5MT0nMTQnIHgyPSc1MicgeTI9JzI3Jy8+PGxpbmUgeDE9Jzc2JyB5MT0nNTAnIHgyPSc3MycgeTI9JzYxJy8+PGxpbmUgeDE9JzIzJyB5MT0nNTgnIHgyPScyMCcgeTI9JzY3Jy8+PC9nPjwvc3ZnPg==");
+    background-size: 90px 70px;
+    opacity: .55;
+    animation: paFall70 1.5s linear infinite;
+}
+.pa-near {
+    top: -100px; width: calc(100% + 140px); height: calc(100% + 100px);
+    background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxNDAnIGhlaWdodD0nMTAwJz48ZyBzdHJva2U9J3JnYigyMDAsMjE0LDIzMiknIHN0cm9rZS1vcGFjaXR5PScwLjYyJyBzdHJva2Utd2lkdGg9JzEuMScgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJz48bGluZSB4MT0nMTUnIHkxPSc2JyB4Mj0nMTInIHkyPSczMCcvPjxsaW5lIHgxPSc1MScgeTE9JzYwJyB4Mj0nNDgnIHkyPSc4MicvPjxsaW5lIHgxPSc4OScgeTE9JzIyJyB4Mj0nODYnIHkyPSc0OCcvPjxsaW5lIHgxPScxMjEnIHkxPSc3MCcgeDI9JzExOCcgeTI9JzkxJy8+PC9nPjwvc3ZnPg==");
+    background-size: 140px 100px;
+    opacity: .7;
+    animation: paFall100 .85s linear infinite;
+}
+@keyframes paFall70  { to { transform: translate3d(-3px, 70px, 0); } }
+@keyframes paFall100 { to { transform: translate3d(-4px, 100px, 0); } }
+
+/* mist: wide soft gradients drifting slowly, one cool, one pumpkin-lit */
+.pa-mist {
+    left: -20%; width: 140%; will-change: transform;
+}
+.pa-m1 {
+    bottom: -8%; height: 75%;
+    background:
+        radial-gradient(ellipse 22% 55% at 18% 70%, rgba(170,186,205,.20), transparent 70%),
+        radial-gradient(ellipse 26% 50% at 55% 78%, rgba(150,166,190,.16), transparent 70%),
+        radial-gradient(ellipse 20% 60% at 86% 65%, rgba(180,190,205,.14), transparent 70%);
+    animation: paDriftA 24s ease-in-out infinite alternate;
+}
+.pa-m2 {
+    bottom: -12%; height: 60%;
+    background:
+        radial-gradient(ellipse 24% 55% at 30% 80%, rgba(255,150,60,.13), transparent 70%),
+        radial-gradient(ellipse 28% 50% at 74% 75%, rgba(255,130,40,.17), transparent 70%);
+    animation: paDriftB 31s ease-in-out infinite alternate;
+}
+@keyframes paDriftA { from { transform: translate3d(-7%, 0, 0); } to { transform: translate3d(7%, -4%, 0); } }
+@keyframes paDriftB { from { transform: translate3d(6%, 0, 0); } to { transform: translate3d(-8%, -3%, 0); } }
+
+/* wet ground: warm sheen that slowly sweeps across, plus rain ripples */
+.pa-wet {
+    left: 0; right: 0; bottom: 0; height: 24%;
+    background:
+        linear-gradient(to top, rgba(255,140,40,.16), transparent 85%),
+        linear-gradient(90deg, transparent 0%, rgba(255,205,150,.12) 50%, transparent 100%) 0 0 / 40% 100% no-repeat;
+    animation: paSheen 9s ease-in-out infinite alternate;
+}
+@keyframes paSheen { from { background-position: 0 0, -10% 0; } to { background-position: 0 0, 110% 0; } }
+
+.pa-ripple {
+    right: var(--r); bottom: 7%;
+    width: 30px; height: 7px;
+    border: 1px solid rgba(255,206,150,.45);
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(.2);
+    animation: paRipple 3.4s ease-out infinite;
+    animation-delay: var(--d);
+}
+@keyframes paRipple {
+    0%   { opacity: 0;  transform: scale(.2); }
+    12%  { opacity: .75; }
+    100% { opacity: 0;  transform: scale(1.6); }
+}
+
+/* legibility over the glow */
+.musicPlayer .playerTitle,
+.musicPlayer .playerArtist { text-shadow: 0 1px 6px rgba(0,0,0,.85); }
+
+/* phones: the player wraps and gets taller, so keep the scene smaller and tucked bottom-right */
+@media (max-width: 700px) {
+    .musicPlayer::before {
+        background-size: auto, auto 50%, auto;
+        background-position: 0 0, right bottom, 0 0;
+    }
+    .pa-near { opacity: .55; }
+}
+
+/* ---- Pumpkin player: spooky details (cobwebs, spiders, blood drips, tiny jack-o'-lanterns) ----
+   A decorative layer ABOVE the player contents but click-through. Everything is small, low-contrast
+   and placed in the player's padding gaps so text and controls stay clear. */
+.musicPlayer > .playerDecor {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+    border-radius: inherit;
+}
+.playerDecor i, .playerDecor b { position: absolute; display: block; pointer-events: none; }
+
+/* cobwebs in the top corners, swaying very slightly */
+.pd-web {
+    top: 0; width: 42px; height: 42px;
+    background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA2MCA2MCc+PGcgZmlsbD0nbm9uZScgc3Ryb2tlLWxpbmVjYXA9J3JvdW5kJz48cGF0aCBkPSdNMCAwTDU4LjAgMC4wTTAgMEw1My42IDIyLjJNMCAwTDQxLjAgNDEuME0wIDBMMjIuMiA1My42TTAgMEwwLjAgNTguMCcgc3Ryb2tlPScjZWZlOGRjJyBzdHJva2Utb3BhY2l0eT0nLjQyJyBzdHJva2Utd2lkdGg9Jy42Jy8+PHBhdGggZD0nTTExLjAgMC4wUTkuMSAxLjggMTAuMiA0LjJNMTAuMiA0LjJRNy43IDUuMSA3LjggNy44TTcuOCA3LjhRNS4xIDcuNyA0LjIgMTAuMk00LjIgMTAuMlExLjggOS4xIDAuMCAxMS4wTTIxLjAgMC4wUTE3LjMgMy40IDE5LjQgOC4wTTE5LjQgOC4wUTE0LjcgOS44IDE0LjggMTQuOE0xNC44IDE0LjhROS44IDE0LjcgOC4wIDE5LjRNOC4wIDE5LjRRMy40IDE3LjMgMC4wIDIxLjBNMzIuMCAwLjBRMjYuNCA1LjIgMjkuNiAxMi4yTTI5LjYgMTIuMlEyMi4zIDE0LjkgMjIuNiAyMi42TTIyLjYgMjIuNlExNC45IDIyLjMgMTIuMiAyOS42TTEyLjIgMjkuNlE1LjIgMjYuNCAwLjAgMzIuME00NC4wIDAuMFEzNi4yIDcuMiA0MC43IDE2LjhNNDAuNyAxNi44UTMwLjcgMjAuNSAzMS4xIDMxLjFNMzEuMSAzMS4xUTIwLjUgMzAuNyAxNi44IDQwLjdNMTYuOCA0MC43UTcuMiAzNi4yIDAuMCA0NC4wTTU2LjAgMC4wUTQ2LjEgOS4yIDUxLjcgMjEuNE01MS43IDIxLjRRMzkuMSAyNi4xIDM5LjYgMzkuNk0zOS42IDM5LjZRMjYuMSAzOS4xIDIxLjQgNTEuN00yMS40IDUxLjdROS4yIDQ2LjEgMC4wIDU2LjAnIHN0cm9rZT0nI2VmZThkYycgc3Ryb2tlLW9wYWNpdHk9Jy4zJyBzdHJva2Utd2lkdGg9Jy40NScvPjwvZz48ZyBmaWxsPScjZmZmJyBmaWxsLW9wYWNpdHk9Jy41NSc+PGNpcmNsZSBjeD0nMTQuOCcgY3k9JzE0LjgnIHI9Jy44Jy8+PGNpcmNsZSBjeD0nMjkuNicgY3k9JzEyLjInIHI9Jy44Jy8+PGNpcmNsZSBjeD0nMTIuMicgY3k9JzI5LjYnIHI9Jy44Jy8+PGNpcmNsZSBjeD0nMzEuMScgY3k9JzMxLjEnIHI9Jy44Jy8+PC9nPjwvc3ZnPg==") 0 0 / 100% 100% no-repeat;
+    opacity: .85;
+    transform-origin: 0 0;
+    animation: pdWebSway 7s ease-in-out infinite alternate;
+}
+.pd-web-l { left: 0; }
+.pd-web-r { right: 0; transform-origin: 100% 0; background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCA2MCA2MCc+PGcgdHJhbnNmb3JtPSdtYXRyaXgoLTEgMCAwIDEgNjAgMCknPjxnIGZpbGw9J25vbmUnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCc+PHBhdGggZD0nTTAgMEw1OC4wIDAuME0wIDBMNTMuNiAyMi4yTTAgMEw0MS4wIDQxLjBNMCAwTDIyLjIgNTMuNk0wIDBMMC4wIDU4LjAnIHN0cm9rZT0nI2VmZThkYycgc3Ryb2tlLW9wYWNpdHk9Jy40Micgc3Ryb2tlLXdpZHRoPScuNicvPjxwYXRoIGQ9J00xMS4wIDAuMFE5LjEgMS44IDEwLjIgNC4yTTEwLjIgNC4yUTcuNyA1LjEgNy44IDcuOE03LjggNy44UTUuMSA3LjcgNC4yIDEwLjJNNC4yIDEwLjJRMS44IDkuMSAwLjAgMTEuME0yMS4wIDAuMFExNy4zIDMuNCAxOS40IDguME0xOS40IDguMFExNC43IDkuOCAxNC44IDE0LjhNMTQuOCAxNC44UTkuOCAxNC43IDguMCAxOS40TTguMCAxOS40UTMuNCAxNy4zIDAuMCAyMS4wTTMyLjAgMC4wUTI2LjQgNS4yIDI5LjYgMTIuMk0yOS42IDEyLjJRMjIuMyAxNC45IDIyLjYgMjIuNk0yMi42IDIyLjZRMTQuOSAyMi4zIDEyLjIgMjkuNk0xMi4yIDI5LjZRNS4yIDI2LjQgMC4wIDMyLjBNNDQuMCAwLjBRMzYuMiA3LjIgNDAuNyAxNi44TTQwLjcgMTYuOFEzMC43IDIwLjUgMzEuMSAzMS4xTTMxLjEgMzEuMVEyMC41IDMwLjcgMTYuOCA0MC43TTE2LjggNDAuN1E3LjIgMzYuMiAwLjAgNDQuME01Ni4wIDAuMFE0Ni4xIDkuMiA1MS43IDIxLjRNNTEuNyAyMS40UTM5LjEgMjYuMSAzOS42IDM5LjZNMzkuNiAzOS42UTI2LjEgMzkuMSAyMS40IDUxLjdNMjEuNCA1MS43UTkuMiA0Ni4xIDAuMCA1Ni4wJyBzdHJva2U9JyNlZmU4ZGMnIHN0cm9rZS1vcGFjaXR5PScuMycgc3Ryb2tlLXdpZHRoPScuNDUnLz48L2c+PGcgZmlsbD0nI2ZmZicgZmlsbC1vcGFjaXR5PScuNTUnPjxjaXJjbGUgY3g9JzE0LjgnIGN5PScxNC44JyByPScuOCcvPjxjaXJjbGUgY3g9JzI5LjYnIGN5PScxMi4yJyByPScuOCcvPjxjaXJjbGUgY3g9JzEyLjInIGN5PScyOS42JyByPScuOCcvPjxjaXJjbGUgY3g9JzMxLjEnIGN5PSczMS4xJyByPScuOCcvPjwvZz48L2c+PC9zdmc+"); }
+@keyframes pdWebSway  { from { transform: rotate(-.8deg) skewX(.6deg); } to { transform: rotate(.8deg) skewX(-.6deg); } }
+
+/* spiders */
+.pd-spider b, .pd-corner {
+    background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxNiAxNSc+PGcgZmlsbD0nbm9uZScgc3Ryb2tlPScjZDhjMmI0JyBzdHJva2Utb3BhY2l0eT0nLjcnIHN0cm9rZS13aWR0aD0nLjcnIHN0cm9rZS1saW5lY2FwPSdyb3VuZCcgc3Ryb2tlLWxpbmVqb2luPSdyb3VuZCc+PHBhdGggZD0nTTYgNS4yTDIuNCAyTC42IDQuNCcvPjxwYXRoIGQ9J001LjggNi42TDEuNiA2TC41IDknLz48cGF0aCBkPSdNNS44IDguMkwyIDEwLjRMMSAxMycvPjxwYXRoIGQ9J002LjQgOS42TDMuOCAxMi4yTDMuNCAxNCcvPjxwYXRoIGQ9J00xMCA1LjJMMTMuNiAyTDE1LjQgNC40Jy8+PHBhdGggZD0nTTEwLjIgNi42TDE0LjQgNkwxNS41IDknLz48cGF0aCBkPSdNMTAuMiA4LjJMMTQgMTAuNEwxNSAxMycvPjxwYXRoIGQ9J005LjYgOS42TDEyLjIgMTIuMkwxMi42IDE0Jy8+PC9nPjxlbGxpcHNlIGN4PSc4JyBjeT0nOScgcng9JzMuMycgcnk9JzMuNycgZmlsbD0nIzE1MGMwZicgc3Ryb2tlPScjZDhjMmI0JyBzdHJva2Utb3BhY2l0eT0nLjM1JyBzdHJva2Utd2lkdGg9Jy40Jy8+PGNpcmNsZSBjeD0nOCcgY3k9JzQuNicgcj0nMicgZmlsbD0nIzFkMTAxMycvPjxwYXRoIGQ9J004IDcuNDAwbC45IDEuNjAwTDggMTAuNjAwbC0uOS0xLjYwMHonIGZpbGw9JyNjNDEyMWYnLz48Y2lyY2xlIGN4PSc3LjMwMCcgY3k9JzQuMzAwJyByPScuNCcgZmlsbD0nI2ZmNDA0MCcvPjxjaXJjbGUgY3g9JzguNzAwJyBjeT0nNC4zMDAnIHI9Jy40JyBmaWxsPScjZmY0MDQwJy8+PC9zdmc+") center / contain no-repeat;
+}
+.pd-hang {
+    top: 0; left: var(--x); width: 12px; height: var(--len);
+    transform-origin: 6px 0;
+    animation: pdSwing 5.2s ease-in-out infinite alternate;
+}
+.pd-hang::before {
+    content: ""; position: absolute; left: 50%; top: 0; width: 1px; height: 100%;
+    background: linear-gradient(rgba(240,230,220,.15), rgba(240,230,220,.45));
+    transform-origin: top; animation: pdThread 7.5s ease-in-out infinite;
+}
+.pd-hang b {
+    left: 0; top: calc(var(--len) - 2px); width: 12px; height: 11px;
+    animation: pdBob 7.5s ease-in-out infinite;
+}
+@keyframes pdSwing  { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+@keyframes pdThread { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.3); } }
+@keyframes pdBob    { 0%,100% { transform: translateY(0); } 50% { transform: translateY(calc(var(--len) * .3)); } }
+
+/* a little spider resting on the right-hand web */
+.pd-corner {
+    top: 11px; right: 12px; width: 8px; height: 7.5px; opacity: .9;
+    animation: pdTwitch 9s ease-in-out infinite;
+}
+@keyframes pdTwitch { 0%,86%,100% { transform: translate(0,0) rotate(0); } 90% { transform: translate(-1px,1px) rotate(-6deg); } 94% { transform: translate(1px,0) rotate(4deg); } }
+
+/* dark-red blood drips from the top edge: each one slowly forms, runs, then dries away */
+.pd-drip { top: 0; left: var(--x); width: var(--w); height: 0; }
+.pd-drip::before {
+    content: ""; position: absolute; left: calc(var(--w) * -2); top: 0; width: calc(var(--w) * 5); height: 4px;
+    background: radial-gradient(ellipse 50% 100% at 50% 0, rgba(94,10,18,.95) 55%, rgba(94,10,18,0) 100%);
+}
+.pd-drip b {
+    left: 0; top: 0; width: 100%; height: calc(var(--h) * var(--k, 1));
+    background: linear-gradient(90deg, #4a0610, #8e111b 45%, #5c0a12);
+    border-radius: 0 0 99px 99px;
+    transform-origin: top;
+    box-shadow: inset 0 -2px 2px rgba(255,120,120,.18);
+    animation: pdDrip var(--t) ease-in-out infinite;
+    animation-delay: var(--d);
+}
+@keyframes pdDrip {
+    0%   { transform: scaleY(0); opacity: 0; }
+    6%   { opacity: 1; }
+    38%  { transform: scaleY(1); }
+    72%  { transform: scaleY(1); opacity: 1; }
+    88%  { transform: scaleY(1.04); opacity: 0; }
+    100% { transform: scaleY(0); opacity: 0; }
+}
+
+.pd-splat {
+    top: 1px; left: 27%; width: 24px; height: 11px; opacity: .55;
+    background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMCAxNCc+CjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0ncicgY3g9JzM1JScgY3k9JzMwJScgcj0nODAlJz48c3RvcCBvZmZzZXQ9JzAnIHN0b3AtY29sb3I9JyNhMzE0MWQnLz48c3RvcCBvZmZzZXQ9JzEnIHN0b3AtY29sb3I9JyM0YjA2MTAnLz48L3JhZGlhbEdyYWRpZW50PjwvZGVmcz4KPGcgZmlsbD0ndXJsKCNyKSc+PGVsbGlwc2UgY3g9JzknIGN5PSc1JyByeD0nNS41MDAnIHJ5PSczLjMwMCcgdHJhbnNmb3JtPSdyb3RhdGUoLTE0IDkgNSknLz48cGF0aCBkPSdNMTMgNC41MDBjNCAuMiA3IDEuNTAwIDkuNTAwIDMuMjAwLTMuMjAwLS4yLTYuNTAwLS43LTkuNTAwLTEuNDAweicvPgo8Y2lyY2xlIGN4PScxNycgY3k9JzIuNjAwJyByPScxLjUwMCcvPjxjaXJjbGUgY3g9JzIyLjUwMCcgY3k9JzcuNjAwJyByPScxLjEwMCcvPjxjaXJjbGUgY3g9JzE0JyBjeT0nMTAuNjAwJyByPScxLjMwMCcvPjxjaXJjbGUgY3g9JzI1LjUwMCcgY3k9JzMuMjAwJyByPScuOCcvPjxjaXJjbGUgY3g9JzQnIGN5PScxMCcgcj0nLjknLz48Y2lyY2xlIGN4PScyOCcgY3k9JzkuNDAwJyByPScuNicvPjwvZz4KPGVsbGlwc2UgY3g9JzcuNjAwJyBjeT0nMy44MDAnIHJ4PScxLjgwMCcgcnk9Jy44JyBmaWxsPScjZmZmJyBvcGFjaXR5PScuMjInLz48L3N2Zz4=") center / contain no-repeat;
+}
+
+/* tiny jack-o'-lanterns resting along the bottom edge, flickering out of sync */
+.pd-pump {
+    width: var(--s, 14px); height: calc(var(--s, 14px) * .92);
+    bottom: 1px;
+    background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyMic+CjxkZWZzPjxyYWRpYWxHcmFkaWVudCBpZD0nYicgY3g9JzQwJScgY3k9JzMwJScgcj0nODAlJz48c3RvcCBvZmZzZXQ9JzAnIHN0b3AtY29sb3I9JyNmZmIwNGEnLz48c3RvcCBvZmZzZXQ9Jy41JyBzdG9wLWNvbG9yPScjZTI2MzFhJy8+PHN0b3Agb2Zmc2V0PScxJyBzdG9wLWNvbG9yPScjNmUyMzA2Jy8+PC9yYWRpYWxHcmFkaWVudD4KPGZpbHRlciBpZD0nZycgeD0nLTUwJScgeT0nLTUwJScgd2lkdGg9JzIwMCUnIGhlaWdodD0nMjAwJSc+PGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0nMS42Jy8+PC9maWx0ZXI+PC9kZWZzPgo8ZWxsaXBzZSBjeD0nMTInIGN5PScxMycgcng9JzExJyByeT0nOC41JyBmaWxsPScjZmY4YTFlJyBvcGFjaXR5PScuNDUnIGZpbHRlcj0ndXJsKCNnKScvPgo8cGF0aCBkPSdNMTEgNC42Yy0uMi0xLjYuNC0yLjYgMS42LTMuMWwuOS42Yy0uNi43LS43IDEuNS0uNCAyLjV6JyBmaWxsPScjNGQzZDE3Jy8+CjxwYXRoIGQ9J00xMiA0LjVDNiA0LjUgMS41IDcuNiAxLjUgMTIuNlM2IDIwIDEyIDIwczEwLjUwMC0yLjMwMCAxMC41MDAtNy40MDBTMTggNC41MDAgMTIgNC41MDB6JyBmaWxsPSd1cmwoI2IpJy8+CjxwYXRoIGQ9J00xMiA0LjgwMEM5LjUwMCA3IDkgMTcgMTIgMTkuNzAwTTEyIDQuODAwQzE0LjUwMCA3IDE1IDE3IDEyIDE5LjcwMCcgZmlsbD0nbm9uZScgc3Ryb2tlPScjNGExODA0JyBzdHJva2Utb3BhY2l0eT0nLjUnIHN0cm9rZS13aWR0aD0nLjcnLz4KPHBhdGggZD0nTTYuNjAwIDEwLjYwMGwyLjQwMCAxLjgwMC0yLjgwMC41ek0xNy40MDAgMTAuNjAwbC0yLjQwMCAxLjgwMCAyLjgwMC41ek03LjgwMCAxNS4yMDBsMS42MDAtMS4xMDAgMS4yMDAgMS4yMDAgMS40MDAtMS4yMDAgMS40MDAgMS4yMDAgMS4yMDAtMS4yMDAgMS42MDAgMS4xMDBjLTEgMS44MDAtMi40MDAgMi41MDAtNC4yMDAgMi41MDBzLTMuMjAwLS43LTQuMjAwLTIuNTAweicgZmlsbD0nI2ZmZTI3YScvPjwvc3ZnPg==") center / contain no-repeat;
+    filter: drop-shadow(0 0 4px rgba(255,140,30,.55));
+    animation: pdFlicker var(--t, 4.6s) steps(1, end) infinite;
+    animation-delay: var(--d, 0s);
+}
+.pd-p1 { left: 40px; --s: 14px; --t: 4.6s; }
+.pd-p2 { left: 31%;  --s: 12px; --t: 5.9s; --d: 1.3s; }
+.pd-p3 { left: 58%;  --s: 11px; --t: 3.8s; --d: 2.4s; }
+@keyframes pdFlicker {
+    0% { opacity: .85; } 12% { opacity: 1; } 24% { opacity: .7; } 37% { opacity: .95; }
+    52% { opacity: .78; } 68% { opacity: 1; } 83% { opacity: .88; }
+}
+
+/* a small pool of blood among the wet-ground reflections */
+.playerAtmos .pa-puddle {
+    right: 205px; bottom: 5px; width: 36px; height: 7px; border-radius: 50%;
+    background: radial-gradient(ellipse at 40% 35%, rgba(190,28,38,.75), rgba(96,8,16,.65) 55%, transparent 74%);
+    box-shadow: 0 0 6px rgba(120,10,20,.35);
+}
+.playerAtmos .pa-puddle::after {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    border: 1px solid rgba(210,50,60,.5); opacity: 0; transform: scale(.3);
+    animation: paRipple 5.5s ease-out infinite 1s;
+}
+
+/* pause while the player is hidden */
+.musicPlayer:not(.active) .playerDecor i,
+.musicPlayer:not(.active) .playerDecor i::before,
+.musicPlayer:not(.active) .playerDecor b,
+.musicPlayer:not(.active) .pa-puddle::after { animation-play-state: paused; }
+
+@media (max-width: 700px) {
+    .pd-web { width: 34px; height: 34px; }
+    .pd-corner { top: 9px; right: 10px; width: 7px; height: 6.500px; }
+    .pd-drip { --k: .8; }
+    .playerDecor .pd-extra, .playerDecor .pd-p3, .playerDecor .pd-splat { display: none; }
+    .pd-hang { --len: 8px !important; left: 46%; }
+    .pd-p1 { left: 24px; --s: 11px; }
+    .pd-p2 { left: 52%; --s: 10px; }
+    .playerAtmos .pa-puddle { right: 150px; bottom: 4px; width: 30px; }
+}
+
+/* reduced motion: keep the still decorations, drop all movement */
+@media (prefers-reduced-motion: reduce) {
+    .playerDecor i, .playerDecor i::before, .playerDecor b, .playerAtmos .pa-puddle::after { animation: none !important; }
+    .playerAtmos .pa-puddle::after { display: none; }
+}
+
+/* run animations only while the player is visible */
+.musicPlayer:not(.active)::before,
+.musicPlayer:not(.active)::after,
+.musicPlayer:not(.active) .playerAtmos i { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+    .playerAtmos .pa-rain, .playerAtmos .pa-ripple { display: none; }
+    .playerAtmos .pa-mist, .playerAtmos .pa-wet { animation: none; }
 }
 
 .playerCover {
@@ -1819,6 +2182,34 @@ html[dir=rtl] .navButton.live::after{right:auto;left:9px}
 
 <div class="musicPlayer" id="musicPlayer">
 
+    <div class="playerAtmos" aria-hidden="true">
+        <i class="pa-mist pa-m1"></i>
+        <i class="pa-mist pa-m2"></i>
+        <i class="pa-rain pa-far"></i>
+        <i class="pa-rain pa-near"></i>
+        <i class="pa-wet"></i>
+        <i class="pa-ripple" style="--r:5%;--d:0s"></i>
+        <i class="pa-ripple" style="--r:13%;--d:1.1s"></i>
+        <i class="pa-ripple" style="--r:21%;--d:2.2s"></i>
+        <i class="pa-ripple" style="--r:9%;--d:1.7s"></i>
+        <i class="pa-puddle"></i>
+    </div>
+
+    <div class="playerDecor" aria-hidden="true">
+        <i class="pd-web pd-web-l"></i>
+        <i class="pd-web pd-web-r"></i>
+        <i class="pd-spider pd-corner"></i>
+        <i class="pd-drip" style="--x:9%;--h:11px;--w:3px;--d:0s;--t:13s"><b></b></i>
+        <i class="pd-drip pd-extra" style="--x:41%;--h:13px;--w:2.5px;--d:4s;--t:16s"><b></b></i>
+        <i class="pd-drip" style="--x:67%;--h:9px;--w:3px;--d:7s;--t:12s"><b></b></i>
+        <i class="pd-drip pd-extra" style="--x:93%;--h:12px;--w:2.5px;--d:2s;--t:15s"><b></b></i>
+        <i class="pd-splat"></i>
+        <i class="pd-spider pd-hang" style="--x:52%;--len:16px"><b></b></i>
+        <i class="pd-pump pd-p1"></i>
+        <i class="pd-pump pd-p2"></i>
+        <i class="pd-pump pd-p3"></i>
+    </div>
+
     <img
         class="playerCover"
         id="playerCover"
@@ -1994,6 +2385,10 @@ html[dir=rtl] .navButton.live::after{right:auto;left:9px}
         Artists
     </button>
 
+    <button class="menuItem" onclick="goTo('albums')">
+        Albums
+    </button>
+
     <button class="menuItem" onclick="goTo('about')">
         About MusicFinder
     </button>
@@ -2154,6 +2549,21 @@ html[dir=rtl] .navButton.live::after{right:auto;left:9px}
     </div>
 
     <div class="artistGrid" id="artistGrid"></div>
+
+</section>
+
+<section class="section" id="albums">
+
+    <div class="sectionHeader">
+        <div>
+            <h2 class="sectionTitle">Albums</h2>
+            <p class="sectionSubtitle">Albums you discover through MusicFinder.</p>
+        </div>
+    </div>
+
+    <div class="resultGrid" id="albumGrid">
+        <div class="empty glass">Search for music to build your album library.</div>
+    </div>
 
 </section>
 
@@ -2783,6 +3193,22 @@ function renderSearchResults(data, query) {
 
     container.innerHTML = html;
 
+    renderAlbumLibrary(albums);
+
+}
+
+
+/* Albums section: shows the albums from the latest search, opened inside MusicFinder */
+function renderAlbumLibrary(albums) {
+
+    const grid = document.getElementById("albumGrid");
+
+    if (!grid) return;
+
+    grid.innerHTML = albums && albums.length
+        ? albums.map(albumCard).join("")
+        : `<div class="empty glass">Search for music to build your album library.</div>`;
+
 }
 
 
@@ -3046,7 +3472,7 @@ function albumCard(album) {
 
     return `
 
-        <div class="resultCard glass" style="cursor:pointer" tabindex="0" role="button" onclick="openAlbum('${escapeHtml(album.id || "")}')" onkeydown="if(event.key==='Enter'){openAlbum('${escapeHtml(album.id || "")}')}">
+        <div class="resultCard glass" style="cursor:pointer" tabindex="0" role="button" onclick="openAlbum('${escapeHtml(album.id || "")}')" onkeydown="if(event.key==='Enter' || event.key===' '){event.preventDefault();openAlbum('${escapeHtml(album.id || "")}')}">
 
             ${
                 image
@@ -3072,10 +3498,14 @@ function albumCard(album) {
 
             <div class="cardActions">
 
+                <button class="smallBtn primary" type="button" onclick="event.stopPropagation();openAlbum('${escapeHtml(album.id || "")}')">
+                    Details
+                </button>
+
                 <a
-                    class="smallBtn primary"
+                    class="smallBtn"
                     href="${spotify}"
-                    target="_blank" onclick="event.stopPropagation()"
+                    target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()"
                 >
                     Open Spotify
                 </a>
@@ -5445,7 +5875,10 @@ function showTelegramPanel(query, copied) {
             "Your recent searches on MusicFinder.": "جستجوهای اخیر شما در MusicFinder.",
             "No biography was found for this artist.": "برای این هنرمند زندگی‌نامه‌ای پیدا نشد.",
             "Wikipedia": "ویکی‌پدیا",
-            "Unknown album": "آلبوم ناشناس"
+            "Unknown album": "آلبوم ناشناس",
+            "Albums": "آلبوم‌ها",
+            "Albums you discover through MusicFinder.": "آلبوم‌هایی که در MusicFinder کشف می‌کنید.",
+            "Search for music to build your album library.": "برای ساختن کتابخانه آلبوم‌ها، موسیقی جستجو کنید."
         });
     }
 
@@ -6197,7 +6630,7 @@ function showTelegramPanel(query, copied) {
 .playerCover,.playerInfo{cursor:pointer}
 .albumLink{background:none;border:0;padding:0;color:inherit;font:inherit;text-align:start;text-decoration:underline;text-decoration-color:rgba(224,164,90,.5);text-underline-offset:3px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}
 .albumLink:hover{color:#ffd9a0}
-.albumCard[role=button]{cursor:pointer;transition:transform .25s}.albumCard[role=button]:hover{transform:translateY(-4px)}
+.albumCard[role=button]{cursor:pointer;transition:transform .25s ease,background .25s ease,box-shadow .25s ease}.albumCard[role=button]:hover{transform:translateY(-4px)}
 
 /* album page */
 .alPage{position:fixed;inset:0;z-index:900;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;

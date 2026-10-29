@@ -1,10 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from urllib.parse import quote
 import os
 import requests
 import base64
+import re
+import time
+import unicodedata
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 
 load_dotenv()
 
@@ -194,6 +199,283 @@ def search_music(q: str):
             status_code=502,
             detail="Spotify search failed."
         )
+
+
+# =========================
+# LYRICS SEARCH
+# =========================
+#
+# Finds songs from a fragment of their lyrics. Spotify cannot search lyric text, so
+# the lyric lookup uses the Musixmatch API (free developer plan, API key required).
+# Only song metadata (title / artist) is read from Musixmatch - no lyric text is
+# requested, stored or returned. Each match is then resolved to a real Spotify track
+# so results work with the existing cards and player.
+#
+# Env: MUSIXMATCH_API_KEY  (server side only; never sent to the browser)
+
+MUSIXMATCH_BASE = "https://api.musixmatch.com/ws/1.1"
+LYRICS_MIN_CHARS = 3
+LYRICS_MAX_CHARS = 200
+LYRICS_MAX_MATCHES = 10
+LYRICS_CACHE_SECONDS = 600
+LYRICS_RATE_LIMIT = 15          # requests per IP per minute (best effort, per server instance)
+
+_lyrics_cache = {}
+_lyrics_hits = {}
+
+
+def _api_error(status, code):
+
+    return HTTPException(
+        status_code=status,
+        detail={"code": code}
+    )
+
+
+def _normalize(text):
+
+    text = unicodedata.normalize("NFD", text or "")
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = re.sub(r"\(.*?\)|\[.*?\]", " ", text)
+    text = re.sub(r"\s-\s.*$", " ", text)
+    text = re.sub(r"[^\w\s]", " ", text.lower())
+
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _lyrics_rate_ok(client_ip):
+
+    now = time.time()
+
+    if len(_lyrics_hits) > 2000:
+        _lyrics_hits.clear()
+
+    hits = _lyrics_hits.setdefault(client_ip, deque())
+
+    while hits and hits[0] < now - 60:
+        hits.popleft()
+
+    if len(hits) >= LYRICS_RATE_LIMIT:
+        return False
+
+    hits.append(now)
+
+    return True
+
+
+def _musixmatch_search(query):
+
+    api_key = os.getenv("MUSIXMATCH_API_KEY")
+
+    if not api_key:
+        raise _api_error(503, "lyrics_not_configured")
+
+    try:
+
+        response = requests.get(
+            f"{MUSIXMATCH_BASE}/track.search",
+            params={
+                "q_lyrics": query,
+                "f_has_lyrics": 1,
+                "s_track_rating": "desc",
+                "page": 1,
+                "page_size": LYRICS_MAX_MATCHES,
+                "apikey": api_key,
+            },
+            timeout=15,
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+    except (requests.RequestException, ValueError) as error:
+
+        # Never log the exception text: requests includes the full URL (and API key).
+        print("Musixmatch request failed:", type(error).__name__)
+
+        raise _api_error(502, "lyrics_unavailable")
+
+    message = data.get("message") or {}
+
+    status = (message.get("header") or {}).get("status_code")
+
+    if status == 402:
+        raise _api_error(429, "lyrics_limit_reached")
+
+    if status == 404:
+        return []
+
+    if status != 200:
+
+        print("Musixmatch returned status:", status)
+
+        raise _api_error(502, "lyrics_unavailable")
+
+    body = message.get("body")
+
+    track_list = body.get("track_list", []) if isinstance(body, dict) else []
+
+    matches = []
+    seen = set()
+
+    for item in track_list:
+
+        track = (item or {}).get("track") or {}
+
+        name = (track.get("track_name") or "").strip()
+        artist = (track.get("artist_name") or "").strip()
+
+        key = (_normalize(name), _normalize(artist))
+
+        if not name or not artist or key in seen:
+            continue
+
+        seen.add(key)
+
+        matches.append({"name": name, "artist": artist})
+
+    return matches
+
+
+def _spotify_lookup(token, name, artist):
+    """Returns (track_or_None, lookup_failed)."""
+
+    try:
+
+        response = requests.get(
+            "https://api.spotify.com/v1/search",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            params={
+                "q": f'track:"{name.replace(chr(34), " ")}" artist:"{artist.replace(chr(34), " ")}"',
+                "type": "track",
+                "limit": 5,
+            },
+            timeout=10,
+        )
+
+        response.raise_for_status()
+
+        items = response.json().get("tracks", {}).get("items", [])
+
+    except (requests.RequestException, ValueError):
+
+        return None, True
+
+    wanted_title = _normalize(name)
+    wanted_artist = _normalize(artist)
+
+    for item in items:
+
+        title = _normalize(item.get("name"))
+
+        artists = [
+            _normalize(a.get("name"))
+            for a in item.get("artists", [])
+        ]
+
+        title_ok = bool(title and wanted_title) and (
+            title == wanted_title
+            or title in wanted_title
+            or wanted_title in title
+        )
+
+        artist_ok = any(
+            a and wanted_artist and (
+                a == wanted_artist
+                or a in wanted_artist
+                or wanted_artist in a
+            )
+            for a in artists
+        )
+
+        if title_ok and artist_ok:
+            return item, False
+
+    return None, False
+
+
+@app.get("/lyrics/search")
+def search_by_lyrics(q: str, request: Request):
+
+    query = re.sub(r"\s+", " ", q or "").strip()
+
+    if len(query) < LYRICS_MIN_CHARS:
+        raise _api_error(400, "query_too_short")
+
+    if len(query) > LYRICS_MAX_CHARS:
+        raise _api_error(400, "query_too_long")
+
+    cache_key = query.lower()
+
+    cached = _lyrics_cache.get(cache_key)
+
+    if cached and cached[0] > time.time():
+        return cached[1]
+
+    forwarded = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+
+    client_ip = forwarded or (request.client.host if request.client else "unknown")
+
+    if not _lyrics_rate_ok(client_ip):
+        raise _api_error(429, "rate_limited")
+
+    matches = _musixmatch_search(query)
+
+    results = []
+    unresolved = []
+    lookup_errors = 0
+
+    if matches:
+
+        token = get_access_token()
+
+        with ThreadPoolExecutor(max_workers=5) as pool:
+
+            outcomes = list(
+                pool.map(
+                    lambda m: _spotify_lookup(token, m["name"], m["artist"]),
+                    matches
+                )
+            )
+
+        seen_ids = set()
+
+        for match, (track, failed) in zip(matches, outcomes):
+
+            if failed:
+                lookup_errors += 1
+                continue
+
+            if track is None:
+                unresolved.append(match)
+                continue
+
+            if track.get("id") in seen_ids:
+                continue
+
+            seen_ids.add(track.get("id"))
+
+            results.append(track)
+
+    payload = {
+        "query": query,
+        "results": results,
+        "unresolved": unresolved,
+        "lookup_errors": lookup_errors,
+        "source": "musixmatch",
+    }
+
+    if lookup_errors == 0:
+
+        if len(_lyrics_cache) > 200:
+            _lyrics_cache.clear()
+
+        _lyrics_cache[cache_key] = (time.time() + LYRICS_CACHE_SECONDS, payload)
+
+    return payload
 
 
 # =========================

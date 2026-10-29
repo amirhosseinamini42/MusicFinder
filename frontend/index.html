@@ -1873,6 +1873,17 @@ html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
 .albumTrack small { color: var(--muted); font-size: 12px; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .albumTrack { transition: none; } }
 </style>
+<style>
+/* Search-type toggle (songs/artists/albums vs lyrics) */
+.searchMode { display: flex; gap: 6px; padding: 4px; margin-top: 14px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid var(--border); }
+.hero > .searchMode { animation-delay: 190ms; }
+.searchMode button { padding: 9px 16px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-size: 14px; font-weight: 700; transition: background .2s, color .2s; }
+.searchMode button:hover { color: var(--text); }
+.searchMode button:focus-visible { outline: 2px solid rgba(224,164,90,.8); outline-offset: 2px; }
+.searchMode button.active { background: linear-gradient(135deg, #e6b06a, #c47f35); color: #1e1208; }
+@media (max-width: 700px) { .searchMode { width: min(750px, 100%); } .searchMode button { flex: 1; padding: 10px 8px; font-size: 13px; } }
+@media (prefers-reduced-motion: reduce) { .searchMode button { transition: none; } }
+</style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
@@ -2667,6 +2678,14 @@ async function performSearch() {
 
     if (!query) return;
 
+    // Lyrics mode is handled by performLyricsSearch (defined near the end of the page)
+    if (window.mfSearchMode === "lyrics") {
+        return performLyricsSearch(query);
+    }
+
+    // Newer searches (of either kind) invalidate older, slower responses
+    const seq = (window.mfSearchSeq = (window.mfSearchSeq || 0) + 1);
+
     const resultsSection =
         document.getElementById("resultsSection");
 
@@ -2720,6 +2739,8 @@ results.innerHTML = `
 
         const data = await response.json();
 
+        if (seq !== window.mfSearchSeq) return;
+
         renderSearchResults(data, query);
 
         resultsSection.scrollIntoView({
@@ -2728,6 +2749,8 @@ results.innerHTML = `
         });
 
     } catch (error) {
+
+        if (seq !== window.mfSearchSeq) return;
 
         console.error(error);
 
@@ -5904,6 +5927,174 @@ function showTelegramPanel(query, copied) {
     }
 
     /* re-run translation so the dictionary fixes apply if the page loaded in Persian */
+    if (isFa() && typeof window.setLanguage === "function") window.setLanguage("fa");
+})();
+</script>
+<script>
+/* =========================
+   LYRICS SEARCH (search by a line of lyrics)
+   Backend: GET /lyrics/search?q=...  (Musixmatch metadata -> Spotify tracks)
+   Results are normal Spotify track objects, so cards, Play Preview, favorites and
+   playlists all reuse the existing code. No lyric text is fetched or displayed.
+========================= */
+(function () {
+    const isFa = () => document.documentElement.lang === "fa";
+    const dig = n => isFa() ? String(n).replace(/\d/g, d => "۰۱۲۳۴۵۶۷۸۹"[d]) : String(n);
+
+    const T = {
+        searching:   ["Searching lyrics", "در حال جستجوی متن آهنگ"],
+        finding:     ["Matching lyrics to songs", "در حال یافتن آهنگ از روی متن"],
+        matches:     ["Songs matching these lyrics", "آهنگ‌های مطابق با این متن"],
+        count:       [n => `${n} matching songs`, n => `${dig(n)} آهنگ مطابق`],
+        notOnSpotify:["Found in the lyrics database, but not on Spotify", "در پایگاه متن آهنگ پیدا شد، اما در Spotify نبود"],
+        empty:       ["No songs found for these lyrics. Try a longer or more exact line.", "آهنگی برای این متن پیدا نشد. یک خط طولانی‌تر یا دقیق‌تر امتحان کنید."],
+        partial:     ["Some matches couldn't be checked on Spotify right now, so the list may be incomplete.", "بررسی بعضی نتایج در Spotify الان ممکن نشد، پس ممکن است فهرست ناقص باشد."],
+        attribution: ["Lyrics matching by Musixmatch", "تطبیق متن آهنگ توسط Musixmatch"],
+        failed:      ["Lyrics search failed.", "جستجوی متن آهنگ ناموفق بود."],
+        query_too_short:  ["Type at least 3 characters from the lyrics.", "حداقل ۳ حرف از متن آهنگ را وارد کنید."],
+        query_too_long:   ["That's too long. Use a single line (up to 200 characters).", "این متن خیلی طولانی است. یک خط (حداکثر ۲۰۰ حرف) بنویسید."],
+        lyrics_not_configured: ["Lyrics search isn't set up on the server yet.", "جستجوی متن آهنگ هنوز روی سرور راه‌اندازی نشده است."],
+        lyrics_limit_reached:  ["The daily lyrics-search limit has been reached. Please try again later.", "سقف روزانه‌ی جستجوی متن آهنگ پر شده است. لطفاً بعداً دوباره تلاش کنید."],
+        rate_limited:     ["Too many searches. Please wait a minute and try again.", "جستجوها زیاد بود. یک دقیقه صبر کنید و دوباره تلاش کنید."],
+        lyrics_unavailable: ["The lyrics service is unavailable right now. Please try again shortly.", "سرویس متن آهنگ فعلاً در دسترس نیست. کمی بعد دوباره تلاش کنید."],
+        network:     ["Couldn't reach the server. Check your connection and try again.", "ارتباط با سرور برقرار نشد. اینترنت خود را بررسی کنید و دوباره تلاش کنید."],
+        server:      ["Something went wrong on the server. Please try again.", "مشکلی در سرور پیش آمد. دوباره تلاش کنید."]
+    };
+    const t = (k, ...a) => { const v = T[k][isFa() ? 1 : 0]; return typeof v === "function" ? v(...a) : v; };
+
+    /* Static labels go through the existing Persian dictionary */
+    if (window.MF_FA) {
+        Object.assign(window.MF_FA, {
+            "Songs, artists & albums": "آهنگ، هنرمند و آلبوم",
+            "Search by lyrics": "جستجو با متن آهنگ",
+            "Type a line from the lyrics...": "یک خط از متن آهنگ را بنویسید...",
+            "Search type": "نوع جستجو"
+        });
+    }
+
+    const PH_ALL = "Search for a song, artist or album...";
+    const PH_LYRICS = "Type a line from the lyrics...";
+
+    window.mfSearchMode = "all";
+
+    function setMode(mode) {
+        window.mfSearchMode = mode === "lyrics" ? "lyrics" : "all";
+        document.querySelectorAll(".searchMode button").forEach(b => {
+            const on = b.dataset.mode === window.mfSearchMode;
+            b.classList.toggle("active", on);
+            b.setAttribute("aria-pressed", String(on));
+        });
+        const input = document.getElementById("searchInput");
+        if (input) input.placeholder = window.mfSearchMode === "lyrics" ? PH_LYRICS : PH_ALL;
+    }
+
+    function buildToggle() {
+        const box = document.getElementById("searchSection");
+        if (!box || document.querySelector(".searchMode")) return;
+        const wrap = document.createElement("div");
+        wrap.className = "searchMode";
+        wrap.setAttribute("role", "group");
+        wrap.setAttribute("aria-label", "Search type");
+        wrap.innerHTML =
+            `<button type="button" class="active" data-mode="all" aria-pressed="true">Songs, artists &amp; albums</button>` +
+            `<button type="button" data-mode="lyrics" aria-pressed="false">Search by lyrics</button>`;
+        wrap.addEventListener("click", e => {
+            const b = e.target.closest("button[data-mode]");
+            if (b) setMode(b.dataset.mode);
+        });
+        box.after(wrap);
+    }
+
+    const loadingDots = `<span class="searchLoading"><span></span><span></span><span></span></span>`;
+
+    function errorMessage(code) {
+        return T[code] ? t(code) : t("server");
+    }
+
+    function renderLyricsResults(data) {
+        const container = document.getElementById("searchResults");
+        const status = document.getElementById("searchStatus");
+        const tracks = Array.isArray(data.results) ? data.results : [];
+        const unresolved = Array.isArray(data.unresolved) ? data.unresolved : [];
+
+        window.currentTracks = tracks;
+        status.textContent = tracks.length ? t("count", tracks.length) : "";
+
+        let html = "";
+
+        if (tracks.length) {
+            html += `<div class="resultGroup">
+                <h3 class="resultGroupTitle">🎤 ${escapeHtml(t("matches"))}</h3>
+                <div class="resultGrid">${tracks.map(trackCard).join("")}</div>
+            </div>`;
+        }
+
+        if (unresolved.length) {
+            html += `<div class="resultGroup">
+                <h3 class="resultGroupTitle">${escapeHtml(t("notOnSpotify"))}</h3>
+                <div class="historyList">${unresolved.map(u =>
+                    `<span class="historyItem" style="cursor:default">${escapeHtml(u.name)} — ${escapeHtml(u.artist)}</span>`
+                ).join("")}</div>
+            </div>`;
+        }
+
+        if (data.lookup_errors > 0) {
+            html += `<div class="empty glass" style="margin-bottom:18px">${escapeHtml(t("partial"))}</div>`;
+        }
+
+        if (!tracks.length && !unresolved.length && !(data.lookup_errors > 0)) {
+            html = `<div class="empty glass">${escapeHtml(t("empty"))}</div>`;
+        }
+
+        html += `<div class="cardMeta" style="text-align:center;margin-top:8px">${escapeHtml(t("attribution"))}</div>`;
+
+        container.innerHTML = html;
+    }
+
+    window.performLyricsSearch = async function (query) {
+        const seq = (window.mfSearchSeq = (window.mfSearchSeq || 0) + 1);
+        const resultsSection = document.getElementById("resultsSection");
+        const results = document.getElementById("searchResults");
+        const status = document.getElementById("searchStatus");
+
+        resultsSection.style.display = "block";
+        status.innerHTML = `${escapeHtml(t("searching"))} ${loadingDots}`;
+        results.innerHTML = `<div class="empty glass searchLoadingBox"><span class="loadingText">${escapeHtml(t("finding"))}</span>${loadingDots}</div>`;
+
+        rememberSearch(query);
+
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 25000);
+
+        try {
+            const response = await fetch(`${API_BASE}/lyrics/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+            let body = null;
+            try { body = await response.json(); } catch (e) { body = null; }
+
+            if (seq !== window.mfSearchSeq) return;          // a newer search replaced this one
+
+            if (!response.ok) {
+                const code = body && body.detail && typeof body.detail === "object" ? body.detail.code : null;
+                results.innerHTML = `<div class="empty glass">${escapeHtml(errorMessage(code))}</div>`;
+                status.textContent = t("failed");
+                return;
+            }
+
+            renderLyricsResults(body || {});
+            resultsSection.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (error) {
+            if (seq !== window.mfSearchSeq) return;
+            console.error("Lyrics search error:", error && error.name);
+            results.innerHTML = `<div class="empty glass">${escapeHtml(t("network"))}</div>`;
+            status.textContent = t("failed");
+        } finally {
+            clearTimeout(timer);
+        }
+    };
+
+    buildToggle();
+
+    /* re-run translation so the new labels are translated if the page loaded in Persian */
     if (isFa() && typeof window.setLanguage === "function") window.setLanguage("fa");
 })();
 </script>

@@ -211,7 +211,9 @@ def search_music(q: str):
 # requested, stored or returned. Each match is then resolved to a real Spotify track
 # so results work with the existing cards and player.
 #
-# Env: MUSIXMATCH_API_KEY  (server side only; never sent to the browser)
+# Env (server side only, never sent to the browser). Use ONE of them:
+#   AUDD_API_TOKEN      - AudD findLyrics (used first when set)
+#   MUSIXMATCH_API_KEY  - Musixmatch track.search
 
 MUSIXMATCH_BASE = "https://api.musixmatch.com/ws/1.1"
 LYRICS_MIN_CHARS = 3
@@ -338,6 +340,79 @@ def _musixmatch_search(query):
     return matches
 
 
+def _audd_search(query):
+    """AudD findLyrics. Only artist/title are read - the lyric text AudD returns is discarded."""
+
+    token = os.getenv("AUDD_API_TOKEN")
+
+    try:
+
+        # Token travels in the POST body, never in the URL (so it cannot appear in error text).
+        response = requests.post(
+            "https://api.audd.io/findLyrics/",
+            data={
+                "api_token": token,
+                "q": query,
+            },
+            timeout=15,
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+    except (requests.RequestException, ValueError) as error:
+
+        print("AudD request failed:", type(error).__name__)
+
+        raise _api_error(502, "lyrics_unavailable")
+
+    if data.get("status") != "success":
+
+        error_info = data.get("error") or {}
+
+        code = error_info.get("error_code")
+
+        print("AudD returned error code:", code)
+
+        if code == 901:
+            raise _api_error(429, "lyrics_limit_reached")
+
+        raise _api_error(502, "lyrics_unavailable")
+
+    result = data.get("result")
+
+    matches = []
+    seen = set()
+
+    for item in (result if isinstance(result, list) else []):
+
+        name = ((item or {}).get("title") or "").strip()
+        artist = ((item or {}).get("artist") or "").strip()
+
+        key = (_normalize(name), _normalize(artist))
+
+        if not name or not artist or key in seen:
+            continue
+
+        seen.add(key)
+
+        matches.append({"name": name, "artist": artist})
+
+        if len(matches) >= LYRICS_MAX_MATCHES:
+            break
+
+    return matches
+
+
+def _find_lyrics_matches(query):
+
+    if os.getenv("AUDD_API_TOKEN"):
+        return _audd_search(query), "audd"
+
+    return _musixmatch_search(query), "musixmatch"
+
+
 def _spotify_lookup(token, name, artist):
     """Returns (track_or_None, lookup_failed)."""
 
@@ -422,7 +497,7 @@ def search_by_lyrics(q: str, request: Request):
     if not _lyrics_rate_ok(client_ip):
         raise _api_error(429, "rate_limited")
 
-    matches = _musixmatch_search(query)
+    matches, source = _find_lyrics_matches(query)
 
     results = []
     unresolved = []
@@ -465,7 +540,7 @@ def search_by_lyrics(q: str, request: Request):
         "results": results,
         "unresolved": unresolved,
         "lookup_errors": lookup_errors,
-        "source": "musixmatch",
+        "source": source,
     }
 
     if lookup_errors == 0:

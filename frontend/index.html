@@ -5949,7 +5949,7 @@ function showTelegramPanel(query, copied) {
         notOnSpotify:["Found in the lyrics database, but not on Spotify", "در پایگاه متن آهنگ پیدا شد، اما در Spotify نبود"],
         empty:       ["No songs found for these lyrics. Try a longer or more exact line.", "آهنگی برای این متن پیدا نشد. یک خط طولانی‌تر یا دقیق‌تر امتحان کنید."],
         partial:     ["Some matches couldn't be checked on Spotify right now, so the list may be incomplete.", "بررسی بعضی نتایج در Spotify الان ممکن نشد، پس ممکن است فهرست ناقص باشد."],
-        attribution: ["Lyrics matching by Musixmatch", "تطبیق متن آهنگ توسط Musixmatch"],
+        attribution: [s => `Lyrics matching by ${s}`, s => `تطبیق متن آهنگ توسط ${s}`],
         failed:      ["Lyrics search failed.", "جستجوی متن آهنگ ناموفق بود."],
         query_too_short:  ["Type at least 3 characters from the lyrics.", "حداقل ۳ حرف از متن آهنگ را وارد کنید."],
         query_too_long:   ["That's too long. Use a single line (up to 200 characters).", "این متن خیلی طولانی است. یک خط (حداکثر ۲۰۰ حرف) بنویسید."],
@@ -6046,7 +6046,7 @@ function showTelegramPanel(query, copied) {
             html = `<div class="empty glass">${escapeHtml(t("empty"))}</div>`;
         }
 
-        html += `<div class="cardMeta" style="text-align:center;margin-top:8px">${escapeHtml(t("attribution"))}</div>`;
+        html += `<div class="cardMeta" style="text-align:center;margin-top:8px">${escapeHtml(t("attribution", data.source === "audd" ? "AudD" : "Musixmatch"))}</div>`;
 
         container.innerHTML = html;
     }

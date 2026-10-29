@@ -219,6 +219,7 @@ a {
     right: -390px;
     width: min(390px, 90vw);
     height: 100vh;
+    height: 100dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
     z-index: 210;
@@ -741,6 +742,7 @@ main {
     width: min(850px, 100%);
     max-height: 90vh;
     overflow-y: auto;
+    overscroll-behavior: contain;
     border-radius: 30px;
     padding: 28px;
 
@@ -1847,6 +1849,30 @@ html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
 }
 </style>
 
+<style>
+/* Album detail: tracklist (classes were used by openAlbum() but had no styles) */
+.albumTrackList { display: flex; flex-direction: column; gap: 8px; margin-top: 22px; }
+.albumTrack {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,.05);
+    color: var(--text);
+    text-align: start;
+    transition: background .2s ease, transform .2s ease;
+}
+.albumTrack:hover, .albumTrack:focus-visible { background: rgba(255,255,255,.12); outline: none; }
+.albumTrack:focus-visible { border-color: rgba(224,164,90,.8); }
+.albumTrack span { color: var(--muted); font-size: 13px; text-align: center; }
+.albumTrack strong { font-weight: 650; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.albumTrack small { color: var(--muted); font-size: 12px; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .albumTrack { transition: none; } }
+</style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <style>
@@ -2171,6 +2197,21 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 
 </section>
 
+<section class="section" id="albums">
+
+    <div class="sectionHeader">
+        <div>
+            <h2 class="sectionTitle">Albums</h2>
+            <p class="sectionSubtitle">Albums you discover through MusicFinder.</p>
+        </div>
+    </div>
+
+    <div class="albumGrid" id="albumGrid">
+        <div class="empty glass">Search for music to build your album library.</div>
+    </div>
+
+</section>
+
 <section class="section" id="history">
 
     <div class="sectionHeader">
@@ -2210,21 +2251,6 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
     </div>
 
     <div class="artistGrid" id="artistGrid"></div>
-
-</section>
-
-<section class="section" id="albums">
-
-    <div class="sectionHeader">
-        <div>
-            <h2 class="sectionTitle">Albums</h2>
-            <p class="sectionSubtitle">Albums you discover through MusicFinder.</p>
-        </div>
-    </div>
-
-    <div class="albumGrid" id="albumGrid">
-        <div class="empty glass">Search for music to build your album library.</div>
-    </div>
 
 </section>
 
@@ -4173,7 +4199,7 @@ function renderForYou() {
                                             <button
                                                 class="smallBtn primary"
                                                 type="button"
-                                                onclick="event.stopPropagation(); playMusicFinderSong(${encoded})"
+                                                onclick="event.stopPropagation(); playMusicFinderSong(JSON.parse(decodeURIComponent('${encoded}')))"
                                             >
                                                 Play Preview
                                             </button>
@@ -4636,6 +4662,9 @@ async function loadPlayerSong(song, autoPlay = false) {
     playerArtist.textContent =
         song.artists?.map(a => a.name).join(", ") || "Unknown Artist";
     playerCover.src = song.album?.images?.[0]?.url || "";
+    playerProgress.value = 0;
+    playerCurrentTime.textContent = "0:00";
+    playerDuration.textContent = "0:00";
     musicPlayer.classList.add("active");
 
     const sources = await getPreviewSources(song);
@@ -4780,6 +4809,8 @@ playerVolume.addEventListener("input", () => {
 
 musicAudio.addEventListener("ended", () => {
 
+    if (isUnlockSound()) return;
+
     setPlayerPlaying(false);
 
     playerProgress.value = 0;
@@ -4880,9 +4911,19 @@ window.playMusicFinderSong = function(song, queue = []) {
    Full song player (Spotify)
 ========================= */
 
+/* Album tracks use the same unified entry point as every other Play button */
+function playTrack(track, queue) {
+    if (!track) return;
+    playMusicFinderSong(track, Array.isArray(queue) && queue.length ? queue : [track]);
+}
+
 function playFullSong(song) {
 
     if (!song) return;
+
+    // Invalidate any preview lookup that is still running, otherwise it would
+    // start playing in the background next to the Spotify embed.
+    playerLoadId++;
 
     // One player at a time: stop and hide the preview player
     musicAudio.pause();
@@ -5312,7 +5353,7 @@ function showTelegramPanel(query, copied) {
         "Check that the MusicFinder server is running.":"بررسی کنید که سرور MusicFinder در حال اجراست.",
         "Close":"بستن","Copy":"کپی","Could not load artist information.":"اطلاعات هنرمند بارگذاری نشد.",
         "Details":"جزئیات","Discography":"آثار و آلبوم‌ها","Download":"دانلود","Download Search":"جستجوی دانلود",
-        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق ت  گرا��",
+        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق ت  گرا  ",
         "Explore":"کاوش","Explore Artist":"کاوش هنرمند",
         "Loading artist information...":"در حال بارگذاری اطلاعات هنرمند...","Loading...":"در حال بارگذاری...",
         "Loading results":"در حال بارگذاری نتایج","Album cover":"جلد آلبوم",
@@ -5822,7 +5863,8 @@ function showTelegramPanel(query, copied) {
         pl.innerHTML = `<div class="sectionHeader"><div><h2 class="sectionTitle" data-t="plTitle"></h2><p class="sectionSubtitle" data-t="plSub"></p></div></div>
             <div class="searchBox mfCreate"><input id="mfPlName" maxlength="60" data-tph="plNewPh" autocomplete="off"><button type="button" class="searchBtn" data-mf="plcreate" data-t="plCreate"></button></div>
             <div id="mfPlList"></div>`;
-        hist.before(fav, pl);
+        const alb = document.getElementById("albums");
+        if (alb) { alb.before(fav); alb.after(pl); } else { hist.before(fav, pl); }
 
         const after = [...document.querySelectorAll(".menuItem")].find(x => (x.getAttribute("onclick") || "").includes("'taste'"));
         if (after) {

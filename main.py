@@ -286,6 +286,79 @@ def get_artist_albums(artist_id: str):
 
 
 # =========================
+# ALBUM
+# =========================
+
+@app.get("/album/{album_id}")
+def get_album(album_id: str):
+
+    if not album_id.isalnum() or len(album_id) > 40:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid album id."
+        )
+
+    token = get_access_token()
+
+    try:
+
+        response = requests.get(
+            f"https://api.spotify.com/v1/albums/{album_id}",
+            headers={
+                "Authorization": f"Bearer {token}"
+            },
+            timeout=20,
+        )
+
+        if response.status_code == 404:
+
+            raise HTTPException(
+                status_code=404,
+                detail="Album not found."
+            )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+    except requests.RequestException as error:
+
+        print("Spotify album error:", error)
+
+        raise HTTPException(
+            status_code=502,
+            detail="Could not load album."
+        )
+
+    album_info = {
+        "id": data.get("id"),
+        "name": data.get("name"),
+        "images": data.get("images", []),
+        "external_urls": data.get("external_urls", {}),
+        "release_date": data.get("release_date"),
+    }
+
+    # The frontend expects a flat array of tracks that carry album artwork,
+    # so the player can show the cover for each album track.
+    tracks = [
+        {**track, "album": album_info}
+        for track in (data.get("tracks") or {}).get("items", [])
+    ]
+
+    return {
+        "id": data.get("id"),
+        "name": data.get("name"),
+        "album_type": data.get("album_type"),
+        "release_date": data.get("release_date"),
+        "images": data.get("images", []),
+        "artists": data.get("artists", []),
+        "external_urls": data.get("external_urls", {}),
+        "tracks": tracks,
+    }
+
+
+# =========================
 # ARTIST BIO
 # =========================
 

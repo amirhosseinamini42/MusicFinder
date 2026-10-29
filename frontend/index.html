@@ -6796,6 +6796,16 @@ html[dir=rtl] .alHdr .alD{text-align:start}
   window.addEventListener("popstate", () => { if (page.classList.contains("open") && !(history.state && history.state.mfAlbum)) closeAlbum(true); });
   $("alClose").onclick = () => closeAlbum(false);
 
+  /* The mini-player is a separate fixed layer above the album page, and the body is scroll-locked while the
+     page is open, so a wheel/trackpad scroll that lands on the player had no scrollable ancestor and was
+     swallowed. Hand it to the album page. Passive (no preventDefault), so it never blocks native behaviour. */
+  const mp = $("musicPlayer");
+  if (mp) mp.addEventListener("wheel", e => {
+    if (e.ctrlKey || !page.classList.contains("open") || $("np").classList.contains("open")) return;   // ctrl+wheel = pinch zoom
+    const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * page.clientHeight : e.deltaY;
+    page.scrollTop += dy;
+  }, { passive: true });
+
   function renderAlbum() {
     const a = album, img = a.images?.[0]?.url || "";
     const artists = (a.artists || []).map(x => x.name).join(", ");

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>MusicFinder · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+* { box-sizing: border-box; }
+:root {
+    --bg:#110b08; --glass:rgba(255,226,190,.07); --glass-strong:rgba(255,226,190,.12);
+    --border:rgba(255,220,180,.14); --text:#f4e8d4; --muted:rgba(244,232,212,.58);
+    --amber:#e0a45a; --danger:#ff7a90; --ok:#8fd19e;
+}
+html { color-scheme: dark; }
+body {
+    margin:0; min-height:100vh; color:var(--text);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+        radial-gradient(ellipse 70% 55% at 14% -8%, rgba(236,148,56,.30), transparent 72%),
+        radial-gradient(ellipse 60% 45% at 92% 108%, rgba(160,56,56,.24), transparent 72%),
+        var(--bg);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+.bar { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding: calc(14px + env(safe-area-inset-top)) 22px 14px; background:rgba(24,14,9,.82); backdrop-filter:blur(22px); border-bottom:1px solid var(--border); }
+.logo { font-size:20px; font-weight:800; letter-spacing:-.5px; } .logo span { color:var(--amber); opacity:.8; }
+.who { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); min-width:0; }
+.who b { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
+.badge { padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; background:rgba(224,164,90,.18); border:1px solid rgba(224,164,90,.5); color:var(--amber); }
+main { width:min(1100px, calc(100% - 32px)); margin:28px auto 80px; }
+h1,h2 { font-family:"Cormorant Garamond", Georgia, serif; font-weight:600; margin:0 0 6px; }
+h1 { font-size:40px; } h2 { font-size:28px; }
+.muted { color:var(--muted); font-size:14px; }
+.glass { background:linear-gradient(160deg, rgba(255,226,190,.085), rgba(255,226,190,.04)); border:1px solid var(--border); border-radius:22px; padding:22px; backdrop-filter:blur(20px); }
+.tabs { display:flex; gap:6px; padding:4px; margin:22px 0; border-radius:14px; background:rgba(255,255,255,.06); border:1px solid var(--border); overflow-x:auto; }
+.tabs button { flex:1; min-width:110px; padding:10px 14px; border:0; border-radius:10px; background:transparent; color:var(--muted); font-weight:700; }
+.tabs button.active { background:linear-gradient(135deg,#e6b06a,#c47f35); color:#1e1208; }
+.tabs button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline:2px solid rgba(224,164,90,.8); outline-offset:2px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; }
+.stat { padding:18px; border-radius:18px; background:rgba(255,255,255,.05); border:1px solid var(--border); }
+.stat b { display:block; font-size:30px; } .stat span { color:var(--muted); font-size:13px; }
+label { display:block; font-size:13px; color:var(--muted); margin:14px 0 6px; }
+input[type=text], input[type=search], input[type=email], select, textarea {
+    width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.07); color:var(--text); }
+textarea { min-height:90px; resize:vertical; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:14px; } @media (max-width:700px){ .row{grid-template-columns:1fr;} }
+.check { display:flex; align-items:flex-start; gap:10px; margin-top:14px; font-size:14px; color:var(--text); }
+.check input { margin-top:3px; accent-color:#c47f35; }
+.btn { padding:11px 18px; border-radius:13px; border:1px solid var(--border); background:rgba(255,255,255,.07); color:var(--text); font-weight:650; transition:background .2s, transform .2s; }
+.btn:hover { background:rgba(255,255,255,.16); transform:translateY(-2px); }
+.btn.primary { background:linear-gradient(135deg,#e6b06a,#c47f35); color:#1e1208; border-color:transparent; }
+.btn.danger { border-color:rgba(255,122,144,.6); color:var(--danger); }
+.btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+.btn.sm { padding:7px 11px; font-size:12.5px; border-radius:10px; }
+.actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:18px; }
+.progress { height:8px; border-radius:999px; background:rgba(255,255,255,.12); overflow:hidden; margin-top:6px; }
+.progress i { display:block; height:100%; width:0; background:linear-gradient(90deg,#e6b06a,#c47f35); transition:width .15s; }
+.msg { padding:12px 14px; border-radius:12px; margin-top:14px; font-size:14px; border:1px solid var(--border); background:rgba(255,255,255,.06); }
+.msg.err { border-color:rgba(255,122,144,.6); color:#ffc2cc; } .msg.ok { border-color:rgba(143,209,158,.5); color:var(--ok); }
+.tableWrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { text-align:start; padding:12px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+.pill { padding:3px 9px; border-radius:999px; font-size:11.5px; font-weight:700; border:1px solid var(--border); }
+.pill.draft { color:var(--muted); } .pill.review { color:#e6c06a; border-color:#e6c06a88; }
+.pill.published { color:var(--ok); border-color:#8fd19e88; } .pill.unpublished { color:var(--danger); border-color:#ff7a9088; }
+.toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; } .toolbar input { flex:1; min-width:180px; } .toolbar select { width:auto; }
+.cov { width:44px; height:44px; border-radius:10px; background:rgba(255,255,255,.08); object-fit:cover; }
+.overlay { position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px; }
+.dlg { width:min(560px,100%); max-height:88vh; overflow:auto; background:rgba(24,14,9,.97); border:1px solid var(--border); border-radius:22px; padding:24px; }
+.hidden { display:none !important; }
+.center { min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; }
+audio { width:100%; margin-top:12px; }
+@media (prefers-reduced-motion: reduce){ * { transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="bar">
+    <div class="logo">Music<span>Finder</span> · Admin</div>
+    <div class="who" id="who"></div>
+</div>
+
+<main id="app"></main>
+<div id="dialogHost"></div>
+
+<script>
+/* Public identifier (same value the main site already ships). Secrets never live in the browser. */
+const GOOGLE_CLIENT_ID = "923068000834-e2e11vqgul2jeqipsels4vbbf5ltauo5.apps.googleusercontent.com";
+const API_BASE = "https://musicfinder-api.vercel.app";
+
+let idToken = null;          // kept in memory only (never written to storage)
+let me = null;
+let tab = "dashboard";
+let tracksCache = [];
+
+const ERR = {
+    auth_required: "Please sign in.", session_expired: "Your session expired. Please sign in again.",
+    email_not_verified: "Your Google email is not verified.", not_authorized: "This account is not authorized for administration.",
+    forbidden: "Only the owner can do that.", owner_protected: "The owner account cannot be changed.",
+    cloud_not_configured: "The server storage is not configured yet.", storage_failed: "Storage error. Please retry.",
+    storage_unavailable: "Storage is unreachable. Please retry.", bad_audio_type: "Unsupported audio type (use MP3, M4A, WAV, OGG or FLAC).",
+    bad_cover_type: "Unsupported image type (use JPG, PNG or WebP).", audio_too_large: "Audio file is too large.",
+    cover_too_large: "Cover image is too large (max 5 MB).", empty_file: "The file is empty.",
+    bad_audio_file: "The uploaded file is not valid audio (its contents do not match its type).",
+    bad_cover_file: "The uploaded cover is not a valid image.", upload_missing: "The file did not finish uploading.",
+    title_required: "Title is required.", artist_required: "Artist is required.", bad_transition: "That status change is not allowed from the current state.",
+    audio_missing: "Upload the audio file first.", rights_not_confirmed: "Confirm you have the rights to distribute this track.",
+    unpublish_first: "Unpublish the track before changing that.", already_admin: "That account is already an administrator.",
+    bad_email: "Enter a valid email address.", rate_limited: "Too many requests. Wait a minute.", not_found: "Not found.",
+    finalize_failed: "Some files failed validation.", duplicate_request: "This submission was already received."
+};
+const msgFor = c => ERR[c] || "Something went wrong. Please try again.";
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const $ = s => document.querySelector(s);
+
+class ApiError extends Error { constructor(status, code, body) { super(code); this.status = status; this.code = code; this.body = body; } }
+
+async function api(path, { method = "GET", body } = {}) {
+    if (!idToken) throw new ApiError(401, "auth_required");
+    let res;
+    try {
+        res = await fetch(API_BASE + path, { method, headers: { Authorization: "Bearer " + idToken, ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    } catch { throw new ApiError(0, "storage_unavailable"); }
+    let data = null; try { data = await res.json(); } catch {}
+    if (!res.ok) {
+        const d = data && data.detail;
+        const code = d && typeof d === "object" ? d.code : "server";
+        if (res.status === 401) { idToken = null; me = null; renderSignIn(msgFor(code)); }
+        throw new ApiError(res.status, code, d);
+    }
+    return data;
+}
+
+/* ---------- sign in ---------- */
+function onCredential(resp) { idToken = resp.credential; boot(); }
+function renderSignIn(note) {
+    $("#who").innerHTML = "";
+    $("#app").innerHTML = `<div class="center"><h1>Administration</h1>
+        <p class="muted">Sign in with an authorized Google account. Access is checked on the server for every action.</p>
+        ${note ? `<div class="msg err">${esc(note)}</div>` : ""}<div id="gbtn"></div></div>`;
+    const go = () => {
+        if (!window.google?.accounts?.id) return setTimeout(go, 250);
+        google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onCredential, auto_select: true });
+        google.accounts.id.renderButton($("#gbtn"), { theme: "filled_black", size: "large", shape: "pill", text: "signin_with" });
+    };
+    go();
+}
+
+async function boot() {
+    try {
+        me = await api("/admin/me");
+    } catch (e) {
+        if (e.status === 401) return;                                  // api() already rendered sign-in
+        idToken = null;
+        return renderSignIn(msgFor(e.code));
+    }
+    $("#who").innerHTML = `<span class="badge">${me.role === "owner" ? "OWNER" : "ADMIN"}</span><b>${esc(me.email)}</b><button class="btn sm" id="out">Sign out</button>`;
+    $("#out").onclick = () => { try { google.accounts.id.disableAutoSelect(); } catch {} idToken = null; me = null; renderSignIn(); };
+    renderShell();
+}
+
+/* ---------- shell ---------- */
+function renderShell() {
+    const tabs = [["dashboard", "Dashboard"], ["upload", "Upload"], ["tracks", "Tracks"]];
+    if (me.role === "owner") tabs.push(["admins", "Administrators"]);
+    $("#app").innerHTML = `<h1>Music management</h1><p class="muted">Upload, review and publish tracks.</p>
+        <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-tab="${k}" class="${tab === k ? "active" : ""}">${l}</button>`).join("")}</div>
+        <div id="panel"></div>`;
+    document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { tab = b.dataset.tab; renderShell(); });
+    ({ dashboard: viewDashboard, upload: viewUpload, tracks: viewTracks, admins: viewAdmins }[tab] || viewDashboard)();
+}
+const note = (el, text, kind = "err") => { el.innerHTML = text ? `<div class="msg ${kind}">${esc(text)}</div>` : ""; };
+
+/* ---------- dashboard ---------- */
+async function viewDashboard() {
+    const p = $("#panel"); p.innerHTML = `<div class="glass muted">Loading…</div>`;
+    try {
+        const s = await api("/admin/stats");
+        const c = s.by_status;
+        p.innerHTML = `<div class="grid">
+            ${[["Total", s.total], ["Published", c.published], ["In review", c.review], ["Drafts", c.draft], ["Unpublished", c.unpublished], ["Awaiting audio", s.awaiting_audio]]
+                .map(([l, n]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join("")}</div>`;
+    } catch (e) { p.innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`; }
+}
+
+/* ---------- upload ---------- */
+function putFile(url, file, contentType, onProgress) {
+    return new Promise((resolve, reject) => {
+        const x = new XMLHttpRequest();
+        x.open("PUT", url);
+        x.setRequestHeader("Content-Type", contentType);
+        x.upload.onprogress = e => e.lengthComputable && onProgress(e.loaded / e.total);
+        x.onload = () => (x.status >= 200 && x.status < 300 ? resolve() : reject(new Error("upload_http_" + x.status)));
+        x.onerror = () => reject(new Error("upload_network"));
+        x.send(file);
+    });
+}
+const decl = f => ({ filename: f.name, size: f.size, content_type: f.type || null });
+let pending = null;   // { trackId, uploads, audio, cover } kept so a failed upload can be retried without duplicates
+
+function viewUpload() {
+    $("#panel").innerHTML = `<form class="glass" id="upForm" autocomplete="off" novalidate>
+        <h2>New track</h2><p class="muted">The file goes straight to private storage. It stays a draft until you review and publish it.</p>
+        <div class="row"><div><label for="fTitle">Title *</label><input id="fTitle" type="text" maxlength="200" required></div>
+        <div><label for="fArtist">Artist *</label><input id="fArtist" type="text" maxlength="200" required></div></div>
+        <label for="fAlbum">Album</label><input id="fAlbum" type="text" maxlength="200">
+        <label for="fDesc">Description</label><textarea id="fDesc" maxlength="2000"></textarea>
+        <div class="row"><div><label for="fAudio">Audio file * (MP3, M4A, WAV, OGG, FLAC)</label><input id="fAudio" type="file" accept=".mp3,.m4a,.wav,.ogg,.flac,audio/*"></div>
+        <div><label for="fCover">Cover image (JPG, PNG, WebP · max 5 MB)</label><input id="fCover" type="file" accept=".jpg,.jpeg,.png,.webp,image/*"></div></div>
+        <img id="coverPrev" class="cov hidden" alt="Cover preview" style="width:110px;height:110px;margin-top:12px">
+        <label class="check"><input type="checkbox" id="fRights"> <span>I own this recording or have permission to distribute it.</span></label>
+        <label class="check"><input type="checkbox" id="fDl"> <span>Allow public download of this track.</span></label>
+        <div id="upProg" class="hidden"><label>Audio upload</label><div class="progress"><i id="pA"></i></div><label>Cover upload</label><div class="progress"><i id="pC"></i></div></div>
+        <div id="upMsg"></div>
+        <div class="actions"><button class="btn primary" id="upGo" type="submit">Upload as draft</button></div></form>`;
+    const cover = $("#fCover");
+    cover.onchange = () => { const f = cover.files[0], img = $("#coverPrev"); if (f && f.type.startsWith("image/")) { img.src = URL.createObjectURL(f); img.classList.remove("hidden"); } else img.classList.add("hidden"); };
+    $("#upForm").onsubmit = async ev => { ev.preventDefault(); await doUpload(); };
+}
+
+async function doUpload() {
+    const msg = $("#upMsg"), go = $("#upGo");
+    const audio = $("#fAudio").files[0], cover = $("#fCover").files[0];
+    const title = $("#fTitle").value.trim(), artist = $("#fArtist").value.trim();
+    if (!title) return note(msg, msgFor("title_required"));
+    if (!artist) return note(msg, msgFor("artist_required"));
+    if (!audio && !pending) return note(msg, "Choose an audio file.");
+    if (!$("#fRights").checked) return note(msg, msgFor("rights_not_confirmed"));
+    go.disabled = true; note(msg, ""); $("#upProg").classList.remove("hidden"); $("#pA").style.width = "0"; $("#pC").style.width = "0";
+    try {
+        if (!pending) {
+            const key = crypto.randomUUID().replace(/-/g, "");                  // idempotency key: double-clicks / retries never duplicate
+            const r = await api("/admin/tracks", { method: "POST", body: {
+                title, artist, album: $("#fAlbum").value, description: $("#fDesc").value, rights_confirmed: true,
+                download_enabled: $("#fDl").checked, client_request_id: key, audio: decl(audio), cover: cover ? decl(cover) : null } });
+            pending = { trackId: r.track.id, uploads: r.uploads, audio, cover };
+        } else if (!pending.uploads) {                                           // retry after a failure: fresh signed URLs
+            const r = await api(`/admin/tracks/${pending.trackId}/upload-urls`, { method: "POST", body: { audio: decl(pending.audio), cover: pending.cover ? decl(pending.cover) : null } });
+            pending.uploads = r.uploads;
+        }
+        if (pending.uploads.audio) await putFile(pending.uploads.audio.url, pending.audio, pending.uploads.audio.content_type, f => $("#pA").style.width = (f * 100) + "%");
+        if (pending.uploads.cover) await putFile(pending.uploads.cover.url, pending.cover, pending.uploads.cover.content_type, f => $("#pC").style.width = (f * 100) + "%");
+        await api(`/admin/tracks/${pending.trackId}/finalize`, { method: "POST", body: { audio: true, cover: true } });
+        pending = null;
+        note(msg, "Uploaded and verified. The track is a draft — open the Tracks tab to review and publish it.", "ok");
+        $("#upForm").reset(); $("#coverPrev").classList.add("hidden");
+    } catch (e) {
+        if (pending) pending.uploads = null;                                     // force new URLs on retry
+        const files = e.body && e.body.files;
+        if (files && Object.values(files).some(c => c !== "upload_missing")) pending = null; // a rejected file needs a new selection
+        const detail = files ? Object.values(files).map(msgFor).join(" ") : (e.code ? msgFor(e.code) : "Upload failed. Press the button to retry.");
+        note(msg, detail);
+    } finally { go.disabled = false; }
+}
+
+/* ---------- tracks ---------- */
+async function viewTracks() {
+    $("#panel").innerHTML = `<div class="glass"><div class="toolbar">
+        <input type="search" id="tQ" placeholder="Search title, artist or album" aria-label="Search tracks">
+        <select id="tS" aria-label="Filter by status"><option value="">All statuses</option><option>draft</option><option>review</option><option>published</option><option>unpublished</option></select>
+        <button class="btn" id="tGo">Search</button></div><div id="tMsg"></div><div class="tableWrap" id="tList"><div class="muted">Loading…</div></div></div>`;
+    $("#tGo").onclick = loadTracks; $("#tQ").onkeydown = e => e.key === "Enter" && loadTracks(); $("#tS").onchange = loadTracks;
+    loadTracks();
+}
+async function loadTracks() {
+    const q = $("#tQ").value.trim(), s = $("#tS").value;
+    try {
+        const r = await api(`/admin/tracks?limit=100${s ? "&status=" + s : ""}${q ? "&q=" + encodeURIComponent(q) : ""}`);
+        tracksCache = r.tracks;
+        $("#tList").innerHTML = r.tracks.length ? `<table><thead><tr><th>Track</th><th>Status</th><th>Files</th><th>Actions</th></tr></thead><tbody>${r.tracks.map(rowHtml).join("")}</tbody></table>` : `<div class="muted">No tracks found.</div>`;
+        $("#tList").querySelectorAll("[data-act]").forEach(b => b.onclick = () => act(b.dataset.act, b.dataset.id));
+    } catch (e) { $("#tList").innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`; }
+}
+function rowHtml(t) {
+    const acts = [["preview", "Preview"], ["edit", "Edit"]];
+    if (t.status === "draft") acts.push(["review", "Send to review"]);
+    if (t.status === "review") acts.push(["published", "Publish"], ["draft", "Back to draft"]);
+    if (t.status === "published") acts.push(["unpublished", "Unpublish"]);
+    if (t.status === "unpublished") acts.push(["published", "Re-publish"]);
+    return `<tr><td><b>${esc(t.title)}</b><div class="muted">${esc(t.artist)}${t.album ? " · " + esc(t.album) : ""}</div></td>
+        <td><span class="pill ${esc(t.status)}">${esc(t.status)}</span></td>
+        <td class="muted">${t.has_audio ? "audio ✓" : "no audio"} · ${t.has_cover ? "cover ✓" : "no cover"}${t.audio_pending ? " · pending" : ""}</td>
+        <td><div style="display:flex;gap:6px;flex-wrap:wrap">${acts.map(([a, l]) => `<button class="btn sm" data-act="${a}" data-id="${esc(t.id)}">${l}</button>`).join("")}<button class="btn sm danger" data-act="delete" data-id="${esc(t.id)}">Delete</button></div></td></tr>`;
+}
+function dialog(html) {
+    const host = $("#dialogHost"); host.innerHTML = `<div class="overlay" role="dialog" aria-modal="true"><div class="dlg">${html}</div></div>`;
+    host.firstChild.onclick = e => { if (e.target === host.firstChild) closeDlg(); };
+    return host;
+}
+const closeDlg = () => { $("#dialogHost").innerHTML = ""; };
+function confirmDlg(text, okLabel, danger) {
+    return new Promise(res => {
+        const h = dialog(`<h2>Please confirm</h2><p class="muted">${esc(text)}</p><div class="actions"><button class="btn ${danger ? "danger" : "primary"}" id="cOk">${esc(okLabel)}</button><button class="btn" id="cNo">Cancel</button></div>`);
+        h.querySelector("#cOk").onclick = () => { closeDlg(); res(true); }; h.querySelector("#cNo").onclick = () => { closeDlg(); res(false); };
+    });
+}
+async function act(a, id) {
+    const t = tracksCache.find(x => x.id === id); if (!t) return;
+    const msg = $("#tMsg"); note(msg, "");
+    try {
+        if (a === "preview") return previewDlg(t);
+        if (a === "edit") return editDlg(t);
+        if (a === "delete") { if (!(await confirmDlg(`Permanently delete "${t.title}" and its files? This cannot be undone.`, "Delete", true))) return; await api(`/admin/tracks/${id}`, { method: "DELETE" }); }
+        else {
+            if (a === "published" && !(await confirmDlg(`Publish "${t.title}"? It becomes publicly searchable and playable.`, "Publish"))) return;
+            if (a === "unpublished" && !(await confirmDlg(`Unpublish "${t.title}"? It disappears from public search and playback.`, "Unpublish", true))) return;
+            await api(`/admin/tracks/${id}/status`, { method: "POST", body: { status: a } });
+        }
+        loadTracks();
+    } catch (e) { note(msg, msgFor(e.code)); }
+}
+async function previewDlg(t) {
+    const h = dialog(`<h2>${esc(t.title)}</h2><p class="muted">${esc(t.artist)}</p><div id="pv" class="muted">Loading…</div><div class="actions"><button class="btn" id="pvX">Close</button></div>`);
+    h.querySelector("#pvX").onclick = closeDlg;
+    try {
+        const r = await api(`/admin/tracks/${t.id}/preview`);
+        h.querySelector("#pv").innerHTML = (r.cover_url ? `<img class="cov" style="width:140px;height:140px" alt="Cover" src="${esc(r.cover_url)}">` : "") + (r.audio_url ? `<audio controls preload="none" src="${esc(r.audio_url)}"></audio>` : `<div class="msg err">No audio uploaded yet.</div>`);
+    } catch (e) { h.querySelector("#pv").innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`; }
+}
+function editDlg(t) {
+    const h = dialog(`<h2>Edit track</h2>
+        <label for="eT">Title</label><input id="eT" type="text" maxlength="200" value="${esc(t.title)}">
+        <label for="eA">Artist</label><input id="eA" type="text" maxlength="200" value="${esc(t.artist)}">
+        <label for="eAl">Album</label><input id="eAl" type="text" maxlength="200" value="${esc(t.album)}">
+        <label for="eD">Description</label><textarea id="eD" maxlength="2000">${esc(t.description)}</textarea>
+        <label class="check"><input type="checkbox" id="eR" ${t.rights_confirmed ? "checked" : ""}> <span>I have the rights to distribute this track.</span></label>
+        <label class="check"><input type="checkbox" id="eDl" ${t.download_enabled ? "checked" : ""}> <span>Allow public download.</span></label>
+        <div id="eM"></div><div class="actions"><button class="btn primary" id="eS">Save</button><button class="btn" id="eX">Cancel</button></div>`);
+    h.querySelector("#eX").onclick = closeDlg;
+    h.querySelector("#eS").onclick = async () => {
+        try {
+            await api(`/admin/tracks/${t.id}`, { method: "PATCH", body: { title: h.querySelector("#eT").value, artist: h.querySelector("#eA").value, album: h.querySelector("#eAl").value,
+                description: h.querySelector("#eD").value, rights_confirmed: h.querySelector("#eR").checked, download_enabled: h.querySelector("#eDl").checked } });
+            closeDlg(); loadTracks();
+        } catch (e) { note(h.querySelector("#eM"), msgFor(e.code)); }
+    };
+}
+
+/* ---------- administrators (owner only; the server enforces this independently) ---------- */
+async function viewAdmins() {
+    const p = $("#panel");
+    p.innerHTML = `<div class="glass"><h2>Administrators</h2><p class="muted">New administrators must sign in with a verified Google account using this exact email. Only the owner can manage this list; the owner account itself cannot be changed here.</p>
+        <div class="toolbar"><input type="email" id="aE" placeholder="admin@example.com" aria-label="New administrator email"><button class="btn primary" id="aAdd">Add administrator</button></div><div id="aM"></div><div class="tableWrap" id="aL">Loading…</div></div>`;
+    $("#aAdd").onclick = async () => {
+        try { await api("/admin/admins", { method: "POST", body: { email: $("#aE").value } }); $("#aE").value = ""; load(); }
+        catch (e) { note($("#aM"), msgFor(e.code)); }
+    };
+    async function load() {
+        try {
+            const r = await api("/admin/admins");
+            $("#aL").innerHTML = `<table><thead><tr><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>${r.admins.map(a => `<tr><td>${esc(a.email)}</td><td>${esc(a.role)}</td><td>${a.revoked_at ? "revoked" : "active"}</td>
+                <td>${a.role === "admin" && !a.revoked_at ? `<button class="btn sm danger" data-rv="${esc(a.email)}">Revoke</button>` : ""}</td></tr>`).join("")}</tbody></table>`;
+            $("#aL").querySelectorAll("[data-rv]").forEach(b => b.onclick = async () => {
+                if (!(await confirmDlg(`Revoke administrator access for ${b.dataset.rv}?`, "Revoke", true))) return;
+                try { await api("/admin/admins/" + encodeURIComponent(b.dataset.rv), { method: "DELETE" }); load(); } catch (e) { note($("#aM"), msgFor(e.code)); }
+            });
+        } catch (e) { $("#aL").innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`; }
+    }
+    load();
+}
+
+renderSignIn();
+</script>
+</body>
+</html>

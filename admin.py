@@ -229,6 +229,7 @@ class TrackCreate(BaseModel):
     description: str = Field(default="", max_length=4000)
     download_enabled: bool = False
     rights_confirmed: bool = False
+    is_unreleased: bool = False
     client_request_id: Optional[str] = Field(default=None, pattern=r"^[A-Za-z0-9_-]{8,64}$")
     audio: FileDecl
     cover: Optional[FileDecl] = None
@@ -251,6 +252,7 @@ class TrackPatch(BaseModel):
     description: Optional[str] = Field(default=None, max_length=4000)
     download_enabled: Optional[bool] = None
     rights_confirmed: Optional[bool] = None
+    is_unreleased: Optional[bool] = None
 
 
 class StatusIn(BaseModel):
@@ -299,6 +301,7 @@ def _admin_view(row: dict) -> dict:
     return {
         "id": row["id"], "title": row["title"], "artist": row["artist"], "album": row.get("album", ""),
         "description": row.get("description", ""), "status": row["status"],
+        "is_unreleased": bool(row.get("is_unreleased")),
         "download_enabled": row["download_enabled"], "rights_confirmed": row["rights_confirmed"],
         "has_audio": bool(row.get("audio_path")), "has_cover": bool(row.get("cover_path")),
         "audio_pending": bool(row.get("audio_path_new")), "cover_pending": bool(row.get("cover_path_new")),
@@ -340,9 +343,23 @@ def _issue(track: dict, audio: Optional[FileDecl], cover: Optional[FileDecl]) ->
 # =====================================================================
 # Admin: identity + dashboard
 # =====================================================================
+def _has_ack(email: str) -> bool:
+    return bool(_rest("GET", "mf_rights_ack", {"email": f"eq.{email}", "select": "email"}))
+
+
 @admin_router.get("/me")
 def me(admin: dict = Depends(current_admin)):
-    return {"email": admin["email"], "name": admin["name"], "role": admin["role"]}
+    return {"email": admin["email"], "name": admin["name"], "role": admin["role"],
+            "rights_ack": _has_ack(admin["email"])}
+
+
+@admin_router.post("/rights-ack")
+def rights_ack(admin: dict = Depends(current_admin)):
+    """One-time acknowledgment per admin account (replaces the per-upload question). Stored server-side;
+    every track still records rights_confirmed, and publishing still requires it."""
+    _rest("POST", "mf_rights_ack", {"on_conflict": "email"}, {"email": admin["email"]},
+          prefer="resolution=ignore-duplicates,return=minimal")
+    return {"ok": True}
 
 
 @admin_router.get("/stats")
@@ -383,8 +400,9 @@ def create_track(body: TrackCreate, response: Response, admin: dict = Depends(cu
         raise _policy_err(e)
 
     row = {**meta, "created_by": admin["email"], "updated_by": admin["email"], "status": "draft",
-           "download_enabled": body.download_enabled, "rights_confirmed": body.rights_confirmed,
-           "client_request_id": body.client_request_id}
+           "download_enabled": body.download_enabled,
+           "rights_confirmed": bool(body.rights_confirmed or _has_ack(admin["email"])),
+           "is_unreleased": body.is_unreleased, "client_request_id": body.client_request_id}
     created = _rest("POST", "mf_tracks", None, row, conflict_ok=True)
     if created is None:                                   # duplicate submission (same client_request_id)
         rows = _rest("GET", "mf_tracks", {"created_by": f"eq.{admin['email']}",
@@ -458,6 +476,8 @@ def update_track(tid: str, body: TrackPatch, admin: dict = Depends(current_admin
     patch = _meta(body.title, body.artist, body.album, body.description)
     if body.download_enabled is not None:
         patch["download_enabled"] = body.download_enabled
+    if body.is_unreleased is not None:
+        patch["is_unreleased"] = body.is_unreleased
     if body.rights_confirmed is not None:
         patch["rights_confirmed"] = body.rights_confirmed
         if body.rights_confirmed is False and track["status"] == "published":
@@ -494,6 +514,19 @@ def preview(tid: str, admin: dict = Depends(current_admin)):
     audio = sign_download(AUDIO_BUCKET, [track.get("audio_path")], ADMIN_URL_TTL).get(track.get("audio_path") or "")
     cover = sign_download(COVER_BUCKET, [track.get("cover_path")], ADMIN_URL_TTL).get(track.get("cover_path") or "")
     return {"audio_url": audio, "cover_url": cover, "expires_in": ADMIN_URL_TTL}
+
+
+@admin_router.delete("/tracks/{tid}/cover")
+def remove_cover(tid: str, admin: dict = Depends(current_admin)):
+    """Detach the cover. The database is updated first, files are removed afterwards, so a failure
+    can never leave a record pointing at a deleted object. Audio, ID, metadata and status are untouched."""
+    track = _get_track(tid)
+    old = [track.get("cover_path"), track.get("cover_path_new")]
+    row = _rest("PATCH", "mf_tracks", {"id": f"eq.{track['id']}"},
+                {"cover_path": None, "cover_ext": None, "cover_path_new": None, "cover_ext_new": None,
+                 "updated_at": _now(), "updated_by": admin["email"]})[0]
+    _try_remove(COVER_BUCKET, [k for k in old if k])
+    return {"track": _admin_view(row)}
 
 
 @admin_router.delete("/tracks/{tid}")
@@ -586,7 +619,7 @@ def public_search(request: Request, response: Response, q: str = "", limit: int 
     if not _rate_ok(_ip(request)):
         raise err(429, "rate_limited")
     params = {"status": "eq.published", "audio_path": "not.is.null", "order": "published_at.desc",
-              "limit": max(1, min(limit, 30)), "select": "id,title,artist,album,cover_path,download_enabled"}
+              "limit": max(1, min(limit, 30)), "select": "id,title,artist,album,cover_path,download_enabled,is_unreleased"}
     term = policy.safe_search_term(q)
     if term:
         params["or"] = f"(title.ilike.*{term}*,artist.ilike.*{term}*,album.ilike.*{term}*)"
@@ -599,7 +632,7 @@ def public_search(request: Request, response: Response, q: str = "", limit: int 
             "id": f"mf:{r['id']}", "name": r["title"], "artists": [{"id": "", "name": r["artist"]}],
             "album": {"name": r.get("album") or "", "images": [{"url": cover}] if cover else []},
             "external_urls": {}, "preview_url": None, "mf_original": True,
-            "download_enabled": bool(r["download_enabled"]),
+            "download_enabled": bool(r["download_enabled"]), "is_unreleased": bool(r.get("is_unreleased")),
         })
     return {"tracks": tracks}
 

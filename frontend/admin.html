@@ -80,6 +80,10 @@ th { color:var(--muted); font-weight:600; font-size:12px; text-transform:upperca
 .center { min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; }
 audio { width:100%; margin-top:12px; }
 @media (prefers-reduced-motion: reduce){ * { transition:none !important; } }
+.drop { border:2px dashed var(--border); border-radius:16px; padding:16px; text-align:center; color:var(--muted); cursor:pointer; margin-top:6px; }
+.drop.over, .drop:focus-visible { border-color:#e0a45a; background:rgba(224,164,90,.10); outline:none; }
+.fileInfo { font-size:12.5px; margin-top:6px; color:var(--muted); } .fileInfo.bad { color:var(--danger); }
+.pill.unreleased { color:#c9a7ff; border-color:#c9a7ff88; }
 </style>
 </head>
 <body>
@@ -117,6 +121,7 @@ const ERR = {
     bad_email: "Enter a valid email address.", rate_limited: "Too many requests. Wait a minute.", not_found: "Not found.",
     finalize_failed: "Some files failed validation.", duplicate_request: "This submission was already received."
 };
+const STATUS_LABEL = { draft: "Draft", review: "Pending Review", published: "Published", unpublished: "Unpublished" };
 const msgFor = c => ERR[c] || "Something went wrong. Please try again.";
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 const $ = s => document.querySelector(s);
@@ -186,15 +191,19 @@ async function viewDashboard() {
         const s = await api("/admin/stats");
         const c = s.by_status;
         p.innerHTML = `<div class="grid">
-            ${[["Total", s.total], ["Published", c.published], ["In review", c.review], ["Drafts", c.draft], ["Unpublished", c.unpublished], ["Awaiting audio", s.awaiting_audio]]
+            ${[["Total", s.total], ["Published", c.published], ["Pending Review", c.review], ["Drafts", c.draft], ["Unpublished", c.unpublished], ["Awaiting audio", s.awaiting_audio]]
                 .map(([l, n]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join("")}</div>`;
     } catch (e) { p.innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`; }
 }
 
 /* ---------- upload ---------- */
+const liveXhrs = new Set();
 function putFile(url, file, contentType, onProgress) {
     return new Promise((resolve, reject) => {
-        const x = new XMLHttpRequest();
+        const x = new XMLHttpRequest(); liveXhrs.add(x);
+        const done = fn => v => { liveXhrs.delete(x); fn(v); };
+        resolve = done(resolve); reject = done(reject);
+        x.onabort = () => reject(new Error("upload_cancelled"));
         x.open("PUT", url);
         x.setRequestHeader("Content-Type", contentType);
         x.upload.onprogress = e => e.lengthComputable && onProgress(e.loaded / e.total);
@@ -202,6 +211,42 @@ function putFile(url, file, contentType, onProgress) {
         x.onerror = () => reject(new Error("upload_network"));
         x.send(file);
     });
+}
+const LIM = { audio: { max: 30 * 1048576, ext: ["mp3", "m4a", "wav", "ogg", "flac"] }, cover: { max: 5 * 1048576, ext: ["jpg", "jpeg", "png", "webp"] } };
+const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+function fileProblem(kind, f) {
+    const ext = (f.name.split(".").pop() || "").toLowerCase();
+    if (!f.size) return "The file is empty.";
+    if (!LIM[kind].ext.includes(ext)) return "Unsupported type: ." + ext;
+    if (f.size > LIM[kind].max) return "Too large (limit " + fmtSize(LIM[kind].max) + ").";
+    return "";
+}
+function showInfo(kind) {
+    const f = $(kind === "audio" ? "#fAudio" : "#fCover").files[0], el = $(kind === "audio" ? "#aInfo" : "#cInfo");
+    if (!f) { el.textContent = ""; return; }
+    const p = fileProblem(kind, f); el.className = "fileInfo" + (p ? " bad" : "");
+    el.textContent = f.name + " · " + fmtSize(f.size) + (p ? " · " + p : " · OK");
+}
+function setFile(input, f) { const dt = new DataTransfer(); dt.items.add(f); input.files = dt.files; input.dispatchEvent(new Event("change")); }
+function wireDrop(zone, inputSel) {
+    const z = $(zone), inp = $(inputSel);
+    z.onclick = () => inp.click();
+    z.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inp.click(); } };
+    z.ondragover = e => { e.preventDefault(); z.classList.add("over"); };
+    z.ondragleave = () => z.classList.remove("over");
+    z.ondrop = e => { e.preventDefault(); z.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f) setFile(inp, f); };
+}
+document.addEventListener("paste", e => {                       // Ctrl+V a file while the upload form is open
+    const inp = $("#fAudio"); if (!inp) return;
+    const f = [...(e.clipboardData?.files || [])][0]; if (!f) return;
+    setFile(f.type.startsWith("image/") ? $("#fCover") : inp, f);
+});
+let stopped = false;
+async function ensureRightsAck() {
+    if (me.rights_ack) return true;
+    const ok = await confirmDlg("One-time confirmation: you will only upload recordings you own or have permission to distribute on MusicFinder. You will not be asked again on this account.", "I confirm");
+    if (!ok) return false;
+    await api("/admin/rights-ack", { method: "POST" }); me.rights_ack = true; return true;
 }
 const decl = f => ({ filename: f.name, size: f.size, content_type: f.type || null });
 let pending = null;   // { trackId, uploads, audio, cover } kept so a failed upload can be retried without duplicates
@@ -213,16 +258,23 @@ function viewUpload() {
         <div><label for="fArtist">Artist *</label><input id="fArtist" type="text" maxlength="200" required></div></div>
         <label for="fAlbum">Album</label><input id="fAlbum" type="text" maxlength="200">
         <label for="fDesc">Description</label><textarea id="fDesc" maxlength="2000"></textarea>
-        <div class="row"><div><label for="fAudio">Audio file * (MP3, M4A, WAV, OGG, FLAC)</label><input id="fAudio" type="file" accept=".mp3,.m4a,.wav,.ogg,.flac,audio/*"></div>
-        <div><label for="fCover">Cover image (JPG, PNG, WebP · max 5 MB)</label><input id="fCover" type="file" accept=".jpg,.jpeg,.png,.webp,image/*"></div></div>
+        <div class="row"><div><label>Audio file * (MP3, M4A, WAV, OGG, FLAC · max 30 MB)</label>
+        <div class="drop" id="dzA" tabindex="0" role="button" aria-label="Choose audio file">Drop audio here, click to choose, or press Ctrl+V to paste</div>
+        <input id="fAudio" type="file" class="hidden" accept=".mp3,.m4a,.wav,.ogg,.flac,audio/*"><div class="fileInfo" id="aInfo"></div></div>
+        <div><label>Cover image (JPG, PNG, WebP · max 5 MB)</label>
+        <div class="drop" id="dzC" tabindex="0" role="button" aria-label="Choose cover image">Drop cover here or click to choose</div>
+        <input id="fCover" type="file" class="hidden" accept=".jpg,.jpeg,.png,.webp,image/*"><div class="fileInfo" id="cInfo"></div></div></div>
         <img id="coverPrev" class="cov hidden" alt="Cover preview" style="width:110px;height:110px;margin-top:12px">
-        <label class="check"><input type="checkbox" id="fRights"> <span>I own this recording or have permission to distribute it.</span></label>
+        <label class="check"><input type="checkbox" id="fUn"> <span>Mark as an Unreleased song (shows an Unreleased badge publicly).</span></label>
         <label class="check"><input type="checkbox" id="fDl"> <span>Allow public download of this track.</span></label>
         <div id="upProg" class="hidden"><label>Audio upload</label><div class="progress"><i id="pA"></i></div><label>Cover upload</label><div class="progress"><i id="pC"></i></div></div>
         <div id="upMsg"></div>
-        <div class="actions"><button class="btn primary" id="upGo" type="submit">Upload as draft</button></div></form>`;
+        <div class="actions"><button class="btn primary" id="upGo" type="submit">Upload as draft</button><button class="btn danger hidden" id="upStop" type="button">Stop upload</button></div></form>`;
     const cover = $("#fCover");
-    cover.onchange = () => { const f = cover.files[0], img = $("#coverPrev"); if (f && f.type.startsWith("image/")) { img.src = URL.createObjectURL(f); img.classList.remove("hidden"); } else img.classList.add("hidden"); };
+    cover.onchange = () => { const f = cover.files[0], img = $("#coverPrev"); if (f && f.type.startsWith("image/")) { img.src = URL.createObjectURL(f); img.classList.remove("hidden"); } else img.classList.add("hidden"); showInfo("cover"); };
+    $("#fAudio").onchange = () => showInfo("audio");
+    wireDrop("#dzA", "#fAudio"); wireDrop("#dzC", "#fCover");
+    $("#upStop").onclick = () => { stopped = true; liveXhrs.forEach(x => x.abort()); };
     $("#upForm").onsubmit = async ev => { ev.preventDefault(); await doUpload(); };
 }
 
@@ -233,39 +285,50 @@ async function doUpload() {
     if (!title) return note(msg, msgFor("title_required"));
     if (!artist) return note(msg, msgFor("artist_required"));
     if (!audio && !pending) return note(msg, "Choose an audio file.");
-    if (!$("#fRights").checked) return note(msg, msgFor("rights_not_confirmed"));
+    for (const [k, f] of [["audio", audio], ["cover", cover]]) { const pr = f && fileProblem(k, f); if (pr) return note(msg, (k === "audio" ? "Audio: " : "Cover: ") + pr); }
+    try { if (!(await ensureRightsAck())) return; } catch (e) { return note(msg, msgFor(e.code)); }
+    stopped = false; $("#upStop").classList.remove("hidden");
     go.disabled = true; note(msg, ""); $("#upProg").classList.remove("hidden"); $("#pA").style.width = "0"; $("#pC").style.width = "0";
     try {
         if (!pending) {
             const key = crypto.randomUUID().replace(/-/g, "");                  // idempotency key: double-clicks / retries never duplicate
             const r = await api("/admin/tracks", { method: "POST", body: {
-                title, artist, album: $("#fAlbum").value, description: $("#fDesc").value, rights_confirmed: true,
+                title, artist, album: $("#fAlbum").value, description: $("#fDesc").value, rights_confirmed: true, is_unreleased: $("#fUn").checked,
                 download_enabled: $("#fDl").checked, client_request_id: key, audio: decl(audio), cover: cover ? decl(cover) : null } });
             pending = { trackId: r.track.id, uploads: r.uploads, audio, cover };
         } else if (!pending.uploads) {                                           // retry after a failure: fresh signed URLs
             const r = await api(`/admin/tracks/${pending.trackId}/upload-urls`, { method: "POST", body: { audio: decl(pending.audio), cover: pending.cover ? decl(pending.cover) : null } });
             pending.uploads = r.uploads;
         }
-        if (pending.uploads.audio) await putFile(pending.uploads.audio.url, pending.audio, pending.uploads.audio.content_type, f => $("#pA").style.width = (f * 100) + "%");
-        if (pending.uploads.cover) await putFile(pending.uploads.cover.url, pending.cover, pending.uploads.cover.content_type, f => $("#pC").style.width = (f * 100) + "%");
+        const U = pending.uploads;                                               // audio and cover upload in parallel
+        await Promise.all([
+            U.audio ? putFile(U.audio.url, pending.audio, U.audio.content_type, f => $("#pA").style.width = (f * 100) + "%") : null,
+            U.cover ? putFile(U.cover.url, pending.cover, U.cover.content_type, f => $("#pC").style.width = (f * 100) + "%") : null
+        ]);
         await api(`/admin/tracks/${pending.trackId}/finalize`, { method: "POST", body: { audio: true, cover: true } });
         pending = null;
         note(msg, "Uploaded and verified. The track is a draft — open the Tracks tab to review and publish it.", "ok");
-        $("#upForm").reset(); $("#coverPrev").classList.add("hidden");
+        $("#upForm").reset(); $("#coverPrev").classList.add("hidden"); showInfo("audio"); showInfo("cover");
     } catch (e) {
+        liveXhrs.forEach(x => x.abort());
+        if (e.message === "upload_cancelled" || stopped) {
+            const id = pending && pending.trackId; pending = null;
+            if (id) { try { await api(`/admin/tracks/${id}`, { method: "DELETE" }); } catch {} }   // cleanup: no half-uploaded draft is left behind
+            return note(msg, "Upload stopped and cleaned up. Choose files and start again.", "ok");
+        }
         if (pending) pending.uploads = null;                                     // force new URLs on retry
         const files = e.body && e.body.files;
         if (files && Object.values(files).some(c => c !== "upload_missing")) pending = null; // a rejected file needs a new selection
         const detail = files ? Object.values(files).map(msgFor).join(" ") : (e.code ? msgFor(e.code) : "Upload failed. Press the button to retry.");
         note(msg, detail);
-    } finally { go.disabled = false; }
+    } finally { go.disabled = false; $("#upStop")?.classList.add("hidden"); }
 }
 
 /* ---------- tracks ---------- */
 async function viewTracks() {
     $("#panel").innerHTML = `<div class="glass"><div class="toolbar">
         <input type="search" id="tQ" placeholder="Search title, artist or album" aria-label="Search tracks">
-        <select id="tS" aria-label="Filter by status"><option value="">All statuses</option><option>draft</option><option>review</option><option>published</option><option>unpublished</option></select>
+        <select id="tS" aria-label="Filter by status"><option value="">All statuses</option><option value="draft">Draft</option><option value="review">Pending Review</option><option value="published">Published</option><option value="unpublished">Unpublished</option></select>
         <button class="btn" id="tGo">Search</button></div><div id="tMsg"></div><div class="tableWrap" id="tList"><div class="muted">Loading…</div></div></div>`;
     $("#tGo").onclick = loadTracks; $("#tQ").onkeydown = e => e.key === "Enter" && loadTracks(); $("#tS").onchange = loadTracks;
     loadTracks();
@@ -286,7 +349,7 @@ function rowHtml(t) {
     if (t.status === "published") acts.push(["unpublished", "Unpublish"]);
     if (t.status === "unpublished") acts.push(["published", "Re-publish"]);
     return `<tr><td><b>${esc(t.title)}</b><div class="muted">${esc(t.artist)}${t.album ? " · " + esc(t.album) : ""}</div></td>
-        <td><span class="pill ${esc(t.status)}">${esc(t.status)}</span></td>
+        <td><span class="pill ${esc(t.status)}">${esc(STATUS_LABEL[t.status] || t.status)}</span>${t.is_unreleased ? ' <span class="pill unreleased">Unreleased</span>' : ""}</td>
         <td class="muted">${t.has_audio ? "audio ✓" : "no audio"} · ${t.has_cover ? "cover ✓" : "no cover"}${t.audio_pending ? " · pending" : ""}</td>
         <td><div style="display:flex;gap:6px;flex-wrap:wrap">${acts.map(([a, l]) => `<button class="btn sm" data-act="${a}" data-id="${esc(t.id)}">${l}</button>`).join("")}<button class="btn sm danger" data-act="delete" data-id="${esc(t.id)}">Delete</button></div></td></tr>`;
 }
@@ -332,13 +395,44 @@ function editDlg(t) {
         <label for="eAl">Album</label><input id="eAl" type="text" maxlength="200" value="${esc(t.album)}">
         <label for="eD">Description</label><textarea id="eD" maxlength="2000">${esc(t.description)}</textarea>
         <label class="check"><input type="checkbox" id="eR" ${t.rights_confirmed ? "checked" : ""}> <span>I have the rights to distribute this track.</span></label>
+        <label class="check"><input type="checkbox" id="eUn" ${t.is_unreleased ? "checked" : ""}> <span>Unreleased song (shows an Unreleased badge publicly).</span></label>
+        <label>Cover</label><div id="eCov" class="muted">Loading…</div>
+        <div class="drop" id="dzE" tabindex="0" role="button">Drop a new cover here or click to choose</div><input id="eCf" type="file" class="hidden" accept=".jpg,.jpeg,.png,.webp,image/*">
+        <div class="actions"><button class="btn sm danger ${t.has_cover ? "" : "hidden"}" id="eCrm" type="button">Remove cover</button></div><div id="eCm"></div>
         <label class="check"><input type="checkbox" id="eDl" ${t.download_enabled ? "checked" : ""}> <span>Allow public download.</span></label>
         <div id="eM"></div><div class="actions"><button class="btn primary" id="eS">Save</button><button class="btn" id="eX">Cancel</button></div>`);
     h.querySelector("#eX").onclick = closeDlg;
+    const showCover = async () => {
+        const box = h.querySelector("#eCov");
+        try { const r = await api(`/admin/tracks/${t.id}/preview`); box.innerHTML = r.cover_url ? `<img class="cov" style="width:120px;height:120px" alt="Current cover" src="${esc(r.cover_url)}">` : "No cover yet."; }
+        catch (e) { box.textContent = msgFor(e.code); }
+    };
+    showCover();
+    const cm = h.querySelector("#eCm"), inp = h.querySelector("#eCf"), dz = h.querySelector("#dzE");
+    dz.onclick = () => inp.click();
+    dz.ondragover = e => { e.preventDefault(); dz.classList.add("over"); }; dz.ondragleave = () => dz.classList.remove("over");
+    dz.ondrop = e => { e.preventDefault(); dz.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f) setFile(inp, f); };
+    inp.onchange = async () => {                                             // replace: old cover stays until the new one is verified
+        const f = inp.files[0]; if (!f) return;
+        const pr = fileProblem("cover", f); if (pr) return note(cm, pr);
+        note(cm, "Uploading cover…", "ok");
+        try {
+            const r = await api(`/admin/tracks/${t.id}/upload-urls`, { method: "POST", body: { cover: decl(f) } });
+            await putFile(r.uploads.cover.url, f, r.uploads.cover.content_type, () => {});
+            await api(`/admin/tracks/${t.id}/finalize`, { method: "POST", body: { audio: false, cover: true } });
+            t.has_cover = true; h.querySelector("#eCrm").classList.remove("hidden"); note(cm, "Cover updated.", "ok"); showCover(); loadTracks();
+        } catch (e) { note(cm, e.body?.files?.cover ? msgFor(e.body.files.cover) : msgFor(e.code)); }
+        inp.value = "";
+    };
+    h.querySelector("#eCrm").onclick = async () => {
+        if (!(await confirmDlg("Remove this track's cover image?", "Remove", true))) return;
+        try { await api(`/admin/tracks/${t.id}/cover`, { method: "DELETE" }); t.has_cover = false; h.querySelector("#eCrm").classList.add("hidden"); note(cm, "Cover removed.", "ok"); showCover(); loadTracks(); }
+        catch (e) { note(cm, msgFor(e.code)); }
+    };
     h.querySelector("#eS").onclick = async () => {
         try {
             await api(`/admin/tracks/${t.id}`, { method: "PATCH", body: { title: h.querySelector("#eT").value, artist: h.querySelector("#eA").value, album: h.querySelector("#eAl").value,
-                description: h.querySelector("#eD").value, rights_confirmed: h.querySelector("#eR").checked, download_enabled: h.querySelector("#eDl").checked } });
+                description: h.querySelector("#eD").value, rights_confirmed: h.querySelector("#eR").checked, is_unreleased: h.querySelector("#eUn").checked, download_enabled: h.querySelector("#eDl").checked } });
             closeDlg(); loadTracks();
         } catch (e) { note(h.querySelector("#eM"), msgFor(e.code)); }
     };

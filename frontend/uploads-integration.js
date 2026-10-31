@@ -1,4 +1,4 @@
-/* MusicFinder: published uploaded tracks ("MusicFinder Originals") in the existing search + player.
+/* MusicFinder: published uploaded tracks ("Songs on MusicFinder") in the existing search + player.
    Additive: loaded AFTER the main inline scripts. It wraps two existing globals and touches nothing else:
      - renderSearchResults(data, query): after the normal render, appends an "Originals" group
      - getPreviewSources(song): for ids like "mf:<uuid>" asks the API for a fresh short-lived signed URL
@@ -7,7 +7,24 @@
     if (typeof renderSearchResults !== "function" || typeof getPreviewSources !== "function") return;
 
     const isMf = id => typeof id === "string" && id.startsWith("mf:");
-    if (window.MF_FA) window.MF_FA["MusicFinder Originals"] = "آثار اصلی MusicFinder";
+    if (window.MF_FA) Object.assign(window.MF_FA, {
+        "Songs on MusicFinder": "آهنگ‌های MusicFinder", "Unreleased Song": "آهنگ منتشرنشده", "Learn more": "بیشتر بدانید"
+    });
+
+    /* Reusable "Learn more" popup (uses the site's existing overlay styles) */
+    window.mfShowInfo = function (title, text) {
+        document.getElementById("mfInfoOv")?.remove();
+        const ov = document.createElement("div");
+        ov.id = "mfInfoOv"; ov.className = "mfOverlay";
+        ov.innerHTML = `<div class="mfPicker glass" role="dialog" aria-modal="true"><h4>${escapeHtml(title)}</h4>
+            <p class="modalText">${escapeHtml(text)}</p>
+            <button type="button" class="smallBtn" style="width:100%">Close</button></div>`;
+        ov.onclick = e => { if (e.target === ov || e.target.tagName === "BUTTON") ov.remove(); };
+        document.body.appendChild(ov);
+        ov.querySelector("button").focus();
+    };
+    window.mfLearnUnreleased = () => mfShowInfo("Unreleased Song",
+        "This song has not been officially released yet. It is shared on MusicFinder by the site's administrators and may change or be removed.");
 
     /* --- playback source: signed URL fetched at play time (URLs expire; never cached long) --- */
     const origSources = getPreviewSources;
@@ -49,6 +66,8 @@
             <div class="cardTitle">${escapeHtml(t.name)}</div>
             <div class="cardArtist">${escapeHtml(t.artists?.[0]?.name || "")}</div>
             <div class="cardMeta">${escapeHtml(t.album?.name || "")}</div>
+            ${t.is_unreleased ? `<div class="cardMeta"><span class="historyItem" style="cursor:default;padding:3px 9px;border-radius:999px;font-size:11px">Unreleased Song</span>
+                <button type="button" class="smallBtn" style="flex:none;padding:3px 9px;font-size:11px" onclick="mfLearnUnreleased()">Learn more</button></div>` : ""}
             <div class="cardActions">
                 <button type="button" class="smallBtn primary full"
                     onclick="event.stopPropagation(); playMusicFinderSong(window.currentTracks.find(t => t.id === '${id}'), window.currentTracks)">Play</button>
@@ -57,7 +76,7 @@
     }
     function originalsHtml(tracks) {
         return `<div class="resultGroup" data-mf-originals>
-            <h3 class="resultGroupTitle">🎧 MusicFinder Originals</h3>
+            <h3 class="resultGroupTitle">🎧 Songs on MusicFinder</h3>
             <div class="resultGrid">${tracks.map(card).join("")}</div></div>`;
     }
 

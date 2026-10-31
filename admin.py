@@ -197,12 +197,14 @@ def read_head(bucket: str, key: str, n: int = 64):
 
 
 def remove_objects(bucket: str, keys: List[str]) -> None:
-    keys = [k for k in keys if k]
+    """Delete objects. Storage API: DELETE /storage/v1/object/{bucket} with {"prefixes": [...]}.
+    Raises 502 on any failure (never reports success silently). Already-missing objects are not an error."""
+    keys = list(dict.fromkeys(k for k in keys if k))
     if not keys:
         return
-    r = _storage("DELETE", quote(bucket, safe=""), json={"prefixes": keys})
+    r = _storage("DELETE", f"object/{quote(bucket, safe='')}", json={"prefixes": keys})
     if r.status_code >= 400:
-        print("remove_objects failed", r.status_code)
+        print("remove_objects failed", r.status_code, bucket, (r.text or "")[:200])   # no tokens/URLs in this text
         raise err(502, "storage_failed")
 
 
@@ -531,11 +533,21 @@ def remove_cover(tid: str, admin: dict = Depends(current_admin)):
 
 @admin_router.delete("/tracks/{tid}")
 def delete_track(tid: str, admin: dict = Depends(current_admin)):
+    """Order: (1) take it off the public site, (2) delete files bucket by bucket, clearing the DB reference of every
+    bucket that was really emptied, (3) delete the row only when no file is left. If storage fails the row is kept
+    (unpublished, so invisible) and the request returns 502; calling DELETE again retries safely."""
     track = _get_track(tid)
     if track["status"] == "published":                    # public availability ends first
-        _rest("PATCH", "mf_tracks", {"id": f"eq.{track['id']}"}, {"status": "unpublished", "updated_at": _now()})
-    remove_objects(AUDIO_BUCKET, [track.get("audio_path"), track.get("audio_path_new")])
-    remove_objects(COVER_BUCKET, [track.get("cover_path"), track.get("cover_path_new")])
+        _rest("PATCH", "mf_tracks", {"id": f"eq.{track['id']}"},
+              {"status": "unpublished", "updated_at": _now(), "updated_by": admin["email"]})
+    for bucket, kind in ((AUDIO_BUCKET, "audio"), (COVER_BUCKET, "cover")):
+        keys = [track.get(f"{kind}_path"), track.get(f"{kind}_path_new")]
+        if not any(keys):
+            continue
+        remove_objects(bucket, keys)                      # raises 502 -> row stays, nothing is hidden from the admin
+        _rest("PATCH", "mf_tracks", {"id": f"eq.{track['id']}"},
+              {f"{kind}_path": None, f"{kind}_ext": None, f"{kind}_path_new": None, f"{kind}_ext_new": None,
+               "updated_at": _now(), "updated_by": admin["email"]})
     _rest("DELETE", "mf_tracks", {"id": f"eq.{track['id']}"}, prefer="return=minimal")
     return {"ok": True}
 

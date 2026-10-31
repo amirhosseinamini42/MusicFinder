@@ -20,32 +20,86 @@
     }
 
     /* ---------- admin check (the backend decides; the icon is only a shortcut) ---------- */
+    const TOKEN_KEY = "mfAdminTok";             /* tab-scoped (sessionStorage); cleared on sign-out / denial; shared with admin.html */
+    const RECHECK_MS = 120000, MIN_GAP_MS = 30000;
+    let gen = 0, recheckTimer = null, refreshTimer = null, silentTimer = null, lastCheck = 0, silent = false;
+
+    /* "admin" | "denied" (403) | "expired" (401) | "unknown" (network / 5xx: keep the current state) */
     async function checkAdmin(token) {
-        const r = await fetch(`${API_BASE}/admin/me`, { headers: { Authorization: "Bearer " + token }, cache: "no-store" });
-        if (!r.ok) return false;
-        const d = await r.json();
-        return !!d && (d.role === "owner" || d.role === "admin");
+        let r;
+        try { r = await fetch(`${API_BASE}/admin/me`, { headers: { Authorization: "Bearer " + token }, cache: "no-store" }); }
+        catch (e) { return "unknown"; }
+        if (r.status === 401) return "expired";
+        if (r.status === 403) return "denied";
+        if (!r.ok) return "unknown";
+        try { const d = await r.json(); return d && (d.role === "owner" || d.role === "admin") ? "admin" : "denied"; }
+        catch (e) { return "unknown"; }
     }
+    function tokenPayload(t) { try { return decodeJwtPayload(t) || {}; } catch (e) { return {}; } }
+    const tokenExp = t => (tokenPayload(t).exp || 0) * 1000;
+    const tokenSub = t => tokenPayload(t).sub || null;
+    const signedInSub = () => (typeof currentUser !== "undefined" && currentUser && currentUser.sub) || null;
+
     function setAdminVisible(on) {
         if (typeof document === "undefined") return;
         const a = document.getElementById("mfAdminLink");
         if (a) a.hidden = !on;
     }
-    async function onToken(token) {
-        adminToken = token;
-        try { verifiedAdmin = await checkAdmin(token); } catch (e) { verifiedAdmin = false; }
-        setAdminVisible(verifiedAdmin);
+    function stopSilent() { silent = false; clearTimeout(silentTimer); }
+    function hideOnly() { verifiedAdmin = false; setAdminVisible(false); }      /* session may still be refreshable */
+    function forgetAdmin() {                                                   /* sign-out / revoked / switched account */
+        gen++; clearInterval(recheckTimer); clearTimeout(refreshTimer); recheckTimer = refreshTimer = null; stopSilent();
+        adminToken = null; hideOnly();
+        try { sessionStorage.removeItem(TOKEN_KEY); localStorage.removeItem(HINT_KEY); } catch (e) {}
+    }
+    function schedule(token) {
+        if (!recheckTimer) recheckTimer = setInterval(recheck, RECHECK_MS);
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(requestFresh, Math.max(tokenExp(token) - Date.now() - 300000, 5000));
+    }
+    async function verify(token, g) {
+        const res = await checkAdmin(token);
+        if (g !== gen) return;                                                 /* a newer sign-in / sign-out won the race */
+        lastCheck = Date.now();
+        if (res === "admin") {
+            verifiedAdmin = true; setAdminVisible(true); schedule(token);
+            try { if (signedInSub()) localStorage.setItem(HINT_KEY, signedInSub()); } catch (e) {}
+        } else if (res === "denied") forgetAdmin();                            /* not (or no longer) an admin */
+        else if (res === "expired") { hideOnly(); requestFresh(); }
+    }
+    function onToken(token) {
+        if (!token) return Promise.resolve();
+        const g = ++gen; adminToken = token;
+        try { sessionStorage.setItem(TOKEN_KEY, token); } catch (e) {}
+        return verify(token, g);
+    }
+    function recheck() {
+        if (!adminToken || (typeof document !== "undefined" && document.hidden)) return Promise.resolve();
+        if (tokenExp(adminToken) <= Date.now() + 15000) { hideOnly(); requestFresh(); return Promise.resolve(); }
+        return verify(adminToken, ++gen);
+    }
+    /* Ask Google for a fresh ID token for the SAME account (One Tap auto-select). Visible state stays backend-verified. */
+    function requestFresh() {
+        if (silent || !signedInSub() || !(window.google && google.accounts && google.accounts.id)) return;
         try {
-            if (verifiedAdmin && typeof currentUser !== "undefined" && currentUser && currentUser.sub) localStorage.setItem(HINT_KEY, currentUser.sub);
-            else localStorage.removeItem(HINT_KEY);
-        } catch (e) {}
+            silent = true; silentTimer = setTimeout(stopSilent, 10000);
+            google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: mainCb(), auto_select: true });
+            google.accounts.id.prompt();
+        } catch (e) { stopSilent(); }
     }
-    function forgetAdmin() {
-        adminToken = null; verifiedAdmin = false; setAdminVisible(false);
-        try { localStorage.removeItem(HINT_KEY); } catch (e) {}
+    function restore() {                                                       /* page load / refresh / coming back from admin.html */
+        let t = null;
+        try { t = sessionStorage.getItem(TOKEN_KEY); } catch (e) {}
+        if (t && signedInSub() && tokenSub(t) === signedInSub() && tokenExp(t) > Date.now() + 15000) { onToken(t); return true; }
+        if (t) { try { sessionStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+        return false;
     }
+    function silentRecheck() {
+        try { if (signedInSub() && localStorage.getItem(HINT_KEY) === signedInSub()) requestFresh(); } catch (e) {}
+    }
+    function mainCb() { return typeof handleGoogleCredential === "function" ? handleGoogleCredential : () => {}; }
 
-    window.__mfAdminAlbums = { albumRef, albumLinkHtml, checkAdmin, onToken, forgetAdmin, state: () => ({ verifiedAdmin, adminToken }) };
+    window.__mfAdminAlbums = { albumRef, albumLinkHtml, checkAdmin, onToken, forgetAdmin, recheck, restore, state: () => ({ verifiedAdmin, adminToken }) };
     if (typeof document === "undefined" || !document.getElementById) return;      /* DOM part below runs in the browser only */
 
     /* ---------- styles + icon ---------- */
@@ -74,16 +128,13 @@ html[dir="rtl"] .mfAlbumLink { background-position:100% 100%; }
     ensureIcon();
 
     /* ---------- get the Google ID token when the user signs in (the site itself discards it) ---------- */
-    let silent = false;
-    function mainCb() { return typeof handleGoogleCredential === "function" ? handleGoogleCredential : () => {}; }
     function wrapCallback(cb) {
         return function (resp) {
             const token = resp && resp.credential;
-            if (silent) {                                    /* silent re-check: only accept the SAME account, never switch users */
-                silent = false;
-                try { if (token && currentUser && decodeJwtPayload(token).sub === currentUser.sub) onToken(token); } catch (e) {}
-                return;
+            if (token && silent && signedInSub() && tokenSub(token) === signedInSub()) {   /* silent refresh: same account only */
+                stopSilent(); onToken(token); return;
             }
+            stopSilent();
             if (token) onToken(token);
             return cb.apply(this, arguments);
         };
@@ -104,21 +155,14 @@ html[dir="rtl"] .mfAlbumLink { background-position:100% 100%; }
         }
         return true;
     }
-    function silentRecheck() {
-        /* After a reload there is no token. If this account was verified as admin before, ask Google for a fresh one
-           (same account only). The icon still appears ONLY after the backend confirms. Untested against real Google. */
-        try {
-            if (typeof currentUser === "undefined" || !currentUser || !currentUser.sub) return;
-            if (localStorage.getItem(HINT_KEY) !== currentUser.sub) return;
-            silent = true;
-            google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: mainCb(), auto_select: true });
-            google.accounts.id.prompt();
-        } catch (e) { silent = false; }
-    }
+    const restored = restore();                              /* no Google round-trip needed when this tab already has a token */
     (function waitForGoogle(n) {
-        if (hookGoogle()) { silentRecheck(); return; }
+        if (hookGoogle()) { if (!restored) silentRecheck(); return; }
         if (n < 40) setTimeout(() => waitForGoogle(n + 1), 250);
     })(0);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden && adminToken && Date.now() - lastCheck > MIN_GAP_MS) recheck(); });
+    window.addEventListener("pageshow", e => { if (e.persisted && adminToken) recheck(); });
+    window.addEventListener("storage", e => { if (e.key === "musicFinderUser" && !e.newValue) forgetAdmin(); });   /* sign-out in another tab */
 
     if (typeof signOutUser === "function") {
         const so = window.signOutUser;

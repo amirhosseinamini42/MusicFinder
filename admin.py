@@ -16,9 +16,10 @@ import os
 import re
 import time
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-from urllib.parse import quote
+from urllib.parse import parse_qs, quote, urlsplit
 
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
@@ -26,6 +27,7 @@ from pydantic import BaseModel, Field
 
 import mf_policy as policy
 from library import err          # same {"code": ...} error shape as the rest of the API
+import auth_google
 
 admin_router = APIRouter(prefix="/admin", tags=["admin"])
 public_router = APIRouter(prefix="/tracks", tags=["tracks"])
@@ -47,47 +49,12 @@ def _now() -> str:
 # Identity + roles
 # =====================================================================
 def _verify_google(token: str) -> dict:
-    """Verified identity from a Google ID token. Raises HTTPException on any failure (fail closed)."""
-    client_id = os.getenv("GOOGLE_CLIENT_ID")
-    if not client_id:
-        raise err(503, "cloud_not_configured")
-    key = hashlib.sha256(token.encode()).hexdigest()
-    hit = _ident_cache.get(key)
-    if hit and hit["exp"] > time.time():
-        return hit
-    try:
-        r = requests.get("https://oauth2.googleapis.com/tokeninfo", params={"id_token": token}, timeout=10)
-    except requests.RequestException:
-        raise err(502, "auth_unavailable")
-    if r.status_code != 200:
-        raise err(401, "session_expired")
-    info = r.json()
-    email = policy.normalize_email(info.get("email"))
-    verified = str(info.get("email_verified", "")).lower() == "true"
-    try:
-        exp = float(info.get("exp", 0))
-    except (TypeError, ValueError):
-        exp = 0
-    if (info.get("aud") != client_id or not info.get("sub") or exp < time.time()
-            or info.get("iss") not in ("accounts.google.com", "https://accounts.google.com")):
-        raise err(401, "session_expired")
-    if not email or not verified:
-        raise err(403, "email_not_verified")
-    ident = {"sub": info["sub"], "email": email, "name": info.get("name") or email,
-             "exp": min(exp, time.time() + 120)}      # identity cache only; roles are never cached
-    if len(_ident_cache) > 500:
-        _ident_cache.clear()
-    _ident_cache[key] = ident
-    return ident
+    """Verified identity from a Google ID token. All validation lives in auth_google (shared with library.py)."""
+    return auth_google.verify_google(token)
 
 
 def _bearer(authorization: Optional[str]) -> str:
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise err(401, "auth_required")
-    token = authorization[7:].strip()
-    if not token:
-        raise err(401, "auth_required")
-    return token
+    return auth_google.bearer_token(authorization)
 
 
 def current_admin(authorization: Optional[str] = Header(default=None)) -> dict:
@@ -108,17 +75,38 @@ def require_owner(admin: dict = Depends(current_admin)) -> dict:
 # Supabase helpers (server side only)
 # =====================================================================
 def _cfg():
-    base, key = os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    base = os.getenv("SUPABASE_URL", "").strip()
+    key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
     if not base or not key:
         raise err(503, "cloud_not_configured")
-    return base.rstrip("/"), key
 
+    try:
+        parsed = urlsplit(base)
+        valid_url = (
+            parsed.scheme == "https"
+            and bool(parsed.hostname)
+            and not parsed.username
+            and not parsed.password
+            and parsed.path in ("", "/")
+            and not parsed.query
+            and not parsed.fragment
+            and parsed.port in (None, 443)
+        )
+    except ValueError:
+        valid_url = False
+
+    if not valid_url:
+        raise err(503, "cloud_configuration_invalid")
+
+    return base.rstrip("/"), key
 
 def _rest(method: str, table: str, params: Optional[dict] = None, json: Any = None,
           prefer: str = "return=representation", conflict_ok: bool = False):
     base, key = _cfg()
     try:
-        r = requests.request(method, f"{base}/rest/v1/{table}", params=params, json=json, timeout=15,
+       r = requests.request(method, f"{base}/rest/v1/{table}", params=params, json=json, timeout=15,
+                     allow_redirects=False,
                              headers={"apikey": key, "Authorization": f"Bearer {key}",
                                       "Content-Type": "application/json", "Prefer": prefer})
     except requests.RequestException as e:
@@ -127,7 +115,15 @@ def _rest(method: str, table: str, params: Optional[dict] = None, json: Any = No
     if r.status_code == 409 and conflict_ok:
         return None
     if r.status_code >= 400:
-        print("Supabase error", r.status_code, r.text[:200])      # no tokens/URLs are ever logged
+        detail = ""
+        try:                                   # PostgREST error code/message name columns only, never secrets
+            j = r.json()
+            detail = f"{j.get('code')} {j.get('message')}"[:300]
+        except (ValueError, AttributeError):
+            pass
+        print("Supabase error status:", r.status_code, detail)
+        if any(c in detail for c in ("PGRST204", "PGRST205", "42703", "42P01")):
+            raise err(503, "schema_outdated")  # a column/table the code needs is missing: migration not applied
         raise err(502, "storage_failed")
     return r.json() if r.text else []
 
@@ -136,6 +132,7 @@ def _storage(method: str, path: str, json: Any = None, headers: Optional[dict] =
     base, key = _cfg()
     try:
         return requests.request(method, f"{base}/storage/v1/{path}", json=json, timeout=20, stream=stream,
+                        allow_redirects=False,
                                 headers={"apikey": key, "Authorization": f"Bearer {key}", **(headers or {})})
     except requests.RequestException as e:
         print("Supabase storage error:", type(e).__name__)
@@ -146,34 +143,111 @@ def _qpath(bucket: str, key: str) -> str:
     return f"{quote(bucket, safe='')}/{quote(key, safe='/')}"
 
 
+def _validated_storage_url(
+    base: str,
+    bucket: str,
+    key: str,
+    raw_url: Any,
+    operation: str,
+) -> str:
+    """Accept only the expected relative Supabase signed URL for this object."""
+    if not isinstance(raw_url, str) or not isinstance(key, str) or not key:
+        raise err(502, "storage_invalid_response")
+
+    prefixes = {
+        "upload": "/object/upload/sign/",
+        "download": "/object/sign/",
+    }
+    prefix = prefixes.get(operation)
+    if prefix is None:
+        raise err(502, "storage_invalid_response")
+
+    try:
+        parsed = urlsplit(raw_url)
+        expected_path = prefix + _qpath(bucket, key)
+        query = parse_qs(parsed.query)
+
+        if (
+            parsed.scheme
+            or parsed.netloc
+            or parsed.fragment
+            or parsed.path != expected_path
+            or not query.get("token")
+            or "\\" in parsed.path
+        ):
+            raise ValueError("invalid signed storage URL")
+    except (ValueError, TypeError):
+        raise err(502, "storage_invalid_response")
+
+    return f"{base}/storage/v1{raw_url}"
+
+
 def sign_upload(bucket: str, key: str) -> str:
     r = _storage("POST", f"object/upload/sign/{_qpath(bucket, key)}")
+
     if r.status_code >= 400:
         print("sign_upload failed", r.status_code)
         raise err(502, "storage_failed")
+
+    try:
+        data = r.json()
+        raw_url = data["url"]
+    except (ValueError, KeyError, TypeError):
+        raise err(502, "storage_invalid_response")
+
     base, _ = _cfg()
-    return f"{base}/storage/v1{r.json()['url']}"
+    return _validated_storage_url(base, bucket, key, raw_url, "upload")
 
 
 def sign_download(bucket: str, keys: List[str], ttl: int, download_name: Optional[str] = None) -> Dict[str, str]:
-    """Batch-sign existing objects. Returns {key: full_url}; keys that failed are omitted."""
-    keys = [k for k in keys if k]
+    """Batch-sign requested objects only. Invalid or unexpected responses fail closed."""
+    keys = list(dict.fromkeys(k for k in keys if isinstance(k, str) and k))
     if not keys:
         return {}
-    r = _storage("POST", f"object/sign/{quote(bucket, safe='')}", json={"expiresIn": ttl, "paths": keys})
+
+    r = _storage(
+        "POST",
+        f"object/sign/{quote(bucket, safe='')}",
+        json={"expiresIn": ttl, "paths": keys},
+    )
+
     if r.status_code >= 400:
         print("sign_download failed", r.status_code)
         raise err(502, "storage_failed")
-    base, _ = _cfg()
-    out = {}
-    for item in r.json():
-        if item.get("signedURL") and not item.get("error"):
-            url = f"{base}/storage/v1{item['signedURL']}"
-            if download_name:
-                url += "&download=" + quote(download_name, safe="")
-            out[item["path"]] = url
-    return out
 
+    try:
+        items = r.json()
+        if not isinstance(items, list):
+            raise ValueError("invalid response")
+    except (ValueError, TypeError):
+        raise err(502, "storage_invalid_response")
+
+    base, _ = _cfg()
+    requested = set(keys)
+    out = {}
+
+    for item in items:
+        if not isinstance(item, dict):
+            raise err(502, "storage_invalid_response")
+
+        if item.get("error"):
+            continue
+
+        path = item.get("path")
+        signed_url = item.get("signedURL")
+        if not isinstance(path, str) or path not in requested:
+            raise err(502, "storage_invalid_response")
+        if path in out or not isinstance(signed_url, str):
+            raise err(502, "storage_invalid_response")
+
+        url = _validated_storage_url(base, bucket, path, signed_url, "download")
+
+        if download_name:
+            url += "&download=" + quote(download_name, safe="")
+
+        out[path] = url
+
+    return out
 
 def read_head(bucket: str, key: str, n: int = 64):
     """Read the first bytes + total size of a stored object. Returns None if it does not exist."""
@@ -293,7 +367,7 @@ def _uuid(value: str) -> str:
 
 
 PUBLIC_FIELDS = ("id,title,artist,album,description,status,download_enabled,rights_confirmed,audio_size,"
-                 "audio_path,cover_path,audio_path_new,cover_path_new,created_by,updated_by,created_at,updated_at,published_at")
+                 "is_unreleased,audio_path,cover_path,audio_path_new,cover_path_new,created_by,updated_by,created_at,updated_at,published_at")
 
 
 def _admin_view(row: dict) -> dict:
@@ -389,7 +463,7 @@ def list_tracks(status: Optional[str] = None, q: Optional[str] = None, limit: in
 
 
 @admin_router.post("/tracks", status_code=201)
-def create_track(body: TrackCreate, response: Response, admin: dict = Depends(current_admin)):
+def create_track(body: TrackCreate, response: Response, admin: dict = Depends(require_owner)):
     meta = _meta(body.title, body.artist, body.album, body.description)
     # validate declared files BEFORE touching the database
     try:
@@ -425,7 +499,7 @@ def create_track(body: TrackCreate, response: Response, admin: dict = Depends(cu
 
 
 @admin_router.post("/tracks/{tid}/upload-urls")
-def reissue_upload_urls(tid: str, body: UploadUrlsIn, admin: dict = Depends(current_admin)):
+def reissue_upload_urls(tid: str, body: UploadUrlsIn, admin: dict = Depends(require_owner)):
     """Retry a failed upload, or replace the audio/cover of an existing track (live file stays until finalize)."""
     if not body.audio and not body.cover:
         raise err(422, "nothing_to_upload")
@@ -436,14 +510,19 @@ def reissue_upload_urls(tid: str, body: UploadUrlsIn, admin: dict = Depends(curr
 
 
 @admin_router.post("/tracks/{tid}/finalize")
-def finalize(tid: str, body: FinalizeIn, admin: dict = Depends(current_admin)):
+def finalize(tid: str, body: FinalizeIn, admin: dict = Depends(require_owner)):
     track = _get_track(tid)
     patch, old, errors = {}, {"audio": [], "cover": []}, {}
+    todo = {k: (b, track.get(f"{k}_path_new")) for k, b, w in (("audio", AUDIO_BUCKET, body.audio), ("cover", COVER_BUCKET, body.cover))
+            if w and track.get(f"{k}_path_new")}
+    with ThreadPoolExecutor(max_workers=2) as pool:      # audio + cover are verified concurrently
+        futs = {k: pool.submit(read_head, b, key) for k, (b, key) in todo.items()}
+        heads = {k: f.result() for k, f in futs.items()}
     for kind, bucket, want in (("audio", AUDIO_BUCKET, body.audio), ("cover", COVER_BUCKET, body.cover)):
         new_key, ext = track.get(f"{kind}_path_new"), track.get(f"{kind}_ext_new")
         if not want or not new_key:
             continue
-        got = read_head(bucket, new_key)
+        got = heads[kind]
         if got is None:
             errors[kind] = "upload_missing"
             continue
@@ -471,7 +550,7 @@ def finalize(tid: str, body: FinalizeIn, admin: dict = Depends(current_admin)):
 
 
 @admin_router.patch("/tracks/{tid}")
-def update_track(tid: str, body: TrackPatch, admin: dict = Depends(current_admin)):
+def update_track(tid: str, body: TrackPatch, admin: dict = Depends(require_owner)):
     track = _get_track(tid)
     patch = _meta(body.title, body.artist, body.album, body.description)
     if body.download_enabled is not None:
@@ -487,7 +566,7 @@ def update_track(tid: str, body: TrackPatch, admin: dict = Depends(current_admin
 
 
 @admin_router.post("/tracks/{tid}/status")
-def set_status(tid: str, body: StatusIn, admin: dict = Depends(current_admin)):
+def set_status(tid: str, body: StatusIn, admin: dict = Depends(require_owner)):
     track = _get_track(tid)
     new = body.status
     if new not in policy.STATUSES:
@@ -517,7 +596,7 @@ def preview(tid: str, admin: dict = Depends(current_admin)):
 
 
 @admin_router.delete("/tracks/{tid}/cover")
-def remove_cover(tid: str, admin: dict = Depends(current_admin)):
+def remove_cover(tid: str, admin: dict = Depends(require_owner)):
     """Detach the cover. The database is updated first, files are removed afterwards, so a failure
     can never leave a record pointing at a deleted object. Audio, ID, metadata and status are untouched."""
     track = _get_track(tid)
@@ -530,7 +609,7 @@ def remove_cover(tid: str, admin: dict = Depends(current_admin)):
 
 
 @admin_router.delete("/tracks/{tid}")
-def delete_track(tid: str, admin: dict = Depends(current_admin)):
+def delete_track(tid: str, admin: dict = Depends(require_owner)):
     track = _get_track(tid)
     if track["status"] == "published":                    # public availability ends first
         _rest("PATCH", "mf_tracks", {"id": f"eq.{track['id']}"}, {"status": "unpublished", "updated_at": _now()})

@@ -119,7 +119,8 @@ const ERR = {
     audio_missing: "Upload the audio file first.", rights_not_confirmed: "Confirm you have the rights to distribute this track.",
     unpublish_first: "Unpublish the track before changing that.", already_admin: "That account is already an administrator.",
     bad_email: "Enter a valid email address.", rate_limited: "Too many requests. Wait a minute.", not_found: "Not found.",
-    finalize_failed: "Some files failed validation.", duplicate_request: "This submission was already received."
+    finalize_failed: "Some files failed validation.", duplicate_request: "This submission was already received.",
+    schema_outdated: "The database is missing a required column. Apply the pending migration, then retry."
 };
 const STATUS_LABEL = { draft: "Draft", review: "Pending Review", published: "Published", unpublished: "Unpublished" };
 const msgFor = c => ERR[c] || "Something went wrong. Please try again.";

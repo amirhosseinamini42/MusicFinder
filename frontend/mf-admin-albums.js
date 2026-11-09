@@ -99,7 +99,10 @@
     }
     function mainCb() { return typeof handleGoogleCredential === "function" ? handleGoogleCredential : () => {}; }
 
-    window.__mfAdminAlbums = { albumRef, albumLinkHtml, checkAdmin, onToken, forgetAdmin, recheck, restore, state: () => ({ verifiedAdmin, adminToken }) };
+    window.__mfAdminAlbums = { albumRef, albumLinkHtml, checkAdmin, onToken, forgetAdmin, recheck, restore,
+                               /* result strings for checkAdmin: "admin" | "denied" | "expired" | "unknown" (see above) */
+                               isAdminResult: r => r === "admin",
+                               state: () => ({ verifiedAdmin, adminToken }) };
     if (typeof document === "undefined" || !document.getElementById) return;      /* DOM part below runs in the browser only */
 
     /* ---------- styles + icon ---------- */

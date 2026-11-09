@@ -1,11 +1,19 @@
-/* Run from the repo root: node tests/test_admin_albums.js   (adjust the path below if the file sits next to index.html) */
+/* Run from the repo root: node tests/test_admin_albums.js */
 const fs = require("fs"), vm = require("vm"), assert = require("assert");
-let calls = [], store = {}, status = 200, body = { role: "admin" }, netFail = false;
+let calls = [], store = {}, sess = {}, status = 200, body = { role: "admin" }, netFail = false;
+let scripted = null;                                 // per-call mock queue: [status, body] | "net"
 const ctx = {
   API_BASE: "http://api", GOOGLE_CLIENT_ID: "cid", currentUser: { sub: "u1" },
   escapeHtml: s => String(s).replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";"),
-  fetch: async (u, o) => { calls.push([u, o && o.headers && o.headers.Authorization]); if (netFail) throw new Error("net"); return { ok: status === 200, json: async () => body }; },
+  fetch: async (u, o) => {
+    calls.push([u, o && o.headers && o.headers.Authorization]);
+    const next = scripted && scripted.length ? scripted.shift() : [status, body];
+    if (next === "net") throw new Error("net");
+    return { ok: next[0] === 200, status: next[0], json: async () => next[1] };
+  },
   localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; }, removeItem: k => { delete store[k]; } },
+  sessionStorage: { getItem: k => sess[k] ?? null, setItem: (k, v) => { sess[k] = v; }, removeItem: k => { delete sess[k]; } },
+  setTimeout: () => 0, clearTimeout: () => {}, setInterval: () => 0, clearInterval: () => {},   // vm has no timers; schedule() must not crash
   console
 };
 ctx.window = ctx; vm.createContext(ctx);
@@ -18,17 +26,25 @@ const T = ctx.__mfAdminAlbums;
   assert.strictEqual(T.albumLinkHtml({ album: { name: "No id" } }), null);                                          // never invent an album
   assert.strictEqual(T.albumLinkHtml({ album: { id: "x'\"><script>", name: "Bad" } }), null);                       // unsafe id rejected
   assert.strictEqual(T.albumLinkHtml({}), null);
-  // admin verification
-  assert.strictEqual(await T.checkAdmin("tok"), true);
-  assert.deepStrictEqual(calls[0], ["http://api/admin/me", "Bearer tok"]);
-  body = { role: "owner" }; assert.strictEqual(await T.checkAdmin("t"), true);
-  body = { role: "viewer" }; assert.strictEqual(await T.checkAdmin("t"), false);
-  status = 403; assert.strictEqual(await T.checkAdmin("t"), false);                                                  // backend says no
+  // admin verification: checkAdmin returns "admin" | "denied" | "expired" | "unknown"; isAdminResult maps it to a boolean
+  assert.strictEqual(await T.checkAdmin("tok"), "admin");                                                            // backend says yes
+  assert.deepStrictEqual(calls[0], ["http://api/admin/me", "Bearer tok"]);                                           // correct URL + bearer header
+  assert.strictEqual(T.isAdminResult("admin"), true);
+  scripted = [[200, { role: "owner" }]];   assert.strictEqual(await T.checkAdmin("t"), "admin");                     // owner counts as admin
+  scripted = [[200, { role: "viewer" }]];  assert.strictEqual(await T.checkAdmin("t"), "denied");                    // unknown role => denied
+  scripted = [[403, {}]];                  assert.strictEqual(await T.checkAdmin("t"), "denied");                    // backend says no
+  scripted = [[500, {}]];                  assert.strictEqual(await T.checkAdmin("t"), "unknown");                   // server error => keep current state
+  scripted = [[401, {}]];                  assert.strictEqual(await T.checkAdmin("t"), "expired");                   // expired session
+  scripted = ["net"];                      assert.strictEqual(await T.checkAdmin("t"), "unknown");                   // network error => keep current state
+  scripted = null;
   status = 200; body = { role: "admin" };
   await T.onToken("tok"); assert.strictEqual(T.state().verifiedAdmin, true); assert.strictEqual(store.mfAdminHint, "u1");
-  status = 403; await T.onToken("tok2"); assert.strictEqual(T.state().verifiedAdmin, false); assert.strictEqual(store.mfAdminHint, undefined);
-  status = 200; netFail = true; await T.onToken("tok3"); assert.strictEqual(T.state().verifiedAdmin, false);        // network error => hidden
-  netFail = false; await T.onToken("tok"); T.forgetAdmin();
+  assert.strictEqual(sess.mfAdminTok, "tok");                                                            // token kept tab-scoped for admin.html
+  scripted = [[403, {}]]; await T.onToken("tok2");                        // backend says no => forget everything
+  assert.strictEqual(T.state().verifiedAdmin, false); assert.strictEqual(store.mfAdminHint, undefined); assert.strictEqual(sess.mfAdminTok, undefined);
+  scripted = ["net"]; netFail = true; await T.onToken("tok3");             // network error => icon stays hidden, nothing verified
+  assert.strictEqual(T.state().verifiedAdmin, false);
+  netFail = false; scripted = null; await T.onToken("tok"); T.forgetAdmin();
   assert.strictEqual(T.state().verifiedAdmin, false); assert.strictEqual(T.state().adminToken, null); assert.strictEqual(store.mfAdminHint, undefined);
   console.log("admin/albums helper checks: all passed");
 })().catch(e => { console.error("FAIL", e.message); process.exit(1); });

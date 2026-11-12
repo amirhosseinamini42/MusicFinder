@@ -1411,44 +1411,20 @@ footer {
     opacity: 1;
 }
 
-/* Halloween atmosphere stays clipped to the player surface. */
+/* Glass layers (reflection and glow) live in glass.css; they stay clipped to the player surface. */
 .musicPlayer::before,
 .musicPlayer::after {
     content: "";
     position: absolute;
     inset: 0;
+    border-radius: inherit;
     pointer-events: none;
-    z-index: 0;
+    z-index: -1;
 }
 
 .musicPlayer > * {
     position: relative;
     z-index: 1;
-}
-
-.musicPlayer::before {
-    background:
-        linear-gradient(105deg, rgba(10, 7, 14, .42), rgba(10, 7, 14, .88)),
-        url("assets/player-halloween-pumpkins.png") left center / cover no-repeat,
-        linear-gradient(105deg, #2b120b, #0d0919);
-    background-blend-mode: multiply, normal, normal;
-    animation: playerHalloweenGlow 12s ease-in-out infinite alternate;
-}
-
-.musicPlayer::after {
-    opacity: .28;
-    background:
-        radial-gradient(circle at 12% 70%, rgba(255, 142, 43, .42), transparent 24%),
-        linear-gradient(90deg, transparent 0 42%, rgba(4, 3, 8, .62) 78%);
-}
-
-@keyframes playerHalloweenGlow {
-    from { filter: saturate(.92) brightness(.84); }
-    to { filter: saturate(1.08) brightness(1); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .musicPlayer::before { animation: none; }
 }
 
 .playerCover {
@@ -1529,6 +1505,10 @@ footer {
 
 .playerPlay:hover {
     background: white;
+}
+
+.playerMinBtn {
+    flex-shrink: 0;
 }
 
 .playerTimeline {
@@ -1931,6 +1911,8 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 .mfMail { direction: ltr; unicode-bidi: isolate; color: #e0a45a; text-decoration: underline; }
 /* MF-EXTRAS-END */
 </style>
+<!-- Liquid Glass layer: must stay the LAST stylesheet so it overrides the inline styles above -->
+<link rel="stylesheet" href="glass.css">
 </head>
 
 <body>
@@ -2025,6 +2007,19 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
         step="0.01"
         value="1"
     >
+
+    <button
+        class="playerButton playerMinBtn"
+        id="playerMin"
+        type="button"
+        title="Minimize player"
+        aria-label="Minimize player"
+        aria-expanded="true"
+    >
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+
+    <div class="playerMiniBar" aria-hidden="true"><i id="playerMiniFill"></i></div>
 
     <audio id="musicAudio"></audio>
 
@@ -4451,6 +4446,9 @@ const playerDuration = document.getElementById("playerDuration");
 
 const playerVolume = document.getElementById("playerVolume");
 
+const playerMin = document.getElementById("playerMin");
+const playerMiniFill = document.getElementById("playerMiniFill");
+
 
 /* Play / pause icons (SVG, same look on every device) */
 
@@ -4465,6 +4463,41 @@ function setPlayerPlaying(isPlaying) {
 function isUnlockSound() {
     return musicAudio.currentSrc.startsWith("data:");
 }
+
+
+/* Minimize / expand the player (state is remembered on this device) */
+
+const PLAYER_MIN_KEY = "musicFinderPlayerMinimized";
+
+function setPlayerMinimized(minimized, remember) {
+
+    musicPlayer.classList.toggle("minimized", minimized);
+
+    const label = minimized ? "Expand player" : "Minimize player";
+
+    playerMin.setAttribute("aria-expanded", String(!minimized));
+    playerMin.setAttribute("aria-label", label);
+    playerMin.title = label;
+
+    if (remember) {
+        try {
+            localStorage.setItem(PLAYER_MIN_KEY, minimized ? "1" : "0");
+        } catch {}
+    }
+
+}
+
+playerMin.addEventListener("click", () => {
+    setPlayerMinimized(!musicPlayer.classList.contains("minimized"), true);
+});
+
+(function restorePlayerSize() {
+    let saved = false;
+    try {
+        saved = localStorage.getItem(PLAYER_MIN_KEY) === "1";
+    } catch {}
+    setPlayerMinimized(saved, false);
+})();
 
 
 
@@ -4674,10 +4707,45 @@ async function getPreviewSources(song) {
 }
 
 
-/* Silent audio used to unlock playback on iOS Safari */
+/* Silent audio used to unlock playback on iOS Safari.
+   Built at load time: 8 kHz, 8-bit, mono WAV of 0.3 s of silence (same format as before, no embedded blob). */
 
-const SILENT_AUDIO =
-    "data:audio/wav;base64,UklGRoQJAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWAJAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA=";
+const SILENT_AUDIO = (function () {
+
+    const samples = 2400;
+    const rate = 8000;
+    const bytes = new Uint8Array(44 + samples);
+    const view = new DataView(bytes.buffer);
+
+    const ascii = (offset, text) => {
+        for (let i = 0; i < text.length; i++) {
+            bytes[offset + i] = text.charCodeAt(i);
+        }
+    };
+
+    ascii(0, "RIFF");
+    view.setUint32(4, 36 + samples, true);
+    ascii(8, "WAVE");
+    ascii(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);        // PCM
+    view.setUint16(22, 1, true);        // mono
+    view.setUint32(24, rate, true);
+    view.setUint32(28, rate, true);     // byte rate (8-bit mono)
+    view.setUint16(32, 1, true);        // block align
+    view.setUint16(34, 8, true);        // bits per sample
+    ascii(36, "data");
+    view.setUint32(40, samples, true);
+    bytes.fill(128, 44);                // 128 = silence for unsigned 8-bit PCM
+
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+
+    return "data:audio/wav;base64," + btoa(binary);
+
+})();
 
 let playerLoadId = 0;
 
@@ -4703,6 +4771,7 @@ async function loadPlayerSong(song, autoPlay = false) {
         song.artists?.map(a => a.name).join(", ") || "Unknown Artist";
     playerCover.src = song.album?.images?.[0]?.url || "";
     playerProgress.value = 0;
+    playerMiniFill.style.width = "0%";
     playerCurrentTime.textContent = "0:00";
     playerDuration.textContent = "0:00";
     musicPlayer.classList.add("active");
@@ -4804,6 +4873,7 @@ musicAudio.addEventListener("timeupdate", () => {
         (musicAudio.currentTime / musicAudio.duration) * 100;
 
     playerProgress.value = progress;
+    playerMiniFill.style.width = progress + "%";
 
     playerCurrentTime.textContent =
         formatPlayerTime(musicAudio.currentTime);
@@ -4854,6 +4924,7 @@ musicAudio.addEventListener("ended", () => {
     setPlayerPlaying(false);
 
     playerProgress.value = 0;
+    playerMiniFill.style.width = "0%";
 
     playerCurrentTime.textContent = "0:00";
 
@@ -5384,19 +5455,20 @@ function showTelegramPanel(query, copied) {
         "MusicFinder remembers what you interact with.":"MusicFinder به یاد می‌سپارد با چه چیزی تعامل داشته‌اید.",
         "Clear Taste":"پاک کردن سلیقه","Clear":"پاک کردن",
         "🎵 Most Explored Songs":"🎵 پربازدیدترین آهنگ‌ها","👤 Most Explored Artists":"👤 پربازدیدترین هنرمندان",
-        "Your recent searches on MusicFinder.":"جستجوهای اخیر ش  ا در MusicFinder.",
+        "Your recent searches on MusicFinder.":"جستجوهای اخیر شما در MusicFinder.",
         "Artists you've discovered through MusicFinder.":"هنرمندانی که در MusicFinder کشف کرده‌اید.",
         "MusicFinder is a personal music discovery project, created by Amirhossein Amini.":"MusicFinder یک پروژه شخصی برای کشف موسیقی است که توسط امیرحسین امینی ساخته شده است.",
         "Music metadata and artwork are provided through Spotify.":"اطلاعات و تصاویر موسیقی از طریق Spotify تأمین می‌شود.",
         "MusicFinder · Personal Music Discovery":"MusicFinder · کشف شخصی موسیقی",
-        "About this song":"درباره این آهنگ","ARTIST":"هنرمند","SONG":"  هنگ","Artist":"هنرمند",
+        "About this song":"درباره این آهنگ","ARTIST":"هنرمند","SONG":"آهنگ","Artist":"هنرمند",
         "Check that the MusicFinder server is running.":"بررسی کنید که سرور MusicFinder در حال اجراست.",
         "Close":"بستن","Copy":"کپی","Could not load artist information.":"اطلاعات هنرمند بارگذاری نشد.",
         "Details":"جزئیات","Discography":"آثار و آلبوم‌ها","Download":"دانلود","Download Search":"جستجوی دانلود",
-        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق ت  گرا  ",
+        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق تلگرام",
         "Explore":"کاوش","Explore Artist":"کاوش هنرمند",
         "Loading artist information...":"در حال بارگذاری اطلاعات هنرمند...","Loading...":"در حال بارگذاری...",
         "Loading results":"در حال بارگذاری نتایج","Album cover":"جلد آلبوم",
+        "Minimize player":"کوچک کردن پخش‌کننده","Expand player":"بزرگ کردن پخش‌کننده",
         "MusicFinder Artist Library":"کتابخانه هنرمندان MusicFinder","No albums found.":"آلبومی پیدا نشد.",
         "No artists yet.":"هنوز هنرمندی نیست.","No results found for":"نتیجه‌ای پیدا نشد برای",
         "No searches yet.":"هنوز جستجویی انجام نشده.","No song playing":"آهنگی پخش نمی‌شود",

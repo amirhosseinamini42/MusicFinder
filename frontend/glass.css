@@ -1,0 +1,71 @@
+
+Shared Google ID-token verification (used by admin.py).
+
+Validates the token with Google (tokeninfo) audience must equal GOOGLE_CLIENT_ID, issuer must be Google,
+the token must not be expired and the email must be verified. Roles are NOT cached here admin.py looks
+the role up in the database on every request.
+Env GOOGLE_CLIENT_ID
+
+import os
+import time
+from typing import Optional
+
+import requests
+
+from library import err
+
+_ISSUERS = (accounts.google.com, httpsaccounts.google.com)
+_cache dict = {}
+
+
+def bearer_token(authorization Optional[str]) - str
+    if not authorization or not authorization.lower().startswith(bearer )
+        raise err(401, auth_required)
+    token = authorization[7].strip()
+    if not token
+        raise err(401, auth_required)
+    return token
+
+
+def verify_google(token str) - dict
+    client_id = os.getenv(GOOGLE_CLIENT_ID)
+    if not client_id
+        raise err(503, cloud_not_configured)
+
+    hit = _cache.get(token)
+    if hit and hit[1]  time.time()
+        return hit[0]
+
+    try
+        r = requests.get(httpsoauth2.googleapis.comtokeninfo, params={id_token token}, timeout=10)
+    except requests.RequestException
+        raise err(502, auth_unavailable)
+    if r.status_code != 200
+        raise err(401, session_expired)
+
+    try
+        info = r.json()
+        exp = int(info.get(exp, 0))
+    except (ValueError, TypeError, AttributeError)
+        raise err(401, session_expired)
+
+    if (
+        info.get(aud) != client_id
+        or not info.get(sub)
+        or exp  time.time()
+        or info.get(iss) not in _ISSUERS
+    )
+        raise err(401, session_expired)
+
+    if str(info.get(email_verified)).lower() != true or not info.get(email)
+        raise err(401, email_not_verified)
+
+    ident = {
+        sub info[sub],
+        email str(info[email]).strip().lower(),
+        name info.get(name) or info[email],
+    }
+    if len(_cache)  500
+        _cache.clear()
+    _cache[token] = (ident, min(float(exp), time.time() + 300))
+    return ident

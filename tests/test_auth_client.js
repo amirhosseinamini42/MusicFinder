@@ -5,6 +5,7 @@ const path = require("node:path");
 
 async function main() {
   const calls = [];
+  const fetchedUrls = [];
   const auth = {
     getSession: async () => ({ data: { session: { access_token: "session-token", user: { id: "user-id" } } }, error: null }),
     signInWithPassword: async value => { calls.push(["signInWithPassword", value]); return { data: { session: {} }, error: null }; },
@@ -18,14 +19,14 @@ async function main() {
   };
   const client = { auth, storage: { from: () => ({}) } };
   const window = {
-    location: { origin: "https://musicfinder-web.vercel.app", pathname: "/admin.html" },
+    location: { origin: "https://musicfinder-web-git-feat-site-auth-system-music-finder.vercel.app", hostname: "musicfinder-web-git-feat-site-auth-system-music-finder.vercel.app", pathname: "/admin.html" },
     supabase: { createClient: (...args) => { calls.push(["createClient", ...args]); return client; } }
   };
   const context = vm.createContext({
     window,
-    fetch: async url => ({ ok: true, json: async () => url.endsWith("/auth/v1/settings")
+    fetch: async url => { fetchedUrls.push(url); return ({ ok: true, json: async () => url.endsWith("/auth/v1/settings")
       ? ({ external: ["email"] })
-      : ({ url: "https://project.supabase.co", publishableKey: "public-key" }) }),
+      : ({ url: "https://project.supabase.co", publishableKey: "public-key" }) }); },
     URL: global.URL
   });
   const source = fs.readFileSync(path.join(__dirname, "..", "frontend", "auth-client.js"), "utf8");
@@ -33,6 +34,7 @@ async function main() {
   const api = window.MFAuth;
   assert.ok(api, "MFAuth is exposed");
   await api.init();
+  assert.equal(fetchedUrls[0], "https://musicfinder-api-git-feat-site-auth-system-music-finder.vercel.app/config/supabase", "Preview uses its matching Preview API");
   assert.equal(api.isGoogleEnabled(), false, "disabled Google provider is detected");
   await api.getSession();
   await api.signIn("person@example.com", "password123");
@@ -47,10 +49,15 @@ async function main() {
   assert.equal(calls.find(call => call[0] === "signInWithPassword")[1].email, "person@example.com");
   assert.equal(calls.find(call => call[0] === "signUp")[1].options.data.full_name, "Person");
   assert.equal(calls.find(call => call[0] === "signInWithOAuth")[1].provider, "google");
-  assert.equal(calls.find(call => call[0] === "resetPasswordForEmail")[2].redirectTo, "https://musicfinder-web.vercel.app/?auth=recovery");
+  assert.equal(calls.find(call => call[0] === "resetPasswordForEmail")[2].redirectTo, "https://musicfinder-web-git-feat-site-auth-system-music-finder.vercel.app/?auth=recovery");
   assert.equal(calls.find(call => call[0] === "resend")[1].type, "signup");
   assert.equal(calls.find(call => call[0] === "signOut")[1].scope, "local");
-  console.log("AUTH CLIENT TESTS: PASS (9 operations, singleton initialization)");
+  for (const file of ["index.html", "admin.html"]) {
+    const html = fs.readFileSync(path.join(__dirname, "..", "frontend", file), "utf8");
+    assert.ok(html.includes("https://musicfinder-api-git-feat-site-auth-system-music-finder.vercel.app"), `${file} routes Preview to Preview API`);
+    assert.ok(html.includes("https://musicfinder-api.vercel.app"), `${file} retains Production API fallback`);
+  }
+  console.log("AUTH CLIENT TESTS: PASS (Preview routing + 9 operations)");
 }
 
 main().catch(error => { console.error(error); process.exitCode = 1; });

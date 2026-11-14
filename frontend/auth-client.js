@@ -1,7 +1,9 @@
 /* Shared Supabase Auth client for MusicFinder site + admin. Public key only. */
 (function (w) {
     "use strict";
-    const API_BASE = "https://musicfinder-api.vercel.app";
+    const API_BASE = window.location.hostname === "musicfinder-web-git-feat-site-auth-system-music-finder.vercel.app"
+        ? "https://musicfinder-api-git-feat-site-auth-system-music-finder.vercel.app"
+        : "https://musicfinder-api.vercel.app";
     let client = null;
     let initPromise = null;
     let googleEnabled = false;

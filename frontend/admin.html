@@ -106,7 +106,9 @@ audio { width:100%; margin-top:12px; }
 <script>
 /* Public identifier (same value the main site already ships). Secrets never live in the browser. */
 
-const API_BASE = "https://musicfinder-api.vercel.app";
+const API_BASE = window.location.hostname === "musicfinder-web-git-feat-site-auth-system-music-finder.vercel.app"
+        ? "https://musicfinder-api-git-feat-site-auth-system-music-finder.vercel.app"
+        : "https://musicfinder-api.vercel.app";
 
 let idToken = null;          // kept in memory only (never written to storage)
 let me = null;

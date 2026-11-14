@@ -5,6 +5,7 @@ const vm = require("node:vm");
 const home = fs.readFileSync("frontend/index.html", "utf8");
 const admin = fs.readFileSync("frontend/admin.html", "utf8");
 const authCss = fs.readFileSync("frontend/auth.css", "utf8");
+const confirm = fs.readFileSync("frontend/confirm.html", "utf8");
 
 for (const [name, html] of [["home", home], ["admin", admin]]) {
     assert.match(html, /data-barba="wrapper"/, `${name} has a Barba wrapper`);
@@ -30,7 +31,11 @@ assert.match(home, /musicPlayer\.classList\.add\("mode-full", "active"\)/);
 assert.match(home, /id="playerClose"/);
 assert.match(home, /musicPlayer\.minimized/);
 assert.match(home, /--mf-glass-shadow/);
+assert.match(home, /id="mf-liquid-glass-final"/);
+assert.match(home, /--dynamic-color:rgba\(115,145,255/);
 assert.match(admin, /class="mf-review-player"/);
+assert.match(admin, /id="mf-liquid-glass-final"/);
+assert.match(admin, /--bg:#080b13 !important/);
 assert.match(admin, /id="rvSeek"/);
 assert.doesNotMatch(admin, /<audio controls/);
 assert.match(admin, /audio\.pause\(\); audio\.removeAttribute\("src"\)/);
@@ -41,6 +46,9 @@ assert.match(admin, /uploadWithRetry\("audio"/);
 assert.match(authCss, /\.mf-auth-dialog \{ border-color:rgba\(220,232,255/);
 assert.match(authCss, /\.mf-auth-primary,.mf-auth-google,.mf-auth-secondary \{ border:1px solid rgba\(205,220,255/);
 assert.match(authCss, /\.mf-auth-dialog input\[type=file\] \{ border-color:rgba\(205,220,255/);
+assert.match(confirm, /name="theme-color" content="#080b13"/);
+assert.match(confirm, /rgba\(115,145,255/);
+assert.doesNotMatch(confirm, /#100d0b|rgba\(214,138,58/);
 
 // Exercise the actual upload transport/retry helper from the admin page.
 const helperStart = admin.indexOf("function putFile(");

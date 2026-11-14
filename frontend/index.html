@@ -6223,5 +6223,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 </script>
+<style id="mf-liquid-glass-final">
+:root { --bg:#080b13 !important; --glass:rgba(225,235,255,.075) !important; --glass-strong:rgba(225,235,255,.14) !important; --border:rgba(220,232,255,.18) !important; --text:#f4f7ff !important; --muted:rgba(225,235,255,.62) !important; --accent:#dce8ff !important; --dynamic-color:rgba(115,145,255,.18) !important; --dynamic-color-2:rgba(75,165,220,.13) !important; --dynamic-color-3:rgba(95,115,205,.12) !important; }
+body { --dynamic-color:rgba(115,145,255,.18) !important; --dynamic-color-2:rgba(75,165,220,.13) !important; --dynamic-color-3:rgba(95,115,205,.12) !important; color:#f4f7ff; }
+.navbar,.menuDrawer,.modal,.modalOverlay,.glass,.resultCard,.artistCard,.featureArtist,.tasteBox,.historyItem,.searchBox,.playerFullContent,.musicPlayer { border-color:rgba(220,232,255,.18) !important; box-shadow:0 22px 70px rgba(0,0,0,.27),inset 0 1px 0 rgba(255,255,255,.15); }
+.navbar,.menuDrawer,.modal,.glass,.resultCard,.artistCard,.featureArtist,.tasteBox,.searchBox { background:linear-gradient(145deg,rgba(240,246,255,.12),rgba(170,195,255,.045) 58%,rgba(255,255,255,.055)) !important; backdrop-filter:blur(26px) saturate(155%); -webkit-backdrop-filter:blur(26px) saturate(155%); }
+button,.navButton,.menuButton,.closeMenu,.searchBtn,.smallBtn,.historyItem,.modalButtons a,.modalButtons button,.menuItem,.playerButton { border-color:rgba(220,232,255,.22) !important; background:linear-gradient(145deg,rgba(230,238,255,.16),rgba(150,180,255,.06)) !important; color:#f4f7ff !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.19),0 8px 24px rgba(0,0,0,.16); backdrop-filter:blur(16px) saturate(150%); transition:transform .28s cubic-bezier(.2,.8,.2,1),background .28s,border-color .28s,box-shadow .28s; }
+button:hover,.navButton:hover,.menuButton:hover,.closeMenu:hover,.searchBtn:hover,.smallBtn:hover,.historyItem:hover,.modalButtons a:hover,.modalButtons button:hover,.menuItem:hover,.playerButton:hover { border-color:rgba(225,238,255,.42) !important; background:linear-gradient(145deg,rgba(235,242,255,.24),rgba(145,175,255,.13)) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 14px 32px rgba(0,0,0,.22); }
+button:active,.playerButton:active { transform:scale(.975); }
+input,select,textarea { color:#f4f7ff !important; border-color:rgba(220,232,255,.19) !important; background:rgba(225,235,255,.065) !important; backdrop-filter:blur(14px); }
+input::placeholder,textarea::placeholder { color:rgba(225,235,255,.42) !important; }
+.logoText span,.mfMail,.sectionSubtitle,.modalMuted { color:#c8d8ff !important; }
+#albums .glass,#albums .albumCard,#albums .albumItem,#albums .albumGrid > * { border-color:rgba(220,232,255,.2) !important; background:linear-gradient(145deg,rgba(240,246,255,.14),rgba(170,195,255,.05)) !important; backdrop-filter:blur(26px) saturate(155%); box-shadow:0 18px 50px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.18); }
+.page-ready body { animation:mfPageEnter .38s ease both; }
+@keyframes mfPageEnter { from { opacity:.88; } to { opacity:1; } }
+@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
+</style>
 </body>
 </html>

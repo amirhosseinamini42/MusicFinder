@@ -1952,10 +1952,11 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 .musicPlayer.minimized .playerControls,.musicPlayer.minimized .playerTimeline,.musicPlayer.minimized .playerVolume,.musicPlayer.minimized .playerFullContent { display:none !important; }
 .playerCloseBtn { width:34px; height:34px; flex:0 0 34px; position:relative; z-index:2; }
 .playerMinBtn { flex-shrink:0; }
-#pageShell { min-height:100vh; opacity:1; transform:translateY(0); transition:opacity .22s ease,transform .22s ease; }
+#pageShell { min-height:100vh; opacity:1; transition:opacity .22s ease; }
 html.page-ready #pageShell { animation:mfPageEnter .42s cubic-bezier(.2,.8,.2,1) both; }
-html.barba-leaving #pageShell { opacity:0; transform:translateY(8px); }
-@keyframes mfPageEnter { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+html.barba-leaving #pageShell { opacity:0; }
+/* Never transform the Barba page shell: fixed UI inside it must stay viewport-anchored. */
+@keyframes mfPageEnter { from{opacity:0} to{opacity:1} }
 @media(max-width:700px) { .musicPlayer.mode-full { left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); width:auto; } .musicPlayer.minimized { left:12px; right:auto; width:min(290px,calc(100% - 24px)); } }
 @media(prefers-reduced-motion:reduce) { #pageShell { animation:none !important; transition:none !important; } :where(button,a[role="button"],.historyItem,.smallBtn) { transition:none !important; } }
 </style>

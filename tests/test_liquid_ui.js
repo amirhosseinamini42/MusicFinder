@@ -33,6 +33,15 @@ assert.match(home, /id="playerClose"/);
 assert.match(home, /musicPlayer\.minimized/);
 assert.match(home, /id="mf-player-layout"/);
 assert.match(home, /setPlayerMinimized\(false, false\)/);
+const pageShellStyle = home.match(/#pageShell\s*\{([^}]*)\}/);
+assert.ok(pageShellStyle, "Barba page shell layout rule exists");
+assert.doesNotMatch(pageShellStyle[1], /\btransform\s*:/, "page shell must not establish a fixed-position containing block");
+assert.doesNotMatch(home, /html\.barba-leaving\s+#pageShell\s*\{[^}]*\btransform\s*:/,
+    "Barba leave transition must not transform the fixed-UI ancestor");
+const pageEnterAnimation = home.match(/@keyframes\s+mfPageEnter\s*\{([\s\S]*?)\n\s*\}/);
+assert.ok(pageEnterAnimation, "page enter animation exists");
+assert.doesNotMatch(pageEnterAnimation[1], /\btransform\s*:/,
+    "page enter animation must not transform the fixed-UI ancestor");
 assert.match(home, /function safeInitialRender\(name, render\)/);
 assert.match(home, /safeInitialRender\("For You", renderForYou\)/);
 assert.match(home, /could not save local taste data/);

@@ -62,7 +62,10 @@
         const a = await auth();
         const { data, error } = await a.signUp({
             email: email.trim(), password,
-            options: { data: { full_name: name.trim() } }
+            options: {
+                data: { full_name: name.trim() },
+                emailRedirectTo: window.location.origin + "/?auth=confirmed"
+            }
         });
         if (error) throw error;
         return data;

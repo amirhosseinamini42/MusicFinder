@@ -48,6 +48,7 @@ async function main() {
   assert.equal(calls.filter(call => call[0] === "createClient").length, 1, "client initializes once");
   assert.equal(calls.find(call => call[0] === "signInWithPassword")[1].email, "person@example.com");
   assert.equal(calls.find(call => call[0] === "signUp")[1].options.data.full_name, "Person");
+  assert.equal(calls.find(call => call[0] === "signUp")[1].options.emailRedirectTo, "https://musicfinder-web-git-feat-site-auth-system-music-finder.vercel.app/?auth=confirmed", "signup confirmation returns to the active site origin");
   assert.equal(calls.find(call => call[0] === "signInWithOAuth")[1].provider, "google");
   assert.equal(calls.find(call => call[0] === "resetPasswordForEmail")[2].redirectTo, "https://musicfinder-web-git-feat-site-auth-system-music-finder.vercel.app/?auth=recovery");
   assert.equal(calls.find(call => call[0] === "resend")[1].type, "signup");
@@ -57,7 +58,35 @@ async function main() {
     assert.ok(html.includes("https://musicfinder-api-git-feat-site-auth-system-music-finder.vercel.app"), `${file} routes Preview to Preview API`);
     assert.ok(html.includes("https://musicfinder-api.vercel.app"), `${file} retains Production API fallback`);
   }
-  console.log("AUTH CLIENT TESTS: PASS (Preview routing + 9 operations)");
+  const home = fs.readFileSync(path.join(__dirname, "..", "frontend", "index.html"), "utf8");
+  assert.ok(home.includes("function handleEmailConfirmation(session)"), "email confirmation callback is handled");
+  assert.ok(home.includes('MFLoginPanel.open("profile", currentUser)'), "confirmed signup opens the existing profile setup panel");
+  const callbackBlock = home.match(/let emailConfirmationUiHandled = false;[\s\S]*?function handleEmailConfirmation\(session\) \{[\s\S]*?\n\}/);
+  assert.ok(callbackBlock, "confirmation callback implementation can be isolated for testing");
+  let callbackContext;
+  let profileOpenCount = 0;
+  let openedProfile = null;
+  callbackContext = vm.createContext({
+    URL,
+    document: { title: "MusicFinder" },
+    window: {
+      location: { href: "https://musicfinder-web.vercel.app/?code=pkce-code&auth=confirmed" },
+      history: { replaceState: (_state, _title, url) => { callbackContext.cleanedUrl = url; } }
+    },
+    signInUser: user => { callbackContext.currentUser = user; },
+    MFLoginPanel: { open: (mode, user) => { profileOpenCount++; openedProfile = { mode, user }; } }
+  });
+  vm.runInContext(callbackBlock[0], callbackContext);
+  vm.runInContext("handleEmailConfirmation({ user: { id: 'confirmed-user' } }); handleEmailConfirmation({ user: { id: 'confirmed-user' } });", callbackContext);
+  assert.equal(profileOpenCount, 1, "confirmation opens profile setup once");
+  assert.equal(openedProfile.mode, "profile");
+  assert.equal(openedProfile.user.id, "confirmed-user");
+  assert.equal(callbackContext.cleanedUrl, "/?code=pkce-code", "confirmation marker is removed while preserving other callback parameters");
+  const css = fs.readFileSync(path.join(__dirname, "..", "frontend", "auth.css"), "utf8");
+  assert.ok(css.includes("100dvh") && css.includes("env(safe-area-inset-top)"), "auth dialog supports mobile viewport and safe areas");
+  const emailTemplate = fs.readFileSync(path.join(__dirname, "..", "docs", "supabase-confirmation-email.html"), "utf8");
+  assert.ok(emailTemplate.includes("{{ .ConfirmationURL }}") && emailTemplate.includes("{{ .SiteURL }}"), "branded confirmation template uses Supabase URL variables");
+  console.log("AUTH CLIENT TESTS: PASS (Preview routing, signup redirect, confirmation callback, profile setup, responsive CSS, branded email template)");
 }
 
 main().catch(error => { console.error(error); process.exitCode = 1; });

@@ -5080,6 +5080,20 @@ async function signOutUser() {
     clearSignedInUser();
 }
 
+let emailConfirmationUiHandled = false;
+
+function handleEmailConfirmation(session) {
+    if (emailConfirmationUiHandled || !session || !session.user) return;
+    const callbackUrl = new URL(window.location.href);
+    if (callbackUrl.searchParams.get("auth") !== "confirmed") return;
+    emailConfirmationUiHandled = true;
+    signInUser(session.user);
+    callbackUrl.searchParams.delete("auth");
+    window.history.replaceState({}, document.title,
+        callbackUrl.pathname + callbackUrl.search + callbackUrl.hash);
+    MFLoginPanel.open("profile", currentUser);
+}
+
 function renderAuth() {
     const area = document.getElementById("authArea");
     if (!area) return;
@@ -5097,12 +5111,18 @@ function renderAuth() {
 async function initAccountAuth() {
     try {
         await MFAuth.init();
-        MFAuth.onAuthStateChange((_event, session) => {
-            if (session && session.user) signInUser(session.user);
+        MFAuth.onAuthStateChange((event, session) => {
+            if (session && session.user) {
+                if (event === "SIGNED_IN") handleEmailConfirmation(session);
+                else signInUser(session.user);
+            }
             else if (currentUser) clearSignedInUser();
         });
         const session = await MFAuth.getSession();
-        if (session && session.user) signInUser(session.user);
+        if (session && session.user) {
+            if (!emailConfirmationUiHandled) signInUser(session.user);
+            handleEmailConfirmation(session);
+        }
         else renderAuth();
         if (new URLSearchParams(window.location.search).get("auth") === "recovery") {
             MFLoginPanel.open("recovery");

@@ -1884,7 +1884,7 @@ html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
 @media (max-width: 700px) { .searchMode { width: min(750px, 100%); } .searchMode button { flex: 1; padding: 10px 8px; font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .searchMode button { transition: none; } }
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 
 <style>
 /* MF-EXTRAS-START */
@@ -1914,6 +1914,10 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 .mfMail { direction: ltr; unicode-bidi: isolate; color: #e0a45a; text-decoration: underline; }
 /* MF-EXTRAS-END */
 </style>
+<link rel="stylesheet" href="/auth.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="/auth-client.js"></script>
+<script src="/auth-ui.js"></script>
 </head>
 
 <body>
@@ -2319,26 +2323,12 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 
 const BASE_TASTE_KEY = "musicFinderTasteV3";
 const BASE_HISTORY_KEY = "musicFinderSearchHistory";
-const USER_KEY = "musicFinderUser";
+const USER_KEY = "musicFinderUser"; // legacy cache key; never trusted for authentication
 
-/* Paste your Google OAuth Client ID here to turn on "Sign in with Google" */
-const GOOGLE_CLIENT_ID = "923068000834-e2e11vqgul2jeqipsels4vbbf5ltauo5.apps.googleusercontent.com";
 
 let TASTE_KEY = BASE_TASTE_KEY;
 let HISTORY_KEY = BASE_HISTORY_KEY;
-let currentUser = null;
-
-try {
-    currentUser = JSON.parse(localStorage.getItem(USER_KEY) || "null");
-} catch {
-    currentUser = null;
-}
-
-/* Each signed-in account keeps its own taste and history */
-if (currentUser && currentUser.sub) {
-    TASTE_KEY = `${BASE_TASTE_KEY}_${currentUser.sub}`;
-    HISTORY_KEY = `${BASE_HISTORY_KEY}_${currentUser.sub}`;
-}
+let currentUser = null; // Only a verified Supabase session can populate this value.
 
 /* =========================
    API
@@ -5023,32 +5013,8 @@ function closeFullPlayer() {
 
 
 /* =========================
-   Account (Sign in with Google)
+   Shared account authentication
 ========================= */
-
-let googleInitDone = false;
-
-function googleLoginEnabled() {
-    return Boolean(GOOGLE_CLIENT_ID) && !GOOGLE_CLIENT_ID.startsWith("PASTE_");
-}
-
-function decodeJwtPayload(token) {
-
-    const base64 = token
-        .split(".")[1]
-        .replace(/-/g, "+")
-        .replace(/_/g, "/");
-
-    const json = decodeURIComponent(
-        atob(base64)
-            .split("")
-            .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-            .join("")
-    );
-
-    return JSON.parse(json);
-}
-
 function refreshAccountData() {
     renderHistory();
     renderTaste();
@@ -5056,174 +5022,97 @@ function refreshAccountData() {
     renderForYou();
 }
 
-function handleGoogleCredential(response) {
-
-    try {
-
-        const info = decodeJwtPayload(response.credential);
-
-        if (!info.sub) return;
-
-        signInUser({
-            sub: info.sub,
-            name: info.name || info.email || "User",
-            email: info.email || "",
-            picture: info.picture || ""
-        });
-
-    } catch (error) {
-
-        console.error("Google sign-in failed:", error);
-
-    }
-
+function accountProfileFromAuth(user) {
+    const metadata = user && user.user_metadata && typeof user.user_metadata === "object" ? user.user_metadata : {};
+    const identities = user && Array.isArray(user.identities) ? user.identities : [];
+    const googleIdentity = identities.find(item => item && item.provider === "google");
+    const googleData = googleIdentity && googleIdentity.identity_data ? googleIdentity.identity_data : {};
+    const legacyGoogleSub = googleData.sub || (googleIdentity && googleIdentity.id) || null;
+    return {
+        id: user.id,
+        sub: String(user.id),
+        legacyGoogleSub: legacyGoogleSub ? String(legacyGoogleSub) : null,
+        name: metadata.full_name || metadata.name || metadata.display_name || (user.email || "User").split("@")[0],
+        email: user.email || "",
+        picture: metadata.avatar_url || metadata.picture || ""
+    };
 }
 
-function signInUser(user) {
-
+function signInUser(authUser) {
+    if (!authUser || !authUser.id) return;
+    const user = accountProfileFromAuth(authUser);
     const accountTaste = `${BASE_TASTE_KEY}_${user.sub}`;
     const accountHistory = `${BASE_HISTORY_KEY}_${user.sub}`;
-
     try {
-
-        // First sign-in on this device: keep what the guest already collected
-        if (!localStorage.getItem(accountTaste) && localStorage.getItem(BASE_TASTE_KEY)) {
-            localStorage.setItem(accountTaste, localStorage.getItem(BASE_TASTE_KEY));
+        const legacyTasteKey = user.legacyGoogleSub ? `${BASE_TASTE_KEY}_${user.legacyGoogleSub}` : null;
+        const legacyHistoryKey = user.legacyGoogleSub ? `${BASE_HISTORY_KEY}_${user.legacyGoogleSub}` : null;
+        if (!localStorage.getItem(accountTaste)) {
+            const existingTaste = (legacyTasteKey && localStorage.getItem(legacyTasteKey)) || localStorage.getItem(BASE_TASTE_KEY);
+            if (existingTaste) localStorage.setItem(accountTaste, existingTaste);
         }
-
-        if (!localStorage.getItem(accountHistory) && localStorage.getItem(BASE_HISTORY_KEY)) {
-            localStorage.setItem(accountHistory, localStorage.getItem(BASE_HISTORY_KEY));
+        if (!localStorage.getItem(accountHistory)) {
+            const existingHistory = (legacyHistoryKey && localStorage.getItem(legacyHistoryKey)) || localStorage.getItem(BASE_HISTORY_KEY);
+            if (existingHistory) localStorage.setItem(accountHistory, existingHistory);
         }
-
-        localStorage.setItem(USER_KEY, JSON.stringify(user));
-
+        localStorage.removeItem(USER_KEY);
     } catch {}
-
     currentUser = user;
     TASTE_KEY = accountTaste;
     HISTORY_KEY = accountHistory;
-
     renderAuth();
     refreshAccountData();
-
 }
 
-function signOutUser() {
-
-    try {
-        localStorage.removeItem(USER_KEY);
-    } catch {}
-
-    try {
-        window.google?.accounts?.id?.disableAutoSelect();
-    } catch {}
-
+function clearSignedInUser() {
+    try { localStorage.removeItem(USER_KEY); } catch {}
     currentUser = null;
     TASTE_KEY = BASE_TASTE_KEY;
     HISTORY_KEY = BASE_HISTORY_KEY;
-
     renderAuth();
     refreshAccountData();
-
 }
 
-function renderGoogleButton() {
-
-    const area = document.getElementById("authArea");
-
-    if (!area || currentUser || !window.google?.accounts?.id) return;
-
-    const small = window.innerWidth < 700;
-
-    area.innerHTML = "";
-
-    google.accounts.id.renderButton(area, {
-        type: small ? "icon" : "standard",
-        theme: "filled_black",
-        size: "large",
-        shape: small ? "circle" : "pill",
-        text: "signin_with"
-    });
-
-}
-
-function initGoogleLogin(attempt = 0) {
-
-    if (!googleLoginEnabled() || currentUser) return;
-
-    // The Google library loads asynchronously, so wait for it
-    if (!window.google?.accounts?.id) {
-
-        if (attempt < 20) {
-            setTimeout(() => initGoogleLogin(attempt + 1), 300);
-        }
-
-        return;
-    }
-
-    if (!googleInitDone) {
-
-        google.accounts.id.initialize({
-            client_id: GOOGLE_CLIENT_ID,
-            callback: handleGoogleCredential
-        });
-
-        googleInitDone = true;
-    }
-
-    renderGoogleButton();
-
+async function signOutUser() {
+    try { await MFAuth.signOut(); }
+    catch (error) { console.error("Sign out failed:", error); }
+    clearSignedInUser();
 }
 
 function renderAuth() {
-
     const area = document.getElementById("authArea");
-
     if (!area) return;
-
-    if (currentUser) {
-
-        const firstName = (currentUser.name || "").split(" ")[0];
-
-        area.innerHTML = `
-            <div class="authUser">
-
-                ${
-                    currentUser.picture
-                    ? `<img
-                            class="authAvatar"
-                            src="${escapeHtml(currentUser.picture)}"
-                            alt=""
-                            referrerpolicy="no-referrer"
-                       >`
-                    : ""
-                }
-
-                <span class="authName">${escapeHtml(firstName)}</span>
-
-            </div>
-
-            <button
-                class="authSignOut"
-                type="button"
-                onclick="signOutUser()"
-            >
-                Sign out
-            </button>
-        `;
-
+    if (!currentUser) {
+        area.innerHTML = `<button class="authSignOut" type="button" onclick="MFLoginPanel.open('login')">Sign in</button>`;
         return;
     }
+    const firstName = (currentUser.name || "").split(" ")[0];
+    area.innerHTML = `<button class="authUser" type="button" onclick="MFLoginPanel.open('profile', currentUser)" aria-label="Open account profile">
+        ${currentUser.picture ? `<img class="authAvatar" src="${escapeHtml(currentUser.picture)}" alt="" referrerpolicy="no-referrer">` : ""}
+        <span class="authName">${escapeHtml(firstName)}</span></button>
+        <button class="authSignOut" type="button" onclick="signOutUser()">Sign out</button>`;
+}
 
-    area.innerHTML = "";
-
-    initGoogleLogin();
-
+async function initAccountAuth() {
+    try {
+        await MFAuth.init();
+        MFAuth.onAuthStateChange((_event, session) => {
+            if (session && session.user) signInUser(session.user);
+            else if (currentUser) clearSignedInUser();
+        });
+        const session = await MFAuth.getSession();
+        if (session && session.user) signInUser(session.user);
+        else renderAuth();
+        if (new URLSearchParams(window.location.search).get("auth") === "recovery") {
+            MFLoginPanel.open("recovery");
+        }
+    } catch (error) {
+        console.error("Account authentication initialization failed:", error);
+        renderAuth();
+    }
 }
 
 renderAuth();
-
-window.addEventListener("load", () => initGoogleLogin());
+window.addEventListener("load", initAccountAuth, { once: true });
 
 </script>
 

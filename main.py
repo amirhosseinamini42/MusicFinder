@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 load_dotenv()
 
 from library import router as library_router
+from admin import admin_router, public_router
 
 app = FastAPI(title="MusicFinder API")
 
@@ -31,6 +32,8 @@ app.add_middleware(
 )
 
 
+app.include_router(admin_router)
+app.include_router(public_router)
 app.include_router(library_router)
 
 # =========================

@@ -463,7 +463,7 @@ def list_tracks(status: Optional[str] = None, q: Optional[str] = None, limit: in
 
 
 @admin_router.post("/tracks", status_code=201)
-def create_track(body: TrackCreate, response: Response, admin: dict = Depends(require_owner)):
+def create_track(body: TrackCreate, response: Response, admin: dict = Depends(current_admin)):
     meta = _meta(body.title, body.artist, body.album, body.description)
     # validate declared files BEFORE touching the database
     try:
@@ -499,7 +499,7 @@ def create_track(body: TrackCreate, response: Response, admin: dict = Depends(re
 
 
 @admin_router.post("/tracks/{tid}/upload-urls")
-def reissue_upload_urls(tid: str, body: UploadUrlsIn, admin: dict = Depends(require_owner)):
+def reissue_upload_urls(tid: str, body: UploadUrlsIn, admin: dict = Depends(current_admin)):
     """Retry a failed upload, or replace the audio/cover of an existing track (live file stays until finalize)."""
     if not body.audio and not body.cover:
         raise err(422, "nothing_to_upload")
@@ -510,7 +510,7 @@ def reissue_upload_urls(tid: str, body: UploadUrlsIn, admin: dict = Depends(requ
 
 
 @admin_router.post("/tracks/{tid}/finalize")
-def finalize(tid: str, body: FinalizeIn, admin: dict = Depends(require_owner)):
+def finalize(tid: str, body: FinalizeIn, admin: dict = Depends(current_admin)):
     track = _get_track(tid)
     patch, old, errors = {}, {"audio": [], "cover": []}, {}
     todo = {k: (b, track.get(f"{k}_path_new")) for k, b, w in (("audio", AUDIO_BUCKET, body.audio), ("cover", COVER_BUCKET, body.cover))
@@ -550,7 +550,7 @@ def finalize(tid: str, body: FinalizeIn, admin: dict = Depends(require_owner)):
 
 
 @admin_router.patch("/tracks/{tid}")
-def update_track(tid: str, body: TrackPatch, admin: dict = Depends(require_owner)):
+def update_track(tid: str, body: TrackPatch, admin: dict = Depends(current_admin)):
     track = _get_track(tid)
     patch = _meta(body.title, body.artist, body.album, body.description)
     if body.download_enabled is not None:
@@ -566,7 +566,7 @@ def update_track(tid: str, body: TrackPatch, admin: dict = Depends(require_owner
 
 
 @admin_router.post("/tracks/{tid}/status")
-def set_status(tid: str, body: StatusIn, admin: dict = Depends(require_owner)):
+def set_status(tid: str, body: StatusIn, admin: dict = Depends(current_admin)):
     track = _get_track(tid)
     new = body.status
     if new not in policy.STATUSES:
@@ -596,7 +596,7 @@ def preview(tid: str, admin: dict = Depends(current_admin)):
 
 
 @admin_router.delete("/tracks/{tid}/cover")
-def remove_cover(tid: str, admin: dict = Depends(require_owner)):
+def remove_cover(tid: str, admin: dict = Depends(current_admin)):
     """Detach the cover. The database is updated first, files are removed afterwards, so a failure
     can never leave a record pointing at a deleted object. Audio, ID, metadata and status are untouched."""
     track = _get_track(tid)
@@ -609,7 +609,7 @@ def remove_cover(tid: str, admin: dict = Depends(require_owner)):
 
 
 @admin_router.delete("/tracks/{tid}")
-def delete_track(tid: str, admin: dict = Depends(require_owner)):
+def delete_track(tid: str, admin: dict = Depends(current_admin)):
     track = _get_track(tid)
     if track["status"] == "published":                    # public availability ends first
         _rest("PATCH", "mf_tracks", {"id": f"eq.{track['id']}"}, {"status": "unpublished", "updated_at": _now()})

@@ -74,7 +74,9 @@ class ApiTests(unittest.TestCase):
 
     # ---- wiring / compatibility ----
     def test_router_registered_and_existing_routes_intact(self):
-        paths = {r.path for r in main.app.routes}
+        # FastAPI's newer router implementation can expose included routers without a
+        # direct `.path` attribute. OpenAPI resolves the registered route tree reliably.
+        paths = set(main.app.openapi()["paths"])
         for p in ("/admin/agent/chat", "/admin/tracks", "/admin/me", "/library/favorites", "/search", "/lyrics/search", "/tracks/search"):
             self.assertIn(p, paths)
 

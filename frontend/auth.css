@@ -1,0 +1,75 @@
+/* Shared MusicFinder account panel ? matches the site's near-black glass theme. */
+.mf-auth-overlay{position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;overflow-y:auto;overscroll-behavior:contain;padding:20px max(13px,env(safe-area-inset-right)) 20px max(13px,env(safe-area-inset-left));background:rgba(17,11,8,.38);backdrop-filter:blur(10px) saturate(105%);-webkit-backdrop-filter:blur(10px) saturate(105%);animation:mfAuthFade .18s ease-out}
+.mf-auth-overlay[hidden]{display:none}
+.mf-auth-dialog{position:relative;isolation:isolate;width:min(440px,100%);max-height:min(90vh,760px);max-height:min(90dvh,760px);overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:30px;border:1px solid rgba(255,220,180,.17);border-radius:25px;background:linear-gradient(155deg,rgba(39,25,17,.94),rgba(17,11,8,.97));box-shadow:0 28px 100px rgba(10,4,2,.48),inset 0 1px 0 rgba(255,236,210,.07);color:#f4e8d4;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;animation:mfAuthRise .22s ease-out}
+.mf-auth-dialog:before{content:"";position:absolute;z-index:-1;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(145deg,rgba(214,138,58,.055),transparent 42%,rgba(140,52,64,.045))}
+.mf-auth-brand{display:flex;align-items:center;gap:9px;margin:2px 0 24px;font-size:13px;font-weight:750;letter-spacing:-.2px;color:rgba(255,255,255,.92)}
+.mf-auth-brand-mark{display:grid;place-items:center;width:27px;height:27px;border:1px solid rgba(255,255,255,.22);border-radius:9px;background:rgba(255,255,255,.09);font-size:12px;font-weight:800}
+.mf-auth-brand span:last-child{opacity:.78}
+.mf-auth-close{position:absolute;top:17px;right:17px;width:35px;height:35px;border:1px solid rgba(255,255,255,.13);border-radius:11px;background:rgba(255,255,255,.055);color:rgba(255,255,255,.8);font-size:22px;line-height:1;transition:background .18s,border-color .18s}
+.mf-auth-close:hover{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.25)}
+.mf-auth-eyebrow{font-size:9px;letter-spacing:2.4px;color:rgba(255,255,255,.42);font-weight:750}
+.mf-auth-dialog h2{margin:9px 0 5px;font-size:31px;line-height:1.15;font-weight:650;letter-spacing:-.9px}
+.mf-auth-muted{margin:0 0 21px;color:rgba(255,255,255,.53);font-size:12.5px;line-height:1.6}
+.mf-auth-dialog label{display:block;margin:14px 0 0;color:rgba(255,255,255,.72);font-size:11.5px;font-weight:600;letter-spacing:.1px}
+.mf-auth-dialog input:not([type=file]){display:block;width:100%;margin-top:7px;padding:13px 14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.055);color:#fff;font:inherit;font-size:13px;outline:none;transition:border-color .18s,background .18s,box-shadow .18s}
+.mf-auth-dialog input::placeholder{color:rgba(255,255,255,.3)}
+.mf-auth-dialog input:focus{border-color:rgba(255,255,255,.42);background:rgba(255,255,255,.085);box-shadow:0 0 0 3px rgba(255,255,255,.055)}
+.mf-auth-dialog input[type=file]{display:block;width:100%;margin-top:8px;padding:10px;border:1px dashed rgba(255,255,255,.17);border-radius:12px;font-size:11px;color:rgba(255,255,255,.65);background:rgba(255,255,255,.035)}
+.mf-auth-primary,.mf-auth-google,.mf-auth-secondary{width:100%;min-height:45px;margin-top:18px;padding:12px 16px;border-radius:13px;font:inherit;font-size:12.5px;font-weight:750;letter-spacing:.1px;transition:transform .18s,background .18s,border-color .18s,opacity .18s}
+.mf-auth-primary{border:1px solid rgba(255,255,255,.85);background:#f5f5f7;color:#101116;box-shadow:0 5px 22px rgba(255,255,255,.08)}
+.mf-auth-primary:hover{background:#fff;transform:translateY(-1px)}
+.mf-auth-google,.mf-auth-secondary{border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.065);color:#fff}
+.mf-auth-google:hover,.mf-auth-secondary:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);transform:translateY(-1px)}
+.mf-auth-primary:disabled,.mf-auth-google:disabled,.mf-auth-secondary:disabled{opacity:.48;cursor:wait;transform:none}
+.mf-auth-tabs{display:flex;gap:5px;padding:4px;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:rgba(255,255,255,.035)}
+.mf-auth-tabs button{flex:1;min-height:37px;padding:9px;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.55);font:inherit;font-size:12px;font-weight:650;transition:background .18s,color .18s}
+.mf-auth-tabs button.active{background:rgba(255,255,255,.13);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.mf-auth-link{display:block;margin:12px auto 0;padding:5px;border:0;background:none;color:rgba(255,255,255,.58);font:inherit;font-size:11.5px;text-decoration:underline;text-underline-offset:3px}
+.mf-auth-link:hover{color:#fff}
+.mf-auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0 0;color:rgba(255,255,255,.32);font-size:9px;letter-spacing:1.5px}
+.mf-auth-divider:before,.mf-auth-divider:after{content:"";height:1px;flex:1;background:rgba(255,255,255,.11)}
+.mf-auth-message{margin:12px 0;padding:11px 12px;border:1px solid rgba(255,255,255,.1);border-radius:11px;background:rgba(255,255,255,.055);font-size:11.5px;line-height:1.55;color:rgba(255,255,255,.8)}
+.mf-auth-message.error{border-color:rgba(255,110,130,.35);color:#ffc2cb;background:rgba(255,80,110,.06)}
+.mf-auth-message.success{border-color:rgba(100,210,150,.3);color:#b8f1cf;background:rgba(70,190,130,.055)}
+.mf-auth-dialog button:focus-visible{outline:2px solid rgba(255,255,255,.8);outline-offset:3px}
+@keyframes mfAuthFade{from{opacity:0}to{opacity:1}}
+@keyframes mfAuthRise{from{opacity:0;transform:translateY(9px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:520px){.mf-auth-overlay{padding: max(13px,env(safe-area-inset-top)) max(13px,env(safe-area-inset-right)) max(13px,env(safe-area-inset-bottom)) max(13px,env(safe-area-inset-left));align-items:center}.mf-auth-dialog{width:100%;padding:25px 21px 22px;border-radius:21px;max-height:calc(100dvh - 26px)}.mf-auth-dialog h2{font-size:28px}.mf-auth-brand{margin-bottom:20px}.mf-auth-dialog input:not([type=file]){font-size:16px}}
+@media(prefers-reduced-motion:reduce){.mf-auth-overlay,.mf-auth-dialog{animation:none!important}.mf-auth-dialog *{transition:none!important}}
+.authUser{border:0;background:transparent;color:inherit;padding:0;cursor:pointer}
+.mf-auth-password-field{position:relative;display:flex;align-items:center;margin-top:7px}
+.mf-auth-password-field input{margin-top:0!important;padding-right:116px!important;box-sizing:border-box}
+.mf-auth-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);min-height:29px;padding:6px 9px;border:1px solid var(--border,rgba(255,220,180,.2));border-radius:8px;background:linear-gradient(110deg,var(--dynamic-color,rgba(214,138,58,.24)),var(--dynamic-color-2,rgba(96,120,140,.16)),var(--dynamic-color-3,rgba(140,52,64,.20)));color:var(--text,#f4e8d4);font:inherit;font-size:10px;font-weight:750;letter-spacing:.05px;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,236,210,.08),0 3px 12px rgba(10,4,2,.18);transition:background .18s,border-color .18s,box-shadow .18s,transform .18s}
+.mf-auth-password-toggle:hover{border-color:rgba(224,164,90,.48);background:linear-gradient(110deg,rgba(214,138,58,.34),rgba(96,120,140,.23),rgba(140,52,64,.28));box-shadow:0 4px 16px rgba(10,4,2,.28),inset 0 1px 0 rgba(255,236,210,.12)}
+.mf-auth-password-toggle:focus-visible{outline:2px solid var(--amber,rgba(224,164,90,.9));outline-offset:2px}
+.mf-auth-google{display:flex;align-items:center;justify-content:center;gap:10px;border-color:var(--border,rgba(255,220,180,.2));background:linear-gradient(110deg,var(--dynamic-color,rgba(214,138,58,.24)),var(--dynamic-color-2,rgba(96,120,140,.16)),var(--dynamic-color-3,rgba(140,52,64,.20)));color:var(--text,#f4e8d4);box-shadow:inset 0 1px 0 rgba(255,236,210,.08),0 5px 18px rgba(10,4,2,.2)}
+.mf-auth-google:hover{border-color:rgba(224,164,90,.5);background:linear-gradient(110deg,rgba(214,138,58,.36),rgba(96,120,140,.25),rgba(140,52,64,.3));box-shadow:0 6px 20px rgba(10,4,2,.3),inset 0 1px 0 rgba(255,236,210,.12)}
+.mf-auth-google-mark{display:grid;place-items:center;width:23px;height:23px;border:1px solid var(--border,rgba(255,220,180,.2));border-radius:8px;background:var(--glass-strong,rgba(255,226,190,.12));font-size:13px;font-weight:800;color:var(--text,#f4e8d4)}
+
+/* Keep typed, pasted and browser-autofilled values inside the warm glass palette. */
+.mf-auth-dialog input:not([type=file]){background-color:rgba(54,35,25,.72);color:#f4e8d4;color-scheme:dark;caret-color:#e6b36d}
+.mf-auth-dialog input:not([type=file]):focus{background-color:rgba(67,43,29,.82);border-color:rgba(224,164,90,.52);box-shadow:0 0 0 3px rgba(214,138,58,.12)}
+.mf-auth-dialog input:not([type=file])::selection{background:rgba(214,138,58,.42);color:#fff4e5}
+.mf-auth-dialog input:not([type=file]):-webkit-autofill,
+.mf-auth-dialog input:not([type=file]):-webkit-autofill:hover,
+.mf-auth-dialog input:not([type=file]):-webkit-autofill:focus,
+.mf-auth-dialog input:not([type=file]):autofill{ -webkit-text-fill-color:#f4e8d4;caret-color:#e6b36d;-webkit-box-shadow:0 0 0 1000px #362319 inset;box-shadow:0 0 0 1000px #362319 inset;border-color:rgba(224,164,90,.38);transition:background-color 99999s ease-out 0s}
+
+/* Use the same amber / slate / burgundy glass treatment across account actions. */
+.mf-auth-primary,.mf-auth-google,.mf-auth-secondary{border:1px solid rgba(224,164,90,.3);background:linear-gradient(110deg,rgba(214,138,58,.3),rgba(96,120,140,.2),rgba(140,52,64,.24));color:#f8ead6;box-shadow:inset 0 1px 0 rgba(255,236,210,.1),0 5px 18px rgba(10,4,2,.22)}
+.mf-auth-primary:hover,.mf-auth-google:hover,.mf-auth-secondary:hover{border-color:rgba(232,177,105,.58);background:linear-gradient(110deg,rgba(214,138,58,.42),rgba(96,120,140,.29),rgba(140,52,64,.33));color:#fff3e2;box-shadow:0 6px 20px rgba(10,4,2,.3),inset 0 1px 0 rgba(255,236,210,.14);transform:translateY(-1px)}
+.mf-auth-primary:active,.mf-auth-google:active,.mf-auth-secondary:active,.mf-auth-tabs button:active{transform:translateY(0)}
+.mf-auth-tabs button.active{background:linear-gradient(110deg,rgba(214,138,58,.25),rgba(96,120,140,.17),rgba(140,52,64,.2));color:#fff0dc;box-shadow:inset 0 1px 0 rgba(255,236,210,.1)}
+.mf-auth-close{border-color:rgba(255,220,180,.2);background:linear-gradient(110deg,rgba(214,138,58,.13),rgba(96,120,140,.1),rgba(140,52,64,.12));color:#f4e8d4}
+.mf-auth-close:hover{border-color:rgba(224,164,90,.42);background:linear-gradient(110deg,rgba(214,138,58,.24),rgba(96,120,140,.16),rgba(140,52,64,.2))}
+.mf-auth-link{color:rgba(230,179,109,.82)}
+.mf-auth-link:hover{color:#ffe2b8}
+.mf-auth-dialog button:focus-visible{outline:2px solid rgba(224,164,90,.85);outline-offset:3px}
+
+/* Match the browser's side scrollbar to the MusicFinder amber / slate / burgundy glass palette. */
+html,body{scrollbar-color:rgba(214,138,58,.72) rgba(17,11,8,.72);scrollbar-width:thin}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:rgba(17,11,8,.72);border-radius:999px}
+::-webkit-scrollbar-thumb{border:2px solid rgba(17,11,8,.78);border-radius:999px;background:linear-gradient(180deg,rgba(214,138,58,.82),rgba(96,120,140,.72),rgba(140,52,64,.78))}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,rgba(232,164,84,.95),rgba(112,139,158,.9),rgba(164,66,78,.9))}

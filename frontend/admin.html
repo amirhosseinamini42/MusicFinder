@@ -4,11 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#110b08">
 <title>MusicFinder · Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<link rel="stylesheet" href="/auth.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="/auth-client.js"></script>
+<script src="/auth-ui.js"></script>
 <style>
 * { box-sizing: border-box; }
 :root {
@@ -31,7 +40,8 @@ button { cursor: pointer; }
 a { color: inherit; }
 .bar { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:12px;
     padding: calc(14px + env(safe-area-inset-top)) 22px 14px; background:rgba(24,14,9,.82); backdrop-filter:blur(22px); border-bottom:1px solid var(--border); }
-.logo { font-size:20px; font-weight:800; letter-spacing:-.5px; } .logo span { color:var(--amber); opacity:.8; }
+.logo { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:-.5px; } .logo span { color:var(--amber); opacity:.8; }
+.siteLogoMark { display:block; width:30px; height:30px; flex:0 0 30px; object-fit:contain; filter:drop-shadow(0 2px 8px rgba(196,127,53,.22)); }
 .who { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); min-width:0; }
 .who b { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
 .badge { padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; background:rgba(224,164,90,.18); border:1px solid rgba(224,164,90,.5); color:var(--amber); }
@@ -88,11 +98,10 @@ audio { width:100%; margin-top:12px; }
 .fileInfo { font-size:12.5px; margin-top:6px; color:var(--muted); } .fileInfo.bad { color:var(--danger); }
 .pill.unreleased { color:#c9a7ff; border-color:#c9a7ff88; }
 </style>
-<link rel="stylesheet" href="glass.css">
 </head>
 <body class="mf-admin">
 <div class="bar">
-    <div class="logo">Music<span>Finder</span> · Admin</div>
+    <div class="logo"><img class="siteLogoMark" src="/favicon-192x192.png" alt="" width="30" height="30" decoding="async">Music<span>Finder</span> · Admin</div>
     <div class="who" id="who"></div>
 </div>
 
@@ -101,9 +110,11 @@ audio { width:100%; margin-top:12px; }
 <div id="reauthHost"></div>
 
 <script>
-/* Public identifier (same value the main site already ships). Secrets never live in the browser. */
-const GOOGLE_CLIENT_ID = "923068000834-e2e11vqgul2jeqipsels4vbbf5ltauo5.apps.googleusercontent.com";
-const API_BASE = "https://musicfinder-api.vercel.app";
+/* Public API origin only. Supabase credentials are supplied by the API, never hardcoded here. */
+const currentHost = window.location.hostname;
+const API_BASE = currentHost.startsWith("musicfinder-web-git-")
+    ? "https://musicfinder-api" + currentHost.slice("musicfinder-web".length)
+    : "https://musicfinder-api.vercel.app";
 
 let idToken = null;          // kept in memory only (never written to storage)
 let me = null;
@@ -111,11 +122,11 @@ let tab = "dashboard";
 let tracksCache = [];
 let tracksFilter = "";       // status filter applied when opening the Tracks view
 let navStack = [];           // previous views, newest last (drives the Back button)
-let reauthWait = null;       // pending re-login after the Google token expired
+let reauthWait = null;
 
 const ERR = {
     auth_required: "Please sign in.", session_expired: "Your session expired. Please sign in again.",
-    email_not_verified: "Your Google email is not verified.", not_authorized: "This account is not authorized for administration.",
+    email_not_verified: "Please verify your email before signing in.", not_authorized: "This account is not authorized for administration.",
     forbidden: "Only the owner can do that.", owner_protected: "The owner account cannot be changed.",
     cloud_not_configured: "The server storage is not configured yet.", storage_failed: "Storage error. Please retry.",
     storage_unavailable: "Storage is unreachable. Please retry.", bad_audio_type: "Unsupported audio type (use MP3, M4A, WAV, OGG or FLAC).",
@@ -132,7 +143,8 @@ const ERR = {
     network_error: "Could not reach the server. Check your connection and retry.",
     cloud_configuration_invalid: "The server's storage configuration is invalid.",
     storage_invalid_response: "Storage returned an unexpected response. Please retry.",
-    auth_unavailable: "Google sign-in verification is unavailable right now. Please retry.",
+    auth_unavailable: "The sign-in service is unavailable right now. Please retry.",
+    auth_mapping_unavailable: "Your account could not be linked to its MusicFinder data. Please retry.",
     nothing_to_upload: "There is nothing to upload.", bad_status: "Unknown status filter."
 };
 const STATUS_LABEL = { draft: "Draft", review: "Pending Review", published: "Published", unpublished: "Unpublished" };
@@ -143,11 +155,15 @@ const $ = s => document.querySelector(s);
 
 class ApiError extends Error { constructor(status, code, body) { super(code); this.status = status; this.code = code; this.body = body; } }
 
-/* ---------- API ---------- */
+/* ---------- shared Supabase session + API ---------- */
 async function rawFetch(path, { method = "GET", body } = {}) {
     let res;
     try {
-        res = await fetch(API_BASE + path, { method, headers: { Authorization: "Bearer " + idToken, ...(body ? { "Content-Type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined });
+        res = await fetch(API_BASE + path, {
+            method,
+            headers: { Authorization: "Bearer " + idToken, ...(body ? { "Content-Type": "application/json" } : {}) },
+            body: body ? JSON.stringify(body) : undefined
+        });
     } catch { throw new ApiError(0, "network_error"); }
     let data = null; try { data = await res.json(); } catch {}
     return { res, data };
@@ -155,88 +171,37 @@ async function rawFetch(path, { method = "GET", body } = {}) {
 
 async function api(path, opts = {}) {
     if (!idToken) throw new ApiError(401, "auth_required");
-    for (let attempt = 0; ; attempt++) {
-        const { res, data } = await rawFetch(path, opts);
-        if (res.ok) return data;
-        const d = data && data.detail;
-        const code = d && typeof d === "object" ? d.code : "server";
-        if (res.status === 401 && attempt === 0) {
-            if (!me) { idToken = null; renderSignIn(msgFor(code)); throw new ApiError(401, code, d); }
-            /* Signed in earlier, token expired since: re-login in an overlay (page and form stay intact), then retry once. */
-            try { await reauth(); continue; } catch { throw new ApiError(401, code, d); }
-        }
-        throw new ApiError(res.status, code, d);
-    }
-}
-
-/* ---------- Google sign-in ---------- */
-let gisReady = false;
-function initGis() {
-    if (!window.google?.accounts?.id) return false;
-    if (!gisReady) {
-        google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: onCredential, auto_select: true });
-        gisReady = true;
-    }
-    return true;
-}
-function whenGis(fn, tries = 0) {
-    if (initGis()) return fn();
-    if (tries < 60) setTimeout(() => whenGis(fn, tries + 1), 250);
-}
-
-async function onCredential(resp) {
-    if (reauthWait) {                                        // re-login while a session is active
-        const w = reauthWait, previous = idToken, msg = $("#reauthMsg");
-        idToken = resp.credential;
+    let result = await rawFetch(path, opts);
+    if (result.res.status === 401) {
+        /* Supabase refreshes an expired access token from the persisted refresh token. */
         try {
-            const { res, data } = await rawFetch("/admin/me");
-            if (!res.ok) throw new Error("not_ok");
-            if (!me || data.email !== me.email) {
-                idToken = previous;
-                if (msg) note(msg, "Please sign in with the same account (" + (me ? me.email : "") + ").");
-                return;
+            const session = await MFAuth.refreshSession();
+            if (session && session.access_token && session.access_token !== idToken) {
+                idToken = session.access_token;
+                result = await rawFetch(path, opts);
             }
-            w.resolve();
-        } catch {
-            idToken = previous;
-            if (msg) note(msg, "Sign-in could not be verified. Please try again.");
-        }
-        return;
+        } catch {}
     }
-    idToken = resp.credential;
-    boot();
-}
-
-function reauth() {
-    if (reauthWait) return reauthWait.promise;
-    let resolve, reject;
-    const promise = new Promise((a, b) => { resolve = a; reject = b; });
-    const w = reauthWait = { promise, resolve, reject };
-    const host = $("#reauthHost");
-    host.innerHTML = `<div class="overlay" style="z-index:60" role="alertdialog" aria-modal="true"><div class="dlg">
-        <h2>Session expired</h2>
-        <p class="muted">Sign in again with <b>${esc(me ? me.email : "")}</b> to continue. Your form and selected files are kept.</p>
-        <div id="reauthBtn" style="margin-top:14px"></div><div id="reauthMsg"></div>
-        <div class="actions"><button class="btn" id="reauthCancel" type="button">Cancel</button></div></div></div>`;
-    $("#reauthCancel").onclick = () => reject(new Error("reauth_cancelled"));
-    whenGis(() => {
-        const el = $("#reauthBtn");
-        if (el) google.accounts.id.renderButton(el, { theme: "filled_black", size: "large", shape: "pill", text: "signin_with" });
-    });
-    const done = () => { host.innerHTML = ""; if (reauthWait === w) reauthWait = null; };
-    promise.then(done, done);
-    return promise;
+    if (!result.res.ok) {
+        const d = result.data && result.data.detail;
+        const code = d && typeof d === "object" ? d.code : "server";
+        if (result.res.status === 401) {
+            idToken = null; me = null;
+            MFAuth.signOut().catch(() => {});
+            renderSignIn(msgFor(code));
+        }
+        throw new ApiError(result.res.status, code, d);
+    }
+    return result.data;
 }
 
 function renderSignIn(note_) {
     $("#who").innerHTML = "";
     $("#app").innerHTML = `<div class="center"><h1>Administration</h1>
-        <p class="muted">Sign in with an authorized Google account. Access is checked on the server for every action.</p>
-        ${note_ ? `<div class="msg err">${esc(note_)}</div>` : ""}<div id="gbtn"></div></div>`;
-    whenGis(() => {
-        const el = $("#gbtn");
-        if (el) google.accounts.id.renderButton(el, { theme: "filled_black", size: "large", shape: "pill", text: "signin_with" });
-    });
+        <p class="muted">Sign in with your MusicFinder account. Administrator access is checked by the server for every action.</p>
+        ${note_ ? `<div class="msg err">${esc(note_)}</div>` : ""}
+        <button class="btn primary" id="adminSignIn" type="button">Sign in</button></div>`;
+    $("#adminSignIn").onclick = () => MFLoginPanel.open("login");
 }
 
 async function boot() {
@@ -248,10 +213,10 @@ async function boot() {
         return renderSignIn(msgFor(e.code));
     }
     $("#who").innerHTML = `<span class="badge">${me.role === "owner" ? "OWNER" : "ADMIN"}</span><b>${esc(me.email)}</b><button class="btn sm" id="out">Sign out</button>`;
-    $("#out").onclick = () => {
-        try { google.accounts.id.disableAutoSelect(); } catch {}
+    $("#out").onclick = async () => {
         idToken = null; me = null; pending = null; navStack = []; tab = "dashboard"; tracksFilter = "";
         reauthWait = null; $("#reauthHost").innerHTML = ""; closeDlg();
+        try { await MFAuth.signOut(); } catch {}
         renderSignIn();
     };
     navStack = []; tab = "dashboard"; tracksFilter = "";
@@ -639,7 +604,7 @@ function editDlg(t) {
 /* ---------- administrators (owner only; the server enforces this independently) ---------- */
 async function viewAdmins() {
     const p = $("#panel");
-    p.innerHTML = `<div class="glass"><h2>Administrators</h2><p class="muted">New administrators must sign in with a verified Google account using this exact email. Only the owner can manage this list; the owner account itself cannot be changed here.</p>
+    p.innerHTML = `<div class="glass"><h2>Administrators</h2><p class="muted">New administrators must sign in with a verified MusicFinder account using this exact email. Only the owner can manage this list; the owner account itself cannot be changed here.</p>
         <div class="toolbar"><input type="email" id="aE" placeholder="admin@example.com" aria-label="New administrator email"><button class="btn primary" id="aAdd">Add administrator</button></div><div id="aM"></div><div class="tableWrap" id="aL">Loading…</div></div>`;
     $("#aAdd").onclick = async () => {
         try { await api("/admin/admins", { method: "POST", body: { email: $("#aE").value } }); $("#aE").value = ""; load(); }
@@ -659,7 +624,26 @@ async function viewAdmins() {
     load();
 }
 
-renderSignIn();
+(async function initAdminAuth() {
+    try {
+        await MFAuth.init();
+        MFAuth.onAuthStateChange((_event, session) => {
+            const previousToken = idToken;
+            idToken = session && session.access_token ? session.access_token : null;
+            if (idToken && !previousToken) boot();
+            else if (!idToken && previousToken) { me = null; renderSignIn(); }
+        });
+        const session = await MFAuth.getSession();
+        const previousToken = idToken;
+        idToken = session && session.access_token ? session.access_token : null;
+        if (idToken && !previousToken) boot();
+        else if (!idToken && !previousToken) renderSignIn();
+        if (new URLSearchParams(window.location.search).get("auth") === "recovery") MFLoginPanel.open("recovery");
+    } catch (error) {
+        console.error("Admin authentication initialization failed:", error);
+        renderSignIn(msgFor("cloud_not_configured"));
+    }
+})();
 </script>
 </body>
 </html>

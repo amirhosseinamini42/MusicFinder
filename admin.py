@@ -1,15 +1,15 @@
 """
 MusicFinder uploads + administration (additive module; existing routes are untouched).
 
-Identity   : Google ID token (same GIS sign-in as the site) -> verified with Google (aud == GOOGLE_CLIENT_ID,
-             email_verified == true). The role is looked up in `mf_admins` on EVERY request (no role caching),
-             so a revoked admin is denied on the very next call. An email in the table is never enough alone.
+Identity   : Supabase Auth access token, verified by the Supabase Auth user endpoint; legacy Google ID tokens
+             are accepted only during staged migration. Roles are looked up in `mf_admins` on EVERY request.
 Uploads    : files go browser -> Supabase Storage directly through short-lived signed upload URLs issued here
              (Vercel functions cap request bodies at ~4.5 MB, so audio cannot pass through this API).
              /finalize re-reads the stored object server-side (size + magic bytes) before it becomes live.
 Storage    : private buckets `mf-audio` / `mf-covers`; public playback only via short-lived signed URLs that
              /tracks/* issues for PUBLISHED tracks. Service-role key stays server side.
-Env        : GOOGLE_CLIENT_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   (all already used by library.py)
+Env        : SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY), SUPABASE_SERVICE_ROLE_KEY;
+             GOOGLE_CLIENT_ID is required only for legacy-token compatibility.
 """
 import hashlib
 import os
@@ -27,7 +27,6 @@ from pydantic import BaseModel, Field
 
 import mf_policy as policy
 from library import err          # same {"code": ...} error shape as the rest of the API
-import auth_google
 
 admin_router = APIRouter(prefix="/admin", tags=["admin"])
 public_router = APIRouter(prefix="/tracks", tags=["tracks"])
@@ -49,12 +48,18 @@ def _now() -> str:
 # Identity + roles
 # =====================================================================
 def _verify_google(token: str) -> dict:
-    """Verified identity from a Google ID token. All validation lives in auth_google (shared with library.py)."""
-    return auth_google.verify_google(token)
+    """Shared verified identity; accepts Supabase sessions and legacy Google tokens during rollout."""
+    import auth_supabase
+    return auth_supabase.verify_access_token(token)
 
 
 def _bearer(authorization: Optional[str]) -> str:
-    return auth_google.bearer_token(authorization)
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise err(401, "auth_required")
+    token = authorization[7:].strip()
+    if not token or len(token) > 8192:
+        raise err(401, "auth_required")
+    return token
 
 
 def current_admin(authorization: Optional[str] = Header(default=None)) -> dict:

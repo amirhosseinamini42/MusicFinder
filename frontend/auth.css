@@ -46,3 +46,23 @@
 .mf-auth-google{display:flex;align-items:center;justify-content:center;gap:10px;border-color:var(--border,rgba(255,220,180,.2));background:linear-gradient(110deg,var(--dynamic-color,rgba(214,138,58,.24)),var(--dynamic-color-2,rgba(96,120,140,.16)),var(--dynamic-color-3,rgba(140,52,64,.20)));color:var(--text,#f4e8d4);box-shadow:inset 0 1px 0 rgba(255,236,210,.08),0 5px 18px rgba(10,4,2,.2)}
 .mf-auth-google:hover{border-color:rgba(224,164,90,.5);background:linear-gradient(110deg,rgba(214,138,58,.36),rgba(96,120,140,.25),rgba(140,52,64,.3));box-shadow:0 6px 20px rgba(10,4,2,.3),inset 0 1px 0 rgba(255,236,210,.12)}
 .mf-auth-google-mark{display:grid;place-items:center;width:23px;height:23px;border:1px solid var(--border,rgba(255,220,180,.2));border-radius:8px;background:var(--glass-strong,rgba(255,226,190,.12));font-size:13px;font-weight:800;color:var(--text,#f4e8d4)}
+
+/* Keep typed, pasted and browser-autofilled values inside the warm glass palette. */
+.mf-auth-dialog input:not([type=file]){background-color:rgba(54,35,25,.72);color:#f4e8d4;color-scheme:dark;caret-color:#e6b36d}
+.mf-auth-dialog input:not([type=file]):focus{background-color:rgba(67,43,29,.82);border-color:rgba(224,164,90,.52);box-shadow:0 0 0 3px rgba(214,138,58,.12)}
+.mf-auth-dialog input:not([type=file])::selection{background:rgba(214,138,58,.42);color:#fff4e5}
+.mf-auth-dialog input:not([type=file]):-webkit-autofill,
+.mf-auth-dialog input:not([type=file]):-webkit-autofill:hover,
+.mf-auth-dialog input:not([type=file]):-webkit-autofill:focus,
+.mf-auth-dialog input:not([type=file]):autofill{ -webkit-text-fill-color:#f4e8d4;caret-color:#e6b36d;-webkit-box-shadow:0 0 0 1000px #362319 inset;box-shadow:0 0 0 1000px #362319 inset;border-color:rgba(224,164,90,.38);transition:background-color 99999s ease-out 0s}
+
+/* Use the same amber / slate / burgundy glass treatment across account actions. */
+.mf-auth-primary,.mf-auth-google,.mf-auth-secondary{border:1px solid rgba(224,164,90,.3);background:linear-gradient(110deg,rgba(214,138,58,.3),rgba(96,120,140,.2),rgba(140,52,64,.24));color:#f8ead6;box-shadow:inset 0 1px 0 rgba(255,236,210,.1),0 5px 18px rgba(10,4,2,.22)}
+.mf-auth-primary:hover,.mf-auth-google:hover,.mf-auth-secondary:hover{border-color:rgba(232,177,105,.58);background:linear-gradient(110deg,rgba(214,138,58,.42),rgba(96,120,140,.29),rgba(140,52,64,.33));color:#fff3e2;box-shadow:0 6px 20px rgba(10,4,2,.3),inset 0 1px 0 rgba(255,236,210,.14);transform:translateY(-1px)}
+.mf-auth-primary:active,.mf-auth-google:active,.mf-auth-secondary:active,.mf-auth-tabs button:active{transform:translateY(0)}
+.mf-auth-tabs button.active{background:linear-gradient(110deg,rgba(214,138,58,.25),rgba(96,120,140,.17),rgba(140,52,64,.2));color:#fff0dc;box-shadow:inset 0 1px 0 rgba(255,236,210,.1)}
+.mf-auth-close{border-color:rgba(255,220,180,.2);background:linear-gradient(110deg,rgba(214,138,58,.13),rgba(96,120,140,.1),rgba(140,52,64,.12));color:#f4e8d4}
+.mf-auth-close:hover{border-color:rgba(224,164,90,.42);background:linear-gradient(110deg,rgba(214,138,58,.24),rgba(96,120,140,.16),rgba(140,52,64,.2))}
+.mf-auth-link{color:rgba(230,179,109,.82)}
+.mf-auth-link:hover{color:#ffe2b8}
+.mf-auth-dialog button:focus-visible{outline:2px solid rgba(224,164,90,.85);outline-offset:3px}

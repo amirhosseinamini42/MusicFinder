@@ -49,18 +49,28 @@
             <div id="mfAuthMessage" class="mf-auth-message" hidden></div>
             ${profile ? `<form id="mfProfileForm"><label>Display name<input name="name" type="text" maxlength="80" required value="${esc(user && (user.name || user.user_metadata?.full_name || user.user_metadata?.name))}"></label>
                 <label>Profile photo <input name="avatar" type="file" accept="image/png,image/jpeg,image/webp"></label>
-                <label>New password <input name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Leave blank to keep current"></label>
+                <label for="mfProfilePassword">New password</label><div class="mf-auth-password-field"><input id="mfProfilePassword" name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Leave blank to keep current"><button class="mf-auth-password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show password</button></div>
                 <button class="mf-auth-primary" type="submit">Save changes</button></form>
                 <button class="mf-auth-secondary" id="mfAuthSignOut" type="button">Sign out</button>` : recovery ?
-                `<form id="mfRecoveryForm"><label>New password<input name="password" type="password" minlength="8" autocomplete="new-password" required></label><button class="mf-auth-primary" type="submit">Update password</button></form>` :
+                `<form id="mfRecoveryForm"><label for="mfRecoveryPassword">New password</label><div class="mf-auth-password-field"><input id="mfRecoveryPassword" name="password" type="password" minlength="8" autocomplete="new-password" required><button class="mf-auth-password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show password</button></div><button class="mf-auth-primary" type="submit">Update password</button></form>` :
                 `<div class="mf-auth-tabs"><button type="button" data-mode="login" class="${!signup ? "active" : ""}">Sign in</button><button type="button" data-mode="signup" class="${signup ? "active" : ""}">Create account</button></div>
                 <form id="mfAuthForm">${signup ? `<label>Your name<input name="name" type="text" maxlength="80" autocomplete="name" required></label>` : ""}
                 <label>Email<input name="email" type="email" maxlength="254" autocomplete="email" required></label>
-                <label>Password<input name="password" type="password" minlength="8" autocomplete="${signup ? "new-password" : "current-password"}" required></label>
+                <label for="mfAuthPassword">Password</label><div class="mf-auth-password-field"><input id="mfAuthPassword" name="password" type="password" minlength="8" autocomplete="${signup ? "new-password" : "current-password"}" required><button class="mf-auth-password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show password</button></div>
                 <button class="mf-auth-primary" type="submit">${signup ? "Create account" : "Sign in"}</button></form>
                 ${!signup ? `<button class="mf-auth-link" id="mfForgot" type="button">Forgot password?</button>` : `<button class="mf-auth-link" id="mfResend" type="button" hidden>Resend verification email</button>`}
-                <div class="mf-auth-divider"><span>OR</span></div><button class="mf-auth-google" id="mfGoogle" type="button">Continue with Google</button>`}
+                <div class="mf-auth-divider"><span>OR</span></div><button class="mf-auth-google" id="mfGoogle" type="button"><span class="mf-auth-google-mark" aria-hidden="true">G</span><span>Continue with Google</span></button>`}
         </section>`;
+        host.querySelectorAll(".mf-auth-password-toggle").forEach(toggle => {
+            toggle.onclick = () => {
+                const input = toggle.parentElement.querySelector("input");
+                const visible = input.type === "password";
+                input.type = visible ? "text" : "password";
+                toggle.textContent = visible ? "Hide password" : "Show password";
+                toggle.setAttribute("aria-label", visible ? "Hide password" : "Show password");
+                toggle.setAttribute("aria-pressed", String(visible));
+            };
+        });
         host.querySelector(".mf-auth-close").onclick = close;
         host.onclick = event => { if (event.target === host) close(); };
         host.onkeydown = event => {
@@ -99,14 +109,18 @@
         };
         const google = host.querySelector("#mfGoogle");
         if (google) {
-            const divider = google.previousElementSibling;
-            const setGoogleVisible = visible => {
-                google.style.display = visible ? "block" : "none";
-                if (divider && divider.classList.contains("mf-auth-divider")) divider.style.display = visible ? "flex" : "none";
+            google.onclick = async () => {
+                google.disabled = true;
+                try {
+                    await w.MFAuth.init();
+                    if (!w.MFAuth.isGoogleEnabled()) {
+                        showMessage("Google sign-in is not enabled for this project yet.", "error");
+                        return;
+                    }
+                    await w.MFAuth.signInWithGoogle();
+                } catch (error) { showMessage(errorText(error), "error"); }
+                finally { google.disabled = false; }
             };
-            setGoogleVisible(false);
-            w.MFAuth.init().then(() => { setGoogleVisible(w.MFAuth.isGoogleEnabled()); }).catch(() => { setGoogleVisible(false); });
-            google.onclick = async () => { google.disabled = true; try { await w.MFAuth.signInWithGoogle(); } catch (error) { showMessage(errorText(error), "error"); google.disabled = false; } };
         }
         const forgot = host.querySelector("#mfForgot");
         if (forgot) forgot.onclick = async () => {

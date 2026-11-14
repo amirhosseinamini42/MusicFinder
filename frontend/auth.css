@@ -38,3 +38,11 @@
 @media(max-width:520px){.mf-auth-overlay{padding:13px;align-items:center}.mf-auth-dialog{padding:25px 21px 22px;border-radius:21px;max-height:calc(100dvh - 26px)}.mf-auth-dialog h2{font-size:28px}.mf-auth-brand{margin-bottom:20px}}
 @media(prefers-reduced-motion:reduce){.mf-auth-overlay,.mf-auth-dialog{animation:none!important}.mf-auth-dialog *{transition:none!important}}
 .authUser{border:0;background:transparent;color:inherit;padding:0;cursor:pointer}
+.mf-auth-password-field{position:relative;display:flex;align-items:center;margin-top:7px}
+.mf-auth-password-field input{margin-top:0!important;padding-right:116px!important;box-sizing:border-box}
+.mf-auth-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);min-height:29px;padding:6px 9px;border:1px solid rgba(151,139,255,.28);border-radius:8px;background:linear-gradient(110deg,rgba(123,96,255,.22),rgba(71,151,255,.17),rgba(48,201,190,.13));color:rgba(232,233,255,.92);font:inherit;font-size:10px;font-weight:700;letter-spacing:.05px;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
+.mf-auth-password-toggle:hover{border-color:rgba(165,157,255,.55);background:linear-gradient(110deg,rgba(123,96,255,.34),rgba(71,151,255,.27),rgba(48,201,190,.22))}
+.mf-auth-password-toggle:focus-visible{outline:2px solid rgba(165,157,255,.8);outline-offset:2px}
+.mf-auth-google{display:flex;align-items:center;justify-content:center;gap:10px;border-color:rgba(151,139,255,.32);background:linear-gradient(110deg,rgba(123,96,255,.2),rgba(71,151,255,.16),rgba(48,201,190,.12))}
+.mf-auth-google:hover{border-color:rgba(165,157,255,.55);background:linear-gradient(110deg,rgba(123,96,255,.32),rgba(71,151,255,.25),rgba(48,201,190,.2))}
+.mf-auth-google-mark{display:grid;place-items:center;width:23px;height:23px;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.1);font-size:13px;font-weight:800;color:#fff}

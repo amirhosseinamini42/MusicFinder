@@ -73,33 +73,3 @@ html,body{scrollbar-color:rgba(214,138,58,.72) rgba(17,11,8,.72);scrollbar-width
 ::-webkit-scrollbar-track{background:rgba(17,11,8,.72);border-radius:999px}
 ::-webkit-scrollbar-thumb{border:2px solid rgba(17,11,8,.78);border-radius:999px;background:linear-gradient(180deg,rgba(214,138,58,.82),rgba(96,120,140,.72),rgba(140,52,64,.78))}
 ::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,rgba(232,164,84,.95),rgba(112,139,158,.9),rgba(164,66,78,.9))}
-
-/* Unified neutral Liquid Glass account UI: no warm/Halloween palette. */
-.mf-auth-overlay { background:rgba(4,8,18,.58); backdrop-filter:blur(18px) saturate(145%); -webkit-backdrop-filter:blur(18px) saturate(145%); }
-.mf-auth-dialog { border-color:rgba(220,232,255,.2); background:linear-gradient(145deg,rgba(24,34,58,.94),rgba(8,12,23,.97)); box-shadow:0 28px 100px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.15); color:#f4f7ff; }
-.mf-auth-dialog:before { background:linear-gradient(145deg,rgba(140,170,255,.12),transparent 44%,rgba(70,190,220,.07)); }
-.mf-auth-dialog label { color:rgba(235,241,255,.76); }
-.mf-auth-muted { color:rgba(225,235,255,.58); }
-.mf-auth-eyebrow { color:rgba(225,235,255,.48); }
-.mf-auth-dialog input:not([type=file]),.mf-auth-dialog input:not([type=file]):-webkit-autofill,.mf-auth-dialog input:not([type=file]):autofill { background-color:rgba(225,235,255,.075); border-color:rgba(225,236,255,.18); color:#f4f7ff; -webkit-text-fill-color:#f4f7ff; caret-color:#dce8ff; }
-.mf-auth-dialog input:not([type=file]):focus { background-color:rgba(225,235,255,.11); border-color:rgba(160,185,255,.62); box-shadow:0 0 0 3px rgba(115,150,255,.14); }
-.mf-auth-dialog input:not([type=file])::placeholder { color:rgba(225,235,255,.34); }
-.mf-auth-dialog input[type=file] { border-color:rgba(205,220,255,.22); background:rgba(225,235,255,.055); color:rgba(225,235,255,.72); }
-.mf-auth-dialog input:not([type=file])::selection { background:rgba(145,175,255,.38); color:#fff; }
-.mf-auth-primary,.mf-auth-google,.mf-auth-secondary { border:1px solid rgba(205,220,255,.28); background:linear-gradient(135deg,rgba(150,175,255,.30),rgba(95,130,230,.18),rgba(65,175,205,.12)); color:#f8faff; box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 8px 24px rgba(0,0,0,.2); }
-.mf-auth-primary:hover,.mf-auth-google:hover,.mf-auth-secondary:hover { border-color:rgba(220,235,255,.48); background:linear-gradient(135deg,rgba(160,185,255,.4),rgba(105,145,245,.24),rgba(70,190,220,.17)); color:#fff; box-shadow:0 12px 30px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.24); }
-.mf-auth-tabs { border-color:rgba(225,236,255,.13); background:rgba(225,235,255,.045); }
-.mf-auth-tabs button { border:1px solid transparent; background:transparent; color:rgba(225,235,255,.6); }
-.mf-auth-tabs button.active { border-color:rgba(205,220,255,.2); background:linear-gradient(135deg,rgba(150,175,255,.25),rgba(95,130,230,.13)); color:#fff; box-shadow:inset 0 1px 0 rgba(255,255,255,.15); }
-.mf-auth-close { border-color:rgba(225,236,255,.18); background:rgba(225,235,255,.08); color:#f4f7ff; }
-.mf-auth-close:hover { border-color:rgba(225,236,255,.34); background:rgba(225,235,255,.16); }
-.mf-auth-link { color:rgba(190,208,255,.82); }
-.mf-auth-link:hover { color:#fff; }
-.mf-auth-message { border-color:rgba(225,236,255,.14); background:rgba(225,235,255,.06); color:rgba(240,245,255,.86); }
-.mf-auth-password-toggle { border-color:rgba(205,220,255,.25); background:linear-gradient(135deg,rgba(150,175,255,.28),rgba(95,130,230,.15)); color:#f4f7ff; box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 4px 14px rgba(0,0,0,.2); }
-.mf-auth-password-toggle:hover { border-color:rgba(225,236,255,.42); background:linear-gradient(135deg,rgba(160,185,255,.38),rgba(95,145,235,.23)); }
-.mf-auth-password-toggle:focus-visible,.mf-auth-dialog button:focus-visible { outline:2px solid rgba(190,210,255,.9); }
-html,body { scrollbar-color:rgba(145,175,255,.72) rgba(8,12,23,.78); }
-::-webkit-scrollbar-track { background:rgba(8,12,23,.78); }
-::-webkit-scrollbar-thumb { border-color:rgba(8,12,23,.82); background:linear-gradient(180deg,rgba(150,175,255,.82),rgba(80,170,205,.72)); }
-::-webkit-scrollbar-thumb:hover { background:linear-gradient(180deg,rgba(180,200,255,.95),rgba(100,195,220,.9)); }

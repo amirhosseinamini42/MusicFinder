@@ -21,7 +21,8 @@ for (const [name, html] of [["home", home], ["admin", admin]]) {
     }
 }
 
-assert.match(home, /id="adminShortcut"[^>]*href="\/admin\.html"[^>]*hidden/);
+assert.match(home, /id="adminShortcut"[^>]*href="\/admin\.html"[^>]*hidden[^>]*><svg/);
+assert.doesNotMatch(home, /id="adminShortcut"[\s\S]{0,500}>[\s\S]*?Admin Panel<\/a>/);
 assert.match(home, /refreshAdminShortcut\(session\)/);
 assert.match(home, /\["admin", "owner"\]\.includes\(admin\.role\)/);
 assert.match(admin, /href="\/"[^>]*aria-label="Back to MusicFinder website"/);
@@ -30,12 +31,16 @@ assert.doesNotMatch(home, /<div class="fullPlayer" id="fullPlayer">/);
 assert.match(home, /musicPlayer\.classList\.add\("mode-full", "active"\)/);
 assert.match(home, /id="playerClose"/);
 assert.match(home, /musicPlayer\.minimized/);
-assert.match(home, /--mf-glass-shadow/);
-assert.match(home, /id="mf-liquid-glass-final"/);
-assert.match(home, /--dynamic-color:rgba\(115,145,255/);
+assert.match(home, /id="mf-player-layout"/);
+assert.match(home, /setPlayerMinimized\(false, false\)/);
+assert.match(home, /AUTUMN .* RAINY-EVENING ATMOSPHERE/);
+assert.match(home, /#rainCanvas/);
+assert.doesNotMatch(home, /mf-liquid-glass-final|#080b13|rgba\(92,120,255/);
+assert.match(home, /--bg: #110b08/);
 assert.match(admin, /class="mf-review-player"/);
-assert.match(admin, /id="mf-liquid-glass-final"/);
-assert.match(admin, /--bg:#080b13 !important/);
+assert.doesNotMatch(admin, /mf-liquid-glass-final|--bg:#080b13|rgba\(92,120,255/);
+assert.match(admin, /--bg:#110b08/);
+assert.match(admin, /rgba\(224,164,90/);
 assert.match(admin, /id="rvSeek"/);
 assert.doesNotMatch(admin, /<audio controls/);
 assert.match(admin, /audio\.pause\(\); audio\.removeAttribute\("src"\)/);
@@ -43,12 +48,12 @@ assert.match(admin, /audioUploaded: false, coverUploaded: false/);
 assert.match(admin, /Promise\.allSettled\(tasks\)/);
 assert.match(admin, /x\.timeout = 180000/);
 assert.match(admin, /uploadWithRetry\("audio"/);
-assert.match(authCss, /\.mf-auth-dialog \{ border-color:rgba\(220,232,255/);
-assert.match(authCss, /\.mf-auth-primary,.mf-auth-google,.mf-auth-secondary \{ border:1px solid rgba\(205,220,255/);
-assert.match(authCss, /\.mf-auth-dialog input\[type=file\] \{ border-color:rgba\(205,220,255/);
-assert.match(confirm, /name="theme-color" content="#080b13"/);
-assert.match(confirm, /rgba\(115,145,255/);
-assert.doesNotMatch(confirm, /#100d0b|rgba\(214,138,58/);
+assert.match(authCss, /rgba\(255,220,180/);
+assert.match(authCss, /linear-gradient\(110deg,rgba\(214,138,58/);
+assert.doesNotMatch(authCss, /Unified neutral Liquid Glass account UI|rgba\(150,175,255/);
+assert.match(confirm, /name="theme-color" content="#110b08"/);
+assert.match(confirm, /rgba\(236,148,56/);
+assert.doesNotMatch(confirm, /#080b13|rgba\(115,145,255/);
 
 // Exercise the actual upload transport/retry helper from the admin page.
 const helperStart = admin.indexOf("function putFile(");

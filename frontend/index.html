@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#080b13">
+<meta name="theme-color" content="#110b08">
 
 <title>MusicFinder</title>
 <meta name="description" content="Discover music, explore artists, and find your next favorite song.">
@@ -1935,31 +1935,11 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <script defer src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/@barba/core@2.10.3/dist/barba.umd.js"></script>
-<style id="mf-liquid-glass">
-:root { --bg:#080b13; --glass:rgba(225,235,255,.075); --glass-strong:rgba(225,235,255,.14); --border:rgba(220,232,255,.18); --text:#f4f7ff; --muted:rgba(225,235,255,.62); --accent:#dce8ff; --mf-glass-shadow:0 22px 70px rgba(0,0,0,.34); }
-html { scroll-behavior:auto; }
-body { color:var(--text); background:radial-gradient(ellipse 70% 50% at 12% 0%,rgba(92,120,255,.18),transparent 70%),radial-gradient(ellipse 55% 45% at 90% 95%,rgba(55,190,220,.11),transparent 72%),var(--bg); }
-body::after { background:radial-gradient(ellipse 65% 45% at 10% 0%,rgba(110,135,255,.20),transparent 72%),radial-gradient(ellipse 50% 40% at 90% 100%,rgba(55,190,220,.12),transparent 72%),radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(0,0,0,.34) 100%); animation:mfGlassAmbient 18s ease-in-out infinite; }
-@keyframes mfGlassAmbient { 0%,100%{opacity:.78} 50%{opacity:1} }
-.navbar::before { background:rgba(9,14,26,.58); backdrop-filter:blur(28px) saturate(155%); -webkit-backdrop-filter:blur(28px) saturate(155%); }
-.glass,.resultCard,.artistCard,.tasteBox,.mfPl,.modal,.menuDrawer,.searchBox,.musicPlayer,.fullPlayer,.tgPanel,.mfPicker { background:linear-gradient(145deg,rgba(240,246,255,.13),rgba(170,195,255,.045) 58%,rgba(255,255,255,.065)); border:1px solid rgba(225,236,255,.18); box-shadow:var(--mf-glass-shadow),inset 0 1px 0 rgba(255,255,255,.22); backdrop-filter:blur(26px) saturate(155%); -webkit-backdrop-filter:blur(26px) saturate(155%); }
-:where(button,a[role="button"],.historyItem,.smallBtn,.menuButton,.navButton,.closeMenu,.modalClose,.playerButton,.fullPlayerClose,.authSignOut,.authUser,.searchBtn,.playBtn,.previewBtn,.featureArtist button,.langSwitch button,.searchMode button) { border:1px solid rgba(225,236,255,.2); border-radius:14px; background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(190,210,255,.055)); color:var(--text); box-shadow:inset 0 1px 0 rgba(255,255,255,.20),0 8px 24px rgba(0,0,0,.12); backdrop-filter:blur(16px) saturate(150%); -webkit-backdrop-filter:blur(16px) saturate(150%); transition:transform .28s cubic-bezier(.2,.8,.2,1),background .28s,border-color .28s,box-shadow .28s,color .28s; }
-:where(button,a[role="button"],.historyItem,.smallBtn,.menuButton,.navButton,.closeMenu,.modalClose,.playerButton,.fullPlayerClose,.authSignOut,.authUser,.searchBtn,.playBtn,.previewBtn,.featureArtist button,.langSwitch button,.searchMode button):hover { transform:translateY(-2px); border-color:rgba(230,240,255,.36); background:linear-gradient(145deg,rgba(255,255,255,.23),rgba(145,175,255,.13)); box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 14px 32px rgba(0,0,0,.22); }
-:where(button,a[role="button"],.historyItem,.smallBtn,.menuButton,.navButton,.closeMenu,.modalClose,.playerButton,.fullPlayerClose,.authSignOut,.authUser,.searchBtn,.playBtn,.previewBtn,.featureArtist button):active { transform:translateY(0) scale(.975); }
-button { border:1px solid rgba(225,236,255,.2); background:linear-gradient(145deg,rgba(255,255,255,.15),rgba(170,195,255,.055)); color:var(--text); box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 22px rgba(0,0,0,.10); backdrop-filter:blur(15px) saturate(145%); -webkit-backdrop-filter:blur(15px) saturate(145%); transition:transform .28s cubic-bezier(.2,.8,.2,1),background .28s,border-color .28s,box-shadow .28s; }
-button:hover { border-color:rgba(230,240,255,.34); background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(145,175,255,.12)); box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 12px 28px rgba(0,0,0,.18); }
-button:active { transform:scale(.975); }
-:where(.searchBtn,.btn.primary,.smallBtn.primary,.playBtn,.playerPlay,.langSwitch button.active,.searchMode button.active) { color:#f8faff; background:linear-gradient(135deg,rgba(150,175,255,.34),rgba(95,130,230,.20)); border:1px solid rgba(205,220,255,.32); }
-:where(input:not([type="range"]),select,textarea) { border:1px solid rgba(225,236,255,.18)!important; background:rgba(225,235,255,.065)!important; color:var(--text)!important; box-shadow:inset 0 1px 0 rgba(255,255,255,.07); backdrop-filter:blur(14px); }
-:where(input,select,textarea):focus { outline:0; border-color:rgba(155,185,255,.7)!important; box-shadow:0 0 0 3px rgba(115,150,255,.14),inset 0 1px 0 rgba(255,255,255,.1); }
-.albumCard,.albumTrack,.tasteRow,.resultCard,.artistCard,.featureArtist,.empty { border:1px solid rgba(225,236,255,.14); background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(170,195,255,.035)); box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 14px 38px rgba(0,0,0,.14); backdrop-filter:blur(20px) saturate(145%); }
-.albumCard:hover,.albumCard:focus-visible,.resultCard:hover,.artistCard:hover { border-color:rgba(220,235,255,.3); box-shadow:0 20px 48px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.2); }
-.albumGrid { gap:16px; }
-.adminShortcut { display:inline-flex; align-items:center; gap:7px; min-height:38px; padding:8px 12px; border-radius:13px; border:1px solid rgba(170,195,255,.32); background:linear-gradient(135deg,rgba(135,165,255,.22),rgba(255,255,255,.08)); color:#edf2ff; font-size:12px; font-weight:750; box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 22px rgba(0,0,0,.16); }
-.adminShortcut span { font-size:14px; }
-.adminShortcut[hidden] { display:none!important; }
-.adminShortcut:hover { transform:translateY(-2px); background:rgba(145,175,255,.22); }
-.musicPlayer { border-radius:24px; }
+<style id="mf-player-layout">
+.adminShortcut { display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; padding:0; border:1px solid var(--border); border-radius:12px; background:var(--glass); color:var(--text); text-decoration:none; transition:transform .22s ease,background .22s ease,border-color .22s ease; }
+.adminShortcut svg { display:block; width:18px; height:18px; }
+.adminShortcut[hidden] { display:none !important; }
+.adminShortcut:hover { transform:translateY(-2px); border-color:rgba(224,164,90,.55); background:rgba(224,164,90,.12); }
 .musicPlayer.mode-full { width:min(460px,calc(100% - 40px)); flex-wrap:wrap; gap:12px; }
 .musicPlayer.mode-full .playerControls,.musicPlayer.mode-full .playerTimeline,.musicPlayer.mode-full .playerVolume { display:none; }
 .playerFullContent { display:none; flex:1 1 100%; min-width:0; }
@@ -1969,22 +1949,22 @@ button:active { transform:scale(.975); }
 .musicPlayer.minimized { width:min(320px,calc(100% - 24px)); min-height:66px; padding:9px 10px; gap:10px; border-radius:18px; }
 .musicPlayer.minimized .playerCover { width:46px; height:46px; }
 .musicPlayer.minimized .playerInfo { min-width:0; flex:1; max-width:none; }
-.musicPlayer.minimized .playerControls,.musicPlayer.minimized .playerTimeline,.musicPlayer.minimized .playerVolume,.musicPlayer.minimized .playerFullContent { display:none!important; }
-.playerCloseBtn { width:34px!important; height:34px!important; flex:0 0 34px; }
-.playerCloseBtn { position:relative!important; z-index:2; }
+.musicPlayer.minimized .playerControls,.musicPlayer.minimized .playerTimeline,.musicPlayer.minimized .playerVolume,.musicPlayer.minimized .playerFullContent { display:none !important; }
+.playerCloseBtn { width:34px; height:34px; flex:0 0 34px; position:relative; z-index:2; }
+.playerMinBtn { flex-shrink:0; }
 #pageShell { min-height:100vh; opacity:1; transform:translateY(0); transition:opacity .22s ease,transform .22s ease; }
 html.page-ready #pageShell { animation:mfPageEnter .42s cubic-bezier(.2,.8,.2,1) both; }
 html.barba-leaving #pageShell { opacity:0; transform:translateY(8px); }
 @keyframes mfPageEnter { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-@media(max-width:700px) { .adminShortcut{width:36px;min-height:36px;padding:0;justify-content:center;font-size:0;gap:0} .adminShortcut span{font-size:15px} .musicPlayer.mode-full{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));width:auto} .musicPlayer.minimized{left:12px;right:auto;width:min(290px,calc(100% - 24px))} .albumGrid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:11px} }
-@media(prefers-reduced-motion:reduce) { body::after{animation:none!important} #pageShell{animation:none!important;transition:none!important} :where(button,a[role="button"],.historyItem,.smallBtn){transition:none!important} }
+@media(max-width:700px) { .musicPlayer.mode-full { left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); width:auto; } .musicPlayer.minimized { left:12px; right:auto; width:min(290px,calc(100% - 24px)); } }
+@media(prefers-reduced-motion:reduce) { #pageShell { animation:none !important; transition:none !important; } :where(button,a[role="button"],.historyItem,.smallBtn) { transition:none !important; } }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script src="/auth-client.js"></script>
 <script src="/auth-ui.js"></script>
 </head>
 
-<body class="mf-liquid-glass" data-barba="wrapper">
+<body data-barba="wrapper">
 <div id="pageShell" data-barba="container" data-barba-namespace="home">
 
 <div id="backgroundArt"></div>
@@ -2117,7 +2097,7 @@ html.barba-leaving #pageShell { opacity:0; transform:translateY(8px); }
     </div>
 
     <div class="navRight">
-        <a class="adminShortcut" id="adminShortcut" href="/admin.html" hidden aria-label="Open Admin Panel"><span aria-hidden="true">▦</span> Admin Panel</a>
+        <a class="adminShortcut" id="adminShortcut" href="/admin.html" hidden aria-label="Open Admin Panel" title="Open Admin Panel"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></a>
         <div class="authArea" id="authArea"></div>
         <button class="menuButton" onclick="openMenu()">☰</button>
     </div>
@@ -4553,13 +4533,7 @@ playerClose.addEventListener("click", () => {
     try { localStorage.setItem(PLAYER_MIN_KEY, "0"); } catch {}
 });
 
-(function restorePlayerSize() {
-    let saved = false;
-    try {
-        saved = localStorage.getItem(PLAYER_MIN_KEY) === "1";
-    } catch {}
-    setPlayerMinimized(saved, false);
-})();
+setPlayerMinimized(false, false);
 
 
 
@@ -6223,23 +6197,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 </script>
-<style id="mf-liquid-glass-final">
-:root { --bg:#080b13 !important; --glass:rgba(225,235,255,.075) !important; --glass-strong:rgba(225,235,255,.14) !important; --border:rgba(220,232,255,.18) !important; --text:#f4f7ff !important; --muted:rgba(225,235,255,.62) !important; --accent:#dce8ff !important; --dynamic-color:rgba(115,145,255,.18) !important; --dynamic-color-2:rgba(75,165,220,.13) !important; --dynamic-color-3:rgba(95,115,205,.12) !important; }
-body { --dynamic-color:rgba(115,145,255,.18) !important; --dynamic-color-2:rgba(75,165,220,.13) !important; --dynamic-color-3:rgba(95,115,205,.12) !important; color:#f4f7ff; }
-.navbar,.menuDrawer,.modal,.modalOverlay,.glass,.resultCard,.artistCard,.featureArtist,.tasteBox,.historyItem,.searchBox,.playerFullContent,.musicPlayer { border-color:rgba(220,232,255,.18) !important; box-shadow:0 22px 70px rgba(0,0,0,.27),inset 0 1px 0 rgba(255,255,255,.15); }
-.navbar,.menuDrawer,.modal,.glass,.resultCard,.artistCard,.featureArtist,.tasteBox,.searchBox { background:linear-gradient(145deg,rgba(240,246,255,.12),rgba(170,195,255,.045) 58%,rgba(255,255,255,.055)) !important; backdrop-filter:blur(26px) saturate(155%); -webkit-backdrop-filter:blur(26px) saturate(155%); }
-button,.navButton,.menuButton,.closeMenu,.searchBtn,.smallBtn,.historyItem,.modalButtons a,.modalButtons button,.menuItem,.playerButton { border-color:rgba(220,232,255,.22) !important; background:linear-gradient(145deg,rgba(230,238,255,.16),rgba(150,180,255,.06)) !important; color:#f4f7ff !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.19),0 8px 24px rgba(0,0,0,.16); backdrop-filter:blur(16px) saturate(150%); transition:transform .28s cubic-bezier(.2,.8,.2,1),background .28s,border-color .28s,box-shadow .28s; }
-button:hover,.navButton:hover,.menuButton:hover,.closeMenu:hover,.searchBtn:hover,.smallBtn:hover,.historyItem:hover,.modalButtons a:hover,.modalButtons button:hover,.menuItem:hover,.playerButton:hover { border-color:rgba(225,238,255,.42) !important; background:linear-gradient(145deg,rgba(235,242,255,.24),rgba(145,175,255,.13)) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 14px 32px rgba(0,0,0,.22); }
-button:active,.playerButton:active { transform:scale(.975); }
-input,select,textarea { color:#f4f7ff !important; border-color:rgba(220,232,255,.19) !important; background:rgba(225,235,255,.065) !important; backdrop-filter:blur(14px); }
-input::placeholder,textarea::placeholder { color:rgba(225,235,255,.42) !important; }
-.logoText span,.mfMail,.sectionSubtitle,.modalMuted { color:#c8d8ff !important; }
-.siteLogoMark { filter:drop-shadow(0 2px 8px rgba(145,175,255,.24)) !important; }
-.menuItem::after { background:linear-gradient(90deg,#b9ccff,#6f98ff) !important; }
-#albums .glass,#albums .albumCard,#albums .albumItem,#albums .albumGrid > * { border-color:rgba(220,232,255,.2) !important; background:linear-gradient(145deg,rgba(240,246,255,.14),rgba(170,195,255,.05)) !important; backdrop-filter:blur(26px) saturate(155%); box-shadow:0 18px 50px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.18); }
-.page-ready body { animation:mfPageEnter .38s ease both; }
-@keyframes mfPageEnter { from { opacity:.88; } to { opacity:1; } }
-@media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
-</style>
+
 </body>
 </html>

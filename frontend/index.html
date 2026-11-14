@@ -2392,70 +2392,53 @@ function encodeSafe(text) {
 
 
 function getTasteData() {
-
-    const saved = localStorage.getItem(TASTE_KEY);
-
-    if (!saved) {
-
-        return {
-            searches: [],
-            artists: {},
-            tracks: {}
-        };
-
-    }
-
+    const empty = { searches: [], artists: {}, tracks: {} };
     try {
-
-        return JSON.parse(saved);
-
-    } catch {
-
+        const saved = localStorage.getItem(TASTE_KEY);
+        if (!saved) return empty;
+        const parsed = JSON.parse(saved);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return empty;
+        const isRecord = value => !!value && typeof value === "object" && !Array.isArray(value);
+        // Old/corrupt browser storage must never prevent the search, details, or player
+        // code from booting. Preserve valid records and repair only malformed containers.
         return {
-            searches: [],
-            artists: {},
-            tracks: {}
+            ...parsed,
+            searches: Array.isArray(parsed.searches) ? parsed.searches.filter(item => typeof item === "string") : [],
+            artists: isRecord(parsed.artists) ? parsed.artists : {},
+            tracks: isRecord(parsed.tracks) ? parsed.tracks : {}
         };
-
+    } catch (error) {
+        console.warn("MusicFinder taste storage is unavailable; using an empty local profile.", error);
+        return empty;
     }
-
 }
 
 
 function saveTasteData(data) {
-
-    localStorage.setItem(
-        TASTE_KEY,
-        JSON.stringify(data)
-    );
-
+    try {
+        localStorage.setItem(TASTE_KEY, JSON.stringify(data));
+        return true;
+    } catch (error) {
+        // Storage quota/privacy restrictions must not block opening Details or playback.
+        console.warn("MusicFinder could not save local taste data:", error);
+        return false;
+    }
 }
 
 
 function getHistory() {
-
     try {
-
-        return JSON.parse(
-            localStorage.getItem(HISTORY_KEY) || "[]"
-        );
-
+        const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed.filter(item => typeof item === "string") : [];
     } catch {
-
         return [];
-
     }
-
 }
 
 
 function saveHistory(history) {
-
-    localStorage.setItem(
-        HISTORY_KEY,
-        JSON.stringify(history)
-    );
-
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); }
+    catch (error) { console.warn("MusicFinder could not save search history:", error); }
 }
 
 
@@ -2604,7 +2587,7 @@ function rememberTrack(track) {
 
     if (!id) return;
 
-    if (!data.tracks[id]) {
+    if (!data.tracks[id] || typeof data.tracks[id] !== "object" || Array.isArray(data.tracks[id])) {
 
         data.tracks[id] = {
 
@@ -2622,7 +2605,7 @@ function rememberTrack(track) {
 
     }
 
-    data.tracks[id].clicks++;
+    data.tracks[id].clicks = (Number(data.tracks[id].clicks) || 0) + 1;
 
     saveTasteData(data);
 
@@ -2641,7 +2624,7 @@ function rememberArtist(artist) {
 
     if (!id) return;
 
-    if (!data.artists[id]) {
+    if (!data.artists[id] || typeof data.artists[id] !== "object" || Array.isArray(data.artists[id])) {
 
         data.artists[id] = {
 
@@ -2658,7 +2641,7 @@ function rememberArtist(artist) {
 
     }
 
-    data.artists[id].clicks++;
+    data.artists[id].clicks = (Number(data.artists[id].clicks) || 0) + 1;
 
     data.artists[id].lastSeen =
         new Date().toISOString();
@@ -3482,7 +3465,8 @@ function openTrackFromEncoded(encoded) {
             decodeURIComponent(encoded)
         );
 
-    registerTrackClick(track);
+    try { registerTrackClick(track); }
+    catch (error) { console.warn("Could not update local track history:", error); }
 
     currentModalTrack = track;
 
@@ -4447,10 +4431,15 @@ document
     );
 
 
-renderHistory();
-renderTaste();
-renderArtists();
-renderForYou();
+function safeInitialRender(name, render) {
+    try { render(); }
+    catch (error) { console.error(`MusicFinder ${name} initialization failed:`, error); }
+}
+// A failure in optional local-history widgets must not abort player and search setup.
+safeInitialRender("history", renderHistory);
+safeInitialRender("taste", renderTaste);
+safeInitialRender("artists", renderArtists);
+safeInitialRender("For You", renderForYou);
 
 /* =========================
    Music Player

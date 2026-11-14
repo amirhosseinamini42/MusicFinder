@@ -33,6 +33,10 @@ assert.match(home, /id="playerClose"/);
 assert.match(home, /musicPlayer\.minimized/);
 assert.match(home, /id="mf-player-layout"/);
 assert.match(home, /setPlayerMinimized\(false, false\)/);
+assert.match(home, /function safeInitialRender\(name, render\)/);
+assert.match(home, /safeInitialRender\("For You", renderForYou\)/);
+assert.match(home, /could not save local taste data/);
+assert.match(home, /try \{ registerTrackClick\(track\); \}/);
 assert.match(home, /AUTUMN .* RAINY-EVENING ATMOSPHERE/);
 assert.match(home, /#rainCanvas/);
 assert.doesNotMatch(home, /mf-liquid-glass-final|#080b13|rgba\(92,120,255/);
@@ -48,6 +52,10 @@ assert.match(admin, /audioUploaded: false, coverUploaded: false/);
 assert.match(admin, /Promise\.allSettled\(tasks\)/);
 assert.match(admin, /x\.timeout = 180000/);
 assert.match(admin, /uploadWithRetry\("audio"/);
+assert.match(admin, /async function optimizeCoverFile\(file\)/);
+assert.match(admin, /createImageBitmap\(file\)/);
+assert.match(admin, /image\/webp/);
+assert.match(admin, /Audio is uploaded\s+\/\/ byte-for-byte/);
 assert.match(authCss, /rgba\(255,220,180/);
 assert.match(authCss, /linear-gradient\(110deg,rgba\(214,138,58/);
 assert.doesNotMatch(authCss, /Unified neutral Liquid Glass account UI|rgba\(150,175,255/);
@@ -95,6 +103,44 @@ async function runTransport(statuses) {
 }
 
 (async () => {
+    // Browser storage from older builds can be malformed or unavailable. It must
+    // not break Details, player boot, or the search UI.
+    const tasteSource = home.match(/function getTasteData\(\) \{[\s\S]*?\n\}/);
+    assert.ok(tasteSource, "taste storage reader exists");
+    const storageContext = vm.createContext({
+        TASTE_KEY: "taste",
+        localStorage: { getItem: () => JSON.stringify({ searches: "bad", artists: null, tracks: [] }) },
+        console: { warn() {} }
+    });
+    vm.runInContext(tasteSource[0] + "\nglobalThis.readTaste = getTasteData;", storageContext);
+    const normalized = storageContext.readTaste();
+    assert.equal(Array.isArray(normalized.searches), true);
+    assert.equal(typeof normalized.artists, "object");
+    assert.equal(Array.isArray(normalized.tracks), false);
+    storageContext.localStorage.getItem = () => { throw new Error("storage blocked"); };
+    const unavailable = storageContext.readTaste();
+    assert.deepEqual(JSON.parse(JSON.stringify(unavailable)), { searches: [], artists: {}, tracks: {} });
+
+    // Large cover images are resized and converted to WebP before upload; audio is untouched.
+    const optimizeSource = admin.match(/async function optimizeCoverFile\(file\) \{[\s\S]*?\n\}/);
+    assert.ok(optimizeSource, "cover optimizer exists");
+    let drawnSize = null;
+    const optimizeContext = vm.createContext({
+        createImageBitmap: async () => ({ width: 3000, height: 2000, close() {} }),
+        File,
+        Blob,
+        document: { createElement: () => ({
+            getContext: () => ({ drawImage: (_bitmap, _x, _y, width, height) => { drawnSize = [width, height]; } }),
+            toBlob: callback => callback(new Blob([new Uint8Array(120)], { type: "image/webp" }))
+        }) },
+        console: { warn() {} }
+    });
+    vm.runInContext(optimizeSource[0] + "\nglobalThis.optimize = optimizeCoverFile;", optimizeContext);
+    const optimizedCover = await optimizeContext.optimize({ name: "cover.png", size: 900000, type: "image/png", lastModified: 1 });
+    assert.equal(optimizedCover.name, "cover.webp");
+    assert.equal(optimizedCover.type, "image/webp");
+    assert.deepEqual(drawnSize, [1800, 1200]);
+
     const recovered = await runTransport([503, 200]);
     assert.equal(recovered.refreshes, 1, "transient storage failures renew the signed URL");
     const rejected = await runTransport([413]);

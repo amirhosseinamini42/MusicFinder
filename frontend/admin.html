@@ -375,6 +375,33 @@ function fileProblem(kind, f) {
     if (f.size > LIM[kind].max) return "Too large (limit " + fmtSize(LIM[kind].max) + ").";
     return "";
 }
+async function optimizeCoverFile(file) {
+    // Covers are the only safe client-side compression target. Audio is uploaded
+    // byte-for-byte so the recording is never re-encoded or degraded.
+    if (!file || file.size < 512 * 1024 || file.size > 20 * 1048576 ||
+        typeof createImageBitmap !== "function" || typeof File !== "function") return file;
+    let bitmap;
+    try {
+        bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, 1800 / Math.max(bitmap.width, bitmap.height));
+        const width = Math.max(1, Math.round(bitmap.width * scale));
+        const height = Math.max(1, Math.round(bitmap.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const context = canvas.getContext("2d", { alpha: false });
+        if (!context) return file;
+        context.drawImage(bitmap, 0, 0, width, height);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", 0.84));
+        if (!blob || blob.type !== "image/webp" || blob.size >= file.size) return file;
+        const base = file.name.replace(/\.[^.]+$/, "");
+        return new File([blob], base + ".webp", { type: "image/webp", lastModified: file.lastModified });
+    } catch (error) {
+        console.warn("Cover optimization skipped; using the original image:", error);
+        return file;
+    } finally {
+        if (bitmap && typeof bitmap.close === "function") bitmap.close();
+    }
+}
 function showInfo(kind) {
     const f = $(kind === "audio" ? "#fAudio" : "#fCover").files[0], el = $(kind === "audio" ? "#aInfo" : "#cInfo");
     if (!f) { el.textContent = ""; return; }
@@ -455,10 +482,18 @@ function viewUpload() {
 
 async function doUpload() {
     const msg = $("#upMsg"), go = $("#upGo");
-    const pickedAudio = $("#fAudio").files[0], pickedCover = $("#fCover").files[0];
+    const pickedAudio = $("#fAudio").files[0];
+    let pickedCover = $("#fCover").files[0];
     const title = $("#fTitle").value.trim(), artist = $("#fArtist").value.trim();
     if (!title) return note(msg, msgFor("title_required"));
     if (!artist) return note(msg, msgFor("artist_required"));
+    if (pickedCover) {
+        const status = $("#upStatus");
+        if (status) status.textContent = "Optimizing cover image…";
+        const originalCover = pickedCover;
+        pickedCover = await optimizeCoverFile(pickedCover);
+        if (pickedCover !== originalCover) setFile($("#fCover"), pickedCover);
+    }
     const needAudio = !pending || !pending.audioDone, needCover = !pending || !pending.coverDone;
     const audio = needAudio ? (pickedAudio || (pending && pending.audio) || null) : null;
     const cover = needCover ? (pickedCover || (pending && pending.cover) || null) : null;

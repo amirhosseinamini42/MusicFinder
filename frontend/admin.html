@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#110b08">
+<meta name="theme-color" content="#080b13">
 <title>MusicFinder · Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,6 +18,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script src="/auth-client.js"></script>
 <script src="/auth-ui.js"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script defer src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@barba/core@2.10.3/dist/barba.umd.js"></script>
 <style>
 * { box-sizing: border-box; }
 :root {
@@ -41,10 +44,10 @@ a { color: inherit; }
 .bar { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:12px;
     padding: calc(14px + env(safe-area-inset-top)) 22px 14px; background:rgba(24,14,9,.82); backdrop-filter:blur(22px); border-bottom:1px solid var(--border); }
 .logo { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:-.5px; } .logo span { color:var(--amber); opacity:.8; }
-.siteLogoMark { display:block; width:30px; height:30px; flex:0 0 30px; object-fit:contain; filter:drop-shadow(0 2px 8px rgba(196,127,53,.22)); }
+.siteLogoMark { display:block; width:30px; height:30px; flex:0 0 30px; object-fit:contain; filter:drop-shadow(0 2px 8px rgba(145,175,255,.24)); }
 .who { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); min-width:0; }
 .who b { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
-.badge { padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; background:rgba(224,164,90,.18); border:1px solid rgba(224,164,90,.5); color:var(--amber); }
+.badge { padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; background:rgba(145,175,255,.16); border:1px solid rgba(145,175,255,.42); color:var(--amber); }
 main { width:min(1100px, calc(100% - 32px)); margin:28px auto 80px; }
 h1,h2 { font-family:"Cormorant Garamond", Georgia, serif; font-weight:600; margin:0 0 6px; }
 h1 { font-size:40px; } h2 { font-size:28px; }
@@ -66,7 +69,7 @@ input[type=text], input[type=search], input[type=email], select, textarea {
 textarea { min-height:90px; resize:vertical; }
 .row { display:grid; grid-template-columns:1fr 1fr; gap:14px; } @media (max-width:700px){ .row{grid-template-columns:1fr;} }
 .check { display:flex; align-items:flex-start; gap:10px; margin-top:14px; font-size:14px; color:var(--text); }
-.check input { margin-top:3px; accent-color:#c47f35; }
+.check input { margin-top:3px; accent-color:#9fb9ff; }
 .btn { padding:11px 18px; border-radius:13px; border:1px solid var(--border); background:rgba(255,255,255,.07); color:var(--text); font-weight:650; transition:background .2s, transform .2s; }
 .btn:hover { background:rgba(255,255,255,.16); transform:translateY(-2px); }
 .btn.primary { background:linear-gradient(135deg,#e6b06a,#c47f35); color:#1e1208; border-color:transparent; }
@@ -83,7 +86,7 @@ table { width:100%; border-collapse:collapse; font-size:14px; }
 th, td { text-align:start; padding:12px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
 th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
 .pill { padding:3px 9px; border-radius:999px; font-size:11.5px; font-weight:700; border:1px solid var(--border); }
-.pill.draft { color:var(--muted); } .pill.review { color:#e6c06a; border-color:#e6c06a88; }
+.pill.draft { color:var(--muted); } .pill.review { color:#b9ccff; border-color:#9fb9ff88; }
 .pill.published { color:var(--ok); border-color:#8fd19e88; } .pill.unpublished { color:var(--danger); border-color:#ff7a9088; }
 .toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; } .toolbar input { flex:1; min-width:180px; } .toolbar select { width:auto; }
 .cov { width:44px; height:44px; border-radius:10px; background:rgba(255,255,255,.08); object-fit:cover; }
@@ -94,14 +97,53 @@ th { color:var(--muted); font-weight:600; font-size:12px; text-transform:upperca
 audio { width:100%; margin-top:12px; }
 @media (prefers-reduced-motion: reduce){ * { transition:none !important; } }
 .drop { border:2px dashed var(--border); border-radius:16px; padding:16px; text-align:center; color:var(--muted); cursor:pointer; margin-top:6px; }
-.drop.over, .drop:focus-visible { border-color:#e0a45a; background:rgba(224,164,90,.10); outline:none; }
+.drop.over, .drop:focus-visible { border-color:#9fb9ff; background:rgba(145,175,255,.10); outline:none; }
 .fileInfo { font-size:12.5px; margin-top:6px; color:var(--muted); } .fileInfo.bad { color:var(--danger); }
 .pill.unreleased { color:#c9a7ff; border-color:#c9a7ff88; }
+/* Site-wide Liquid Glass language, shared with the public MusicFinder experience. */
+:root { --bg:#080b13; --glass:rgba(225,235,255,.075); --glass-strong:rgba(225,235,255,.14); --border:rgba(220,232,255,.18); --text:#f4f7ff; --muted:rgba(225,235,255,.62); --amber:#dce8ff; --ok:#9ee8c0; }
+body { background:radial-gradient(ellipse 70% 50% at 12% 0%,rgba(92,120,255,.18),transparent 70%),radial-gradient(ellipse 55% 45% at 90% 95%,rgba(55,190,220,.11),transparent 72%),var(--bg); }
+.bar { background:rgba(9,14,26,.64); border-bottom:1px solid rgba(225,236,255,.17); box-shadow:0 12px 36px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.16); backdrop-filter:blur(28px) saturate(155%); -webkit-backdrop-filter:blur(28px) saturate(155%); }
+.glass,.stat,.dlg,.tabs,.msg,.drop,.progress,.tableWrap { border-color:rgba(225,236,255,.18); box-shadow:0 22px 70px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.16); backdrop-filter:blur(24px) saturate(150%); -webkit-backdrop-filter:blur(24px) saturate(150%); }
+.glass,.dlg { background:linear-gradient(145deg,rgba(240,246,255,.13),rgba(170,195,255,.045) 58%,rgba(255,255,255,.065)); }
+.btn,.tabs button,.stat.statBtn { border:1px solid rgba(225,236,255,.2); background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(190,210,255,.055)); color:var(--text); box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 24px rgba(0,0,0,.12); backdrop-filter:blur(16px) saturate(150%); transition:transform .28s cubic-bezier(.2,.8,.2,1),background .28s,border-color .28s,box-shadow .28s; }
+.btn:hover,.tabs button:hover,.stat.statBtn:hover { transform:translateY(-2px); border-color:rgba(230,240,255,.36); background:linear-gradient(145deg,rgba(255,255,255,.23),rgba(145,175,255,.13)); box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 14px 32px rgba(0,0,0,.22); }
+button { border-color:rgba(225,236,255,.2); background:linear-gradient(145deg,rgba(255,255,255,.15),rgba(170,195,255,.055)); color:var(--text); box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 22px rgba(0,0,0,.10); backdrop-filter:blur(15px) saturate(145%); transition:transform .28s cubic-bezier(.2,.8,.2,1),background .28s,border-color .28s,box-shadow .28s; }
+button:hover { border-color:rgba(230,240,255,.34); background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(145,175,255,.12)); box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 12px 28px rgba(0,0,0,.18); }
+button:active { transform:scale(.975); }
+.btn.primary,.tabs button.active { color:#f8faff; background:linear-gradient(135deg,rgba(150,175,255,.34),rgba(95,130,230,.20)); border:1px solid rgba(205,220,255,.32); }
+input[type=text],input[type=search],input[type=email],select,textarea { background:rgba(225,235,255,.065); border-color:rgba(225,236,255,.18); box-shadow:inset 0 1px 0 rgba(255,255,255,.07); backdrop-filter:blur(14px); }
+input:focus,select:focus,textarea:focus { outline:0; border-color:rgba(155,185,255,.7); box-shadow:0 0 0 3px rgba(115,150,255,.14),inset 0 1px 0 rgba(255,255,255,.1); }
+.drop { background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(145,175,255,.035)); }
+.progress { background:rgba(225,235,255,.12); }
+.progress i { background:linear-gradient(90deg,#b9ccff,#6f98ff); box-shadow:0 0 18px rgba(115,150,255,.38); }
+.mf-review-player { padding:15px; border:1px solid rgba(225,236,255,.18); border-radius:18px; background:linear-gradient(145deg,rgba(240,246,255,.13),rgba(170,195,255,.045) 58%,rgba(255,255,255,.065)); box-shadow:0 18px 48px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.18); backdrop-filter:blur(24px) saturate(150%); }
+.mf-review-head { display:flex; align-items:center; gap:13px; min-width:0; }
+.mf-review-cover { width:68px; height:68px; flex:0 0 68px; border-radius:13px; object-fit:cover; background:rgba(225,235,255,.08); box-shadow:0 8px 22px rgba(0,0,0,.25); }
+.mf-review-title { color:var(--text); font-size:14px; font-weight:750; overflow-wrap:anywhere; }
+.mf-review-artist { color:var(--muted); font-size:12px; margin-top:4px; }
+.mf-review-controls { display:grid; grid-template-columns:42px minmax(0,1fr) auto; align-items:center; gap:10px; margin-top:16px; }
+.mf-review-play { width:42px; height:42px; padding:0; border-radius:50%; font-size:15px; }
+.mf-review-seek,.mf-review-volume { width:100%; accent-color:#a9c0ff; cursor:pointer; }
+.mf-review-time { min-width:82px; color:var(--muted); font-size:11px; text-align:end; font-variant-numeric:tabular-nums; }
+.mf-review-volume-row { display:flex; align-items:center; gap:10px; margin-top:11px; color:var(--muted); font-size:11px; }
+.mf-review-volume { max-width:130px; }
+.mf-review-player audio { display:none; }
+.barBrand { display:flex; align-items:center; gap:16px; min-width:0; }
+.backWebsite { display:inline-flex; align-items:center; gap:7px; padding:9px 13px; border-radius:13px; border:1px solid rgba(225,236,255,.2); background:linear-gradient(145deg,rgba(255,255,255,.15),rgba(145,175,255,.06)); color:var(--text); font-size:12px; font-weight:750; text-decoration:none; box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 24px rgba(0,0,0,.12); transition:transform .25s,background .25s; }
+.backWebsite:hover { transform:translateY(-2px); background:rgba(145,175,255,.2); }
+#pageShell { min-height:100vh; opacity:1; transform:translateY(0); transition:opacity .22s ease,transform .22s ease; }
+html.page-ready #pageShell { animation:mfAdminEnter .42s cubic-bezier(.2,.8,.2,1) both; }
+html.barba-leaving #pageShell { opacity:0; transform:translateY(8px); }
+@keyframes mfAdminEnter { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@media(max-width:700px) { .bar { padding-left:12px; padding-right:12px; flex-wrap:wrap; } .barBrand { gap:8px; } .logo { font-size:16px; } .backWebsite { padding:8px 9px; font-size:11px; } .who { flex-wrap:wrap; justify-content:flex-end; gap:6px; } main { width:calc(100% - 20px); margin-top:18px; } .glass { padding:16px; } }
+@media(prefers-reduced-motion:reduce) { #pageShell{animation:none!important;transition:none!important} .btn,.tabs button,.stat.statBtn{transition:none!important} }
 </style>
 </head>
-<body class="mf-admin">
+<body class="mf-admin" data-barba="wrapper">
+<div id="pageShell" data-barba="container" data-barba-namespace="admin">
 <div class="bar">
-    <div class="logo"><img class="siteLogoMark" src="/favicon-192x192.png" alt="" width="30" height="30" decoding="async">Music<span>Finder</span> · Admin</div>
+    <div class="barBrand"><div class="logo"><img class="siteLogoMark" src="/favicon-192x192.png" alt="" width="30" height="30" decoding="async">Music<span>Finder</span> · Admin</div><a class="backWebsite" href="/" aria-label="Back to MusicFinder website">← Back to Website</a></div>
     <div class="who" id="who"></div>
 </div>
 
@@ -214,7 +256,7 @@ async function boot() {
     }
     $("#who").innerHTML = `<span class="badge">${me.role === "owner" ? "OWNER" : "ADMIN"}</span><b>${esc(me.email)}</b><button class="btn sm" id="out">Sign out</button>`;
     $("#out").onclick = async () => {
-        idToken = null; me = null; pending = null; navStack = []; tab = "dashboard"; tracksFilter = "";
+        idToken = null; me = null; pending = null; createRequestId = null; navStack = []; tab = "dashboard"; tracksFilter = "";
         reauthWait = null; $("#reauthHost").innerHTML = ""; closeDlg();
         try { await MFAuth.signOut(); } catch {}
         renderSignIn();
@@ -290,12 +332,41 @@ function putFile(url, file, contentType, onProgress) {
         resolve = done(resolve); reject = done(reject);
         x.onabort = () => reject(new Error("upload_cancelled"));
         x.open("PUT", url);
+        x.timeout = 180000;
         x.setRequestHeader("Content-Type", contentType);
         x.upload.onprogress = e => e.lengthComputable && onProgress(e.loaded / e.total);
         x.onload = () => (x.status >= 200 && x.status < 300 ? resolve() : reject(new Error("upload_http_" + x.status)));
         x.onerror = () => reject(new Error("upload_network"));
+        x.ontimeout = () => reject(new Error("upload_timeout"));
         x.send(file);
     });
+}
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function uploadWithRetry(kind, file, initialUpload, onProgress) {
+    let signed = initialUpload;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        if (stopped) throw new Error("upload_cancelled");
+        try {
+            await putFile(signed.url, file, signed.content_type, onProgress);
+            return;
+        } catch (error) {
+            if (error.message === "upload_cancelled" || stopped) throw new Error("upload_cancelled");
+            const status = /^upload_http_(\d+)$/.exec(error.message || "");
+            const retryable = error.message === "upload_network" || error.message === "upload_timeout" ||
+                !!(status && ([401,403,408,429].includes(Number(status[1])) || Number(status[1]) >= 500));
+            if (!retryable || attempt === 2) throw error;
+            await wait(500 * (attempt + 1));
+            if (stopped) throw new Error("upload_cancelled");
+            // Renew the signed URL for this file only. This also replaces an object
+            // whose upload may have completed server-side before the connection dropped.
+            const refreshed = await api(`/admin/tracks/${pending.trackId}/upload-urls`, {
+                method: "POST", body: { [kind]: decl(file) }
+            });
+            signed = refreshed.uploads && refreshed.uploads[kind];
+            if (!signed || !signed.url) throw new Error("storage_invalid_response");
+            onProgress(0);
+        }
+    }
 }
 const bar = sel => f => { const el = $(sel); if (el) el.style.width = (f * 100) + "%"; };
 function uploadFailMessage(e) {
@@ -309,6 +380,7 @@ function uploadFailMessage(e) {
         return `Storage refused the upload (HTTP ${n}). ${hint}`;
     }
     if (e && e.message === "upload_network") return "Network error while uploading. Check your connection and press retry.";
+    if (e && e.message === "upload_timeout") return "The upload took too long and timed out. Your draft is kept; press Retry upload to continue.";
     return null;
 }
 const LIM = { audio: { max: 30 * 1048576, ext: ["mp3", "m4a", "wav", "ogg", "flac"] }, cover: { max: 5 * 1048576, ext: ["jpg", "jpeg", "png", "webp"] } };
@@ -348,9 +420,11 @@ async function ensureRightsAck() {
     await api("/admin/rights-ack", { method: "POST" }); me.rights_ack = true; return true;
 }
 const decl = f => ({ filename: f.name, size: f.size, content_type: f.type || null });
-/* pending = { trackId, uploads, audio, cover, audioDone, coverDone, meta }
+const sameFile = (a, b) => !!(a && b && a.name === b.name && a.size === b.size && a.lastModified === b.lastModified);
+/* pending = { trackId, uploads, audio, cover, audioUploaded, coverUploaded, audioDone, coverDone, meta }
    Kept across failures so a retry reuses the SAME draft (no duplicates) and only redoes what is not finished. */
 let pending = null;
+let createRequestId = null;
 
 function viewUpload() {
     $("#panel").innerHTML = `<form class="glass" id="upForm" autocomplete="off" novalidate>
@@ -368,6 +442,7 @@ function viewUpload() {
         <img id="coverPrev" class="cov hidden" alt="Cover preview" style="width:110px;height:110px;margin-top:12px">
         <label class="check"><input type="checkbox" id="fUn"> <span>Mark as an Unreleased song (shows an Unreleased badge publicly).</span></label>
         <label class="check"><input type="checkbox" id="fDl"> <span>Allow public download of this track.</span></label>
+        <div id="upStatus" class="muted" role="status" aria-live="polite"></div>
         <div id="upProg" class="hidden"><label>Audio upload</label><div class="progress"><i id="pA"></i></div><label>Cover upload</label><div class="progress"><i id="pC"></i></div></div>
         <div id="upMsg"></div>
         <div class="actions"><button class="btn primary" id="upGo" type="submit">Upload as draft</button>
@@ -409,27 +484,52 @@ async function doUpload() {
     try { if (!(await ensureRightsAck())) return; } catch (e) { return note(msg, msgFor(e.code)); }
     const meta = { title, artist, album: $("#fAlbum").value, description: $("#fDesc").value, is_unreleased: $("#fUn").checked, download_enabled: $("#fDl").checked };
     stopped = false; $("#upStop").classList.remove("hidden");
-    go.disabled = true; note(msg, ""); $("#upProg").classList.remove("hidden"); bar("#pA")(0); bar("#pC")(0);
+    go.disabled = true; note(msg, ""); $("#upProg").classList.remove("hidden");
+    bar("#pA")(pending && pending.audioUploaded ? 1 : 0); bar("#pC")(pending && pending.coverUploaded ? 1 : 0);
+    const statusLine = $("#upStatus"); if (statusLine) statusLine.textContent = "Preparing a secure upload…";
     try {
         if (!pending) {
-            const key = crypto.randomUUID().replace(/-/g, "");                  // idempotency key: double-clicks / retries never duplicate
+            createRequestId = createRequestId || crypto.randomUUID().replace(/-/g, "");
+            const key = createRequestId;                                          // retain the same key if the create response is lost
             const r = await api("/admin/tracks", { method: "POST", body: { ...meta, rights_confirmed: true, client_request_id: key, audio: decl(audio), cover: cover ? decl(cover) : null } });
-            pending = { trackId: r.track.id, uploads: r.uploads, audio, cover, audioDone: false, coverDone: false, meta };
+            pending = { trackId: r.track.id, uploads: r.uploads, audio, cover,
+                audioUploaded: false, coverUploaded: false, audioDone: false, coverDone: false, meta };
+            createRequestId = null;
         } else {
+            if (pickedAudio && !sameFile(pickedAudio, pending.audio) && !pending.audioDone) {
+                pending.audioUploaded = false; pending.uploads = null;
+            }
+            if (pickedCover && !sameFile(pickedCover, pending.cover) && !pending.coverDone) {
+                pending.coverUploaded = false; pending.uploads = null;
+            }
             pending.audio = audio; pending.cover = cover; pending.meta = meta;
             await api(`/admin/tracks/${pending.trackId}`, { method: "PATCH", body: meta });   // keep edited text on the existing draft
             if (!pending.uploads) {                                                  // retry: fresh signed URLs, only for unfinished files
                 const body = {};
-                if (!pending.audioDone && pending.audio) body.audio = decl(pending.audio);
-                if (!pending.coverDone && pending.cover) body.cover = decl(pending.cover);
+                if (!pending.audioUploaded && !pending.audioDone && pending.audio) body.audio = decl(pending.audio);
+                if (!pending.coverUploaded && !pending.coverDone && pending.cover) body.cover = decl(pending.cover);
                 pending.uploads = Object.keys(body).length ? (await api(`/admin/tracks/${pending.trackId}/upload-urls`, { method: "POST", body })).uploads : {};
             }
         }
-        const U = pending.uploads || {}, tasks = [];                              // audio and cover upload in parallel
-        if (U.audio && !pending.audioDone && pending.audio) tasks.push(putFile(U.audio.url, pending.audio, U.audio.content_type, bar("#pA")));
-        if (U.cover && !pending.coverDone && pending.cover) tasks.push(putFile(U.cover.url, pending.cover, U.cover.content_type, bar("#pC")));
-        await Promise.all(tasks);
-        const fin = await api(`/admin/tracks/${pending.trackId}/finalize`, { method: "POST", body: { audio: !pending.audioDone, cover: !!pending.cover && !pending.coverDone } });
+        const U = pending.uploads || {}, tasks = [];                              // parallel transfers; each successful file is retained across retries
+        if (U.audio && !pending.audioUploaded && !pending.audioDone && pending.audio) tasks.push((async () => {
+            await uploadWithRetry("audio", pending.audio, U.audio, f => { bar("#pA")(f); const s = $("#upStatus"); if (s) s.textContent = `Uploading audio · ${Math.round(f * 100)}%`; });
+            pending.audioUploaded = true;
+        })());
+        if (U.cover && !pending.coverUploaded && !pending.coverDone && pending.cover) tasks.push((async () => {
+            await uploadWithRetry("cover", pending.cover, U.cover, f => { bar("#pC")(f); const s = $("#upStatus"); if (s) s.textContent = `Uploading cover · ${Math.round(f * 100)}%`; });
+            pending.coverUploaded = true;
+        })());
+        const results = await Promise.allSettled(tasks);
+        const failed = results.find(result => result.status === "rejected");
+        if (failed) throw failed.reason;
+        if (pending.audio && !pending.audioUploaded && !pending.audioDone) throw new Error("storage_invalid_response");
+        if (pending.cover && !pending.coverUploaded && !pending.coverDone) throw new Error("storage_invalid_response");
+        const status = $("#upStatus"); if (status) status.textContent = "Verifying uploaded files…";
+        const fin = await api(`/admin/tracks/${pending.trackId}/finalize`, { method: "POST", body: {
+            audio: !!pending.audioUploaded && !pending.audioDone,
+            cover: !!pending.cover && !!pending.coverUploaded && !pending.coverDone
+        } });
         const track = fin.track;
         pending = null;
         msg.innerHTML = `<div class="msg ok">Uploaded and verified. "${esc(track.title)}" is saved as a draft.
@@ -438,9 +538,9 @@ async function doUpload() {
         msg.querySelector("#upTracks").onclick = () => drillInto("tracks", "draft");
         $("#upForm").reset(); $("#coverPrev").classList.add("hidden"); showInfo("audio"); showInfo("cover");
     } catch (e) {
-        liveXhrs.forEach(x => x.abort());
         if (e.message === "upload_cancelled" || stopped) {
-            const id = pending && pending.trackId; pending = null;
+            liveXhrs.forEach(x => x.abort());
+            const id = pending && pending.trackId; pending = null; createRequestId = null;
             if (id) { try { await api(`/admin/tracks/${id}`, { method: "DELETE" }); } catch {} }   // cleanup: no half-uploaded draft is left behind
             return note(msg, "Upload stopped and cleaned up. Choose files and start again.", "ok");
         }
@@ -450,11 +550,13 @@ async function doUpload() {
         if (files && pending) {
             const rejected = [];
             for (const k of ["audio", "cover"]) {
-                const wanted = k === "audio" ? !pending.audioDone : (pending.cover && !pending.coverDone);
+                const uploadedKey = k + "Uploaded";
+                const wanted = k === "audio" ? (pending.audioUploaded && !pending.audioDone) : (pending.cover && pending.coverUploaded && !pending.coverDone);
                 if (!wanted) continue;
                 if (!files[k]) { if (k === "audio") pending.audioDone = true; else pending.coverDone = true; }   // this file passed validation
+                else if (files[k] === "upload_missing") pending[uploadedKey] = false;
                 else if (files[k] !== "upload_missing") {                                                     // rejected: needs a new file
-                    pending[k] = null; rejected.push(k);
+                    pending[k] = null; pending[uploadedKey] = false; rejected.push(k);
                     const inp = $(k === "audio" ? "#fAudio" : "#fCover"); if (inp) { inp.value = ""; showInfo(k); }
                 }
             }
@@ -515,6 +617,7 @@ function dialog(html) {
     return host;
 }
 const closeDlg = () => {
+    $("#dialogHost").querySelectorAll("audio").forEach(audio => { audio.pause(); audio.removeAttribute("src"); audio.load(); });
     $("#dialogHost").innerHTML = "";
     const f = onDlgClose; onDlgClose = null;
     if (f) f();
@@ -548,8 +651,45 @@ async function previewDlg(t) {
     h.querySelector("#pvX").onclick = closeDlg;
     try {
         const r = await api(`/admin/tracks/${t.id}/preview`);
-        h.querySelector("#pv").innerHTML = (r.cover_url ? `<img class="cov" style="width:140px;height:140px" alt="Cover" src="${esc(r.cover_url)}">` : "") + (r.audio_url ? `<audio controls preload="none" src="${esc(r.audio_url)}"></audio>` : `<div class="msg err">No audio uploaded yet.</div>`);
-    } catch (e) { h.querySelector("#pv").innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`; }
+        const box = h.querySelector("#pv");
+        if (!box || !document.querySelector("#dialogHost .overlay")) return;
+        if (!r.audio_url) { box.innerHTML = `<div class="msg err">No audio uploaded yet.</div>`; return; }
+        box.innerHTML = `<div class="mf-review-player">
+            <div class="mf-review-head">
+                ${r.cover_url ? `<img class="mf-review-cover" alt="Cover" src="${esc(r.cover_url)}">` : `<div class="mf-review-cover"></div>`}
+                <div style="min-width:0"><div class="mf-review-title">${esc(t.title)}</div><div class="mf-review-artist">${esc(t.artist)} · Review preview</div></div>
+            </div>
+            <div class="mf-review-controls">
+                <button class="mf-review-play" id="rvPlay" type="button" aria-label="Play preview">▶</button>
+                <input class="mf-review-seek" id="rvSeek" type="range" min="0" max="1000" value="0" aria-label="Seek preview">
+                <span class="mf-review-time" id="rvTime">0:00 / 0:00</span>
+            </div>
+            <div class="mf-review-volume-row"><span>Volume</span><input class="mf-review-volume" id="rvVolume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Preview volume"></div>
+            <audio id="rvAudio" preload="none" src="${esc(r.audio_url)}"></audio>
+        </div>`;
+        const audio = box.querySelector("#rvAudio"), play = box.querySelector("#rvPlay"), seek = box.querySelector("#rvSeek"), time = box.querySelector("#rvTime");
+        const fmt = seconds => { if (!Number.isFinite(seconds) || seconds < 0) return "0:00"; const n = Math.floor(seconds); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}`; };
+        const update = () => {
+            const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+            seek.value = duration ? String(Math.round(audio.currentTime / duration * 1000)) : "0";
+            time.textContent = `${fmt(audio.currentTime)} / ${fmt(duration)}`;
+        };
+        play.onclick = async () => {
+            if (audio.paused) { try { await audio.play(); } catch { play.title = "Playback was blocked. Press Play again."; } }
+            else audio.pause();
+        };
+        audio.addEventListener("play", () => { play.textContent = "Ⅱ"; play.setAttribute("aria-label", "Pause preview"); });
+        audio.addEventListener("pause", () => { play.textContent = "▶"; play.setAttribute("aria-label", "Play preview"); });
+        audio.addEventListener("timeupdate", update);
+        audio.addEventListener("loadedmetadata", update);
+        audio.addEventListener("ended", update);
+        audio.addEventListener("error", () => { time.textContent = "Preview unavailable"; });
+        seek.addEventListener("input", () => { if (Number.isFinite(audio.duration)) audio.currentTime = audio.duration * Number(seek.value) / 1000; });
+        box.querySelector("#rvVolume").addEventListener("input", event => { audio.volume = Number(event.target.value); });
+    } catch (e) {
+        const box = h.querySelector("#pv");
+        if (box) box.innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`;
+    }
 }
 function editDlg(t) {
     const h = dialog(`<h2>Edit track</h2>
@@ -644,6 +784,31 @@ async function viewAdmins() {
         renderSignIn(msgFor("cloud_not_configured"));
     }
 })();
+</script>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (window.Lenis && !reduceMotion) {
+        try { window.mfLenis = new Lenis({ autoRaf:true, smoothWheel:true, syncTouch:false, lerp:.09, allowNestedScroll:true,
+            prevent: node => !!(node && node.closest && node.closest(".tableWrap,.dlg,[data-lenis-prevent]")) }); }
+        catch (error) { console.warn("Lenis initialization skipped:", error); }
+    }
+    document.documentElement.classList.add("page-ready");
+    if (window.barba && !reduceMotion) {
+        try { barba.init({ preventRunning:true,
+            requestError: (_trigger, action, url) => { if (action === "click") location.assign(url); else location.replace(url); return false; },
+            prevent: ({el}) => !el || el.hasAttribute("data-barba-prevent") || el.target === "_blank" ||
+                new URL(el.href, location.href).origin !== location.origin ||
+                !["/", "/admin.html"].includes(new URL(el.href, location.href).pathname),
+            transitions:[{ name:"musicfinder-liquid-route", leave:async ({next}) => {
+                document.documentElement.classList.add("barba-leaving");
+                await new Promise(resolve => setTimeout(resolve,150));
+                location.replace(next.url.href);
+            }}]
+        }); } catch (error) { console.warn("Barba initialization skipped:", error); }
+    }
+});
 </script>
 </body>
 </html>

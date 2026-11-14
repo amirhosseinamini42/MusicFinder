@@ -111,6 +111,14 @@
         });
         if (error) throw error;
     }
+    async function verifyOtp(tokenHash, type) {
+        if (typeof tokenHash !== "string" || !tokenHash.trim()) throw new Error("confirmation_token_missing");
+        if (type !== "email") throw new Error("confirmation_type_invalid");
+        const a = await auth();
+        const { data, error } = await a.verifyOtp({ token_hash: tokenHash.trim(), type: "email" });
+        if (error) throw error;
+        return data;
+    }
     async function updatePassword(password) {
         const a = await auth();
         const { data, error } = await a.updateUser({ password });
@@ -152,5 +160,5 @@
     }
     function isGoogleEnabled() { return googleEnabled; }
     w.MFAuth = Object.freeze({ init, getSession, refreshSession, signIn, signUp, signInWithGoogle, signOut,
-        resetPassword, resendSignup, updatePassword, updateName, uploadAvatar, onAuthStateChange, isGoogleEnabled });
+        resetPassword, resendSignup, verifyOtp, updatePassword, updateName, uploadAvatar, onAuthStateChange, isGoogleEnabled });
 })(window);

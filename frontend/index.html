@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#110b08">
+<meta name="theme-color" content="#080b13">
 
 <title>MusicFinder</title>
 <meta name="description" content="Discover music, explore artists, and find your next favorite song.">
@@ -202,7 +202,7 @@ a {
     filter: drop-shadow(0 2px 8px rgba(196,127,53,.22));
 }
 
-.logo span {
+.logoText span {
     opacity: .45;
 }
 
@@ -1651,10 +1651,10 @@ footer {
     --muted: rgba(244,232,212,0.58);
     --accent: #f4e8d4;
 
-    /* default light: amber lamp, burgundy dusk, rainy blue-gray (artwork colours still override these) */
-    --dynamic-color: rgba(214,138,58,.24);
-    --dynamic-color-2: rgba(96,120,140,.16);
-    --dynamic-color-3: rgba(140,52,64,.20);
+    /* neutral blue / silver glass accents; artwork may add subtle source-specific color */
+    --dynamic-color: rgba(135,165,255,.26);
+    --dynamic-color-2: rgba(96,145,205,.18);
+    --dynamic-color-3: rgba(80,180,210,.18);
 }
 
 .navbar::before { background: rgba(24,14,9,.62); }
@@ -1679,7 +1679,7 @@ body::after {
     animation: lampBreathe 14s ease-in-out infinite;
 }
 
-body::selection, ::selection { background: rgba(214,138,58,.4); }
+body::selection, ::selection { background: rgba(145,175,255,.38); }
 
 @keyframes lampBreathe {
     0%, 100% { opacity: .85; }
@@ -1711,7 +1711,7 @@ html::after {
     letter-spacing: 0;
 }
 
-.logo span { color: #e0a45a; opacity: .75; }
+.logoText span { color: #c8d8ff; opacity: .82; }
 
 @media (prefers-reduced-motion: reduce) {
     body::after { animation: none; }
@@ -1925,19 +1925,67 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 .mfPicker { width: min(420px, 100%); max-height: 80vh; overflow: auto; padding: 22px; border-radius: 24px; background: rgba(24,14,9,.96); border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,.6); }
 .mfPicker h4 { margin: 0 0 14px; font-size: 17px; }
 .mfPickItem { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; margin-bottom: 8px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255,255,255,.05); color: var(--text); text-align: start; }
-.mfPickItem.on { border-color: #e0a45a; background: rgba(224,164,90,.16); }
+.mfPickItem.on { border-color: #9fb9ff; background: rgba(145,175,255,.16); }
 .mfPickCreate { display: flex; gap: 8px; margin-top: 12px; }
 .mfPickCreate input { flex: 1; min-width: 0; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,.07); color: var(--text); }
-.mfMail { direction: ltr; unicode-bidi: isolate; color: #e0a45a; text-decoration: underline; }
+.mfMail { direction: ltr; unicode-bidi: isolate; color: #b9ccff; text-decoration: underline; }
 /* MF-EXTRAS-END */
 </style>
 <link rel="stylesheet" href="/auth.css">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script defer src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@barba/core@2.10.3/dist/barba.umd.js"></script>
+<style id="mf-liquid-glass">
+:root { --bg:#080b13; --glass:rgba(225,235,255,.075); --glass-strong:rgba(225,235,255,.14); --border:rgba(220,232,255,.18); --text:#f4f7ff; --muted:rgba(225,235,255,.62); --accent:#dce8ff; --mf-glass-shadow:0 22px 70px rgba(0,0,0,.34); }
+html { scroll-behavior:auto; }
+body { color:var(--text); background:radial-gradient(ellipse 70% 50% at 12% 0%,rgba(92,120,255,.18),transparent 70%),radial-gradient(ellipse 55% 45% at 90% 95%,rgba(55,190,220,.11),transparent 72%),var(--bg); }
+body::after { background:radial-gradient(ellipse 65% 45% at 10% 0%,rgba(110,135,255,.20),transparent 72%),radial-gradient(ellipse 50% 40% at 90% 100%,rgba(55,190,220,.12),transparent 72%),radial-gradient(ellipse at 50% 45%,transparent 50%,rgba(0,0,0,.34) 100%); animation:mfGlassAmbient 18s ease-in-out infinite; }
+@keyframes mfGlassAmbient { 0%,100%{opacity:.78} 50%{opacity:1} }
+.navbar::before { background:rgba(9,14,26,.58); backdrop-filter:blur(28px) saturate(155%); -webkit-backdrop-filter:blur(28px) saturate(155%); }
+.glass,.resultCard,.artistCard,.tasteBox,.mfPl,.modal,.menuDrawer,.searchBox,.musicPlayer,.fullPlayer,.tgPanel,.mfPicker { background:linear-gradient(145deg,rgba(240,246,255,.13),rgba(170,195,255,.045) 58%,rgba(255,255,255,.065)); border:1px solid rgba(225,236,255,.18); box-shadow:var(--mf-glass-shadow),inset 0 1px 0 rgba(255,255,255,.22); backdrop-filter:blur(26px) saturate(155%); -webkit-backdrop-filter:blur(26px) saturate(155%); }
+:where(button,a[role="button"],.historyItem,.smallBtn,.menuButton,.navButton,.closeMenu,.modalClose,.playerButton,.fullPlayerClose,.authSignOut,.authUser,.searchBtn,.playBtn,.previewBtn,.featureArtist button,.langSwitch button,.searchMode button) { border:1px solid rgba(225,236,255,.2); border-radius:14px; background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(190,210,255,.055)); color:var(--text); box-shadow:inset 0 1px 0 rgba(255,255,255,.20),0 8px 24px rgba(0,0,0,.12); backdrop-filter:blur(16px) saturate(150%); -webkit-backdrop-filter:blur(16px) saturate(150%); transition:transform .28s cubic-bezier(.2,.8,.2,1),background .28s,border-color .28s,box-shadow .28s,color .28s; }
+:where(button,a[role="button"],.historyItem,.smallBtn,.menuButton,.navButton,.closeMenu,.modalClose,.playerButton,.fullPlayerClose,.authSignOut,.authUser,.searchBtn,.playBtn,.previewBtn,.featureArtist button,.langSwitch button,.searchMode button):hover { transform:translateY(-2px); border-color:rgba(230,240,255,.36); background:linear-gradient(145deg,rgba(255,255,255,.23),rgba(145,175,255,.13)); box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 14px 32px rgba(0,0,0,.22); }
+:where(button,a[role="button"],.historyItem,.smallBtn,.menuButton,.navButton,.closeMenu,.modalClose,.playerButton,.fullPlayerClose,.authSignOut,.authUser,.searchBtn,.playBtn,.previewBtn,.featureArtist button):active { transform:translateY(0) scale(.975); }
+button { border:1px solid rgba(225,236,255,.2); background:linear-gradient(145deg,rgba(255,255,255,.15),rgba(170,195,255,.055)); color:var(--text); box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 8px 22px rgba(0,0,0,.10); backdrop-filter:blur(15px) saturate(145%); -webkit-backdrop-filter:blur(15px) saturate(145%); transition:transform .28s cubic-bezier(.2,.8,.2,1),background .28s,border-color .28s,box-shadow .28s; }
+button:hover { border-color:rgba(230,240,255,.34); background:linear-gradient(145deg,rgba(255,255,255,.22),rgba(145,175,255,.12)); box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 12px 28px rgba(0,0,0,.18); }
+button:active { transform:scale(.975); }
+:where(.searchBtn,.btn.primary,.smallBtn.primary,.playBtn,.playerPlay,.langSwitch button.active,.searchMode button.active) { color:#f8faff; background:linear-gradient(135deg,rgba(150,175,255,.34),rgba(95,130,230,.20)); border:1px solid rgba(205,220,255,.32); }
+:where(input:not([type="range"]),select,textarea) { border:1px solid rgba(225,236,255,.18)!important; background:rgba(225,235,255,.065)!important; color:var(--text)!important; box-shadow:inset 0 1px 0 rgba(255,255,255,.07); backdrop-filter:blur(14px); }
+:where(input,select,textarea):focus { outline:0; border-color:rgba(155,185,255,.7)!important; box-shadow:0 0 0 3px rgba(115,150,255,.14),inset 0 1px 0 rgba(255,255,255,.1); }
+.albumCard,.albumTrack,.tasteRow,.resultCard,.artistCard,.featureArtist,.empty { border:1px solid rgba(225,236,255,.14); background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(170,195,255,.035)); box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 14px 38px rgba(0,0,0,.14); backdrop-filter:blur(20px) saturate(145%); }
+.albumCard:hover,.albumCard:focus-visible,.resultCard:hover,.artistCard:hover { border-color:rgba(220,235,255,.3); box-shadow:0 20px 48px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.2); }
+.albumGrid { gap:16px; }
+.adminShortcut { display:inline-flex; align-items:center; gap:7px; min-height:38px; padding:8px 12px; border-radius:13px; border:1px solid rgba(170,195,255,.32); background:linear-gradient(135deg,rgba(135,165,255,.22),rgba(255,255,255,.08)); color:#edf2ff; font-size:12px; font-weight:750; box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 8px 22px rgba(0,0,0,.16); }
+.adminShortcut span { font-size:14px; }
+.adminShortcut[hidden] { display:none!important; }
+.adminShortcut:hover { transform:translateY(-2px); background:rgba(145,175,255,.22); }
+.musicPlayer { border-radius:24px; }
+.musicPlayer.mode-full { width:min(460px,calc(100% - 40px)); flex-wrap:wrap; gap:12px; }
+.musicPlayer.mode-full .playerControls,.musicPlayer.mode-full .playerTimeline,.musicPlayer.mode-full .playerVolume { display:none; }
+.playerFullContent { display:none; flex:1 1 100%; min-width:0; }
+.musicPlayer.mode-full .playerFullContent { display:block; }
+.musicPlayer.mode-full .fullPlayerTop { display:none; }
+.musicPlayer.mode-full .fullPlayerBody iframe { width:100%; border:0; border-radius:14px; }
+.musicPlayer.minimized { width:min(320px,calc(100% - 24px)); min-height:66px; padding:9px 10px; gap:10px; border-radius:18px; }
+.musicPlayer.minimized .playerCover { width:46px; height:46px; }
+.musicPlayer.minimized .playerInfo { min-width:0; flex:1; max-width:none; }
+.musicPlayer.minimized .playerControls,.musicPlayer.minimized .playerTimeline,.musicPlayer.minimized .playerVolume,.musicPlayer.minimized .playerFullContent { display:none!important; }
+.playerCloseBtn { width:34px!important; height:34px!important; flex:0 0 34px; }
+.playerCloseBtn { position:relative!important; z-index:2; }
+#pageShell { min-height:100vh; opacity:1; transform:translateY(0); transition:opacity .22s ease,transform .22s ease; }
+html.page-ready #pageShell { animation:mfPageEnter .42s cubic-bezier(.2,.8,.2,1) both; }
+html.barba-leaving #pageShell { opacity:0; transform:translateY(8px); }
+@keyframes mfPageEnter { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@media(max-width:700px) { .adminShortcut{width:36px;min-height:36px;padding:0;justify-content:center;font-size:0;gap:0} .adminShortcut span{font-size:15px} .musicPlayer.mode-full{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));width:auto} .musicPlayer.minimized{left:12px;right:auto;width:min(290px,calc(100% - 24px))} .albumGrid{grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:11px} }
+@media(prefers-reduced-motion:reduce) { body::after{animation:none!important} #pageShell{animation:none!important;transition:none!important} :where(button,a[role="button"],.historyItem,.smallBtn){transition:none!important} }
+</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script src="/auth-client.js"></script>
 <script src="/auth-ui.js"></script>
 </head>
 
-<body>
+<body class="mf-liquid-glass" data-barba="wrapper">
+<div id="pageShell" data-barba="container" data-barba-namespace="home">
 
 <div id="backgroundArt"></div>
 <div class="backgroundOverlay"></div>
@@ -2041,15 +2089,11 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
     </button>
 
+    <button class="playerButton playerCloseBtn" id="playerClose" type="button" aria-label="Close player" title="Close player">×</button>
+
     <div class="playerMiniBar" aria-hidden="true"><i id="playerMiniFill"></i></div>
 
-    <audio id="musicAudio"></audio>
-
-</div>
-
-<!-- Full song player -->
-
-<div class="fullPlayer" id="fullPlayer">
+    <div class="playerFullContent" id="fullPlayer">
 
     <div class="fullPlayerTop">
 
@@ -2058,31 +2102,22 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
             <div class="fullPlayerArtist" id="fullPlayerArtist"></div>
         </div>
 
-        <button
-            class="fullPlayerClose"
-            type="button"
-            onclick="closeFullPlayer()"
-            aria-label="Close"
-        >
-            ×
-        </button>
-
     </div>
-
     <div class="fullPlayerBody" id="fullPlayerBody"></div>
-
     <div class="fullPlayerNote" id="fullPlayerNote"></div>
-
+    </div>
+    <audio id="musicAudio"></audio>
 </div>
 
 <nav class="navbar">
 
     <div class="logo">
         <img class="siteLogoMark" src="/favicon-192x192.png" alt="" width="31" height="31" decoding="async">
-        Music<span>Finder</span>
+        <span class="logoText">Music<span>Finder</span></span>
     </div>
 
     <div class="navRight">
+        <a class="adminShortcut" id="adminShortcut" href="/admin.html" hidden aria-label="Open Admin Panel"><span aria-hidden="true">▦</span> Admin Panel</a>
         <div class="authArea" id="authArea"></div>
         <button class="menuButton" onclick="openMenu()">☰</button>
     </div>
@@ -4460,6 +4495,7 @@ const playerVolume = document.getElementById("playerVolume");
 
 const playerMin = document.getElementById("playerMin");
 const playerMiniFill = document.getElementById("playerMiniFill");
+const playerClose = document.getElementById("playerClose");
 
 
 /* Play / pause icons (SVG, same look on every device) */
@@ -4501,6 +4537,20 @@ function setPlayerMinimized(minimized, remember) {
 
 playerMin.addEventListener("click", () => {
     setPlayerMinimized(!musicPlayer.classList.contains("minimized"), true);
+});
+
+playerClose.addEventListener("click", () => {
+    if (musicPlayer.classList.contains("mode-full")) {
+        closeFullPlayer();
+        return;
+    }
+    playerLoadId++;
+    musicAudio.pause();
+    musicAudio.removeAttribute("src");
+    musicAudio.load();
+    setPlayerPlaying(false);
+    musicPlayer.classList.remove("active", "minimized");
+    try { localStorage.setItem(PLAYER_MIN_KEY, "0"); } catch {}
 });
 
 (function restorePlayerSize() {
@@ -5048,11 +5098,9 @@ function playFullSong(song) {
     // start playing in the background next to the Spotify embed.
     playerLoadId++;
 
-    // One player at a time: stop and hide the preview player
+    // One shared player surface; full-song provider playback remains a separate source adapter.
     musicAudio.pause();
-    musicPlayer.classList.remove("active");
 
-    const panel = document.getElementById("fullPlayer");
     const body = document.getElementById("fullPlayerBody");
     const note = document.getElementById("fullPlayerNote");
 
@@ -5063,6 +5111,10 @@ function playFullSong(song) {
 
     document.getElementById("fullPlayerArtist").textContent =
         artists.join(", ");
+    playerTitle.textContent = song.name || "Unknown Song";
+    playerArtist.textContent = artists.join(", ") || "Unknown Artist";
+    playerCover.src = song.album?.images?.[0]?.url || "";
+    setPlayerMinimized(false, true);
 
     // Google search: song name + artist + the Persian word for "download"
     const searchText =
@@ -5106,18 +5158,17 @@ function playFullSong(song) {
 
     }
 
-    panel.classList.add("active");
+    musicPlayer.classList.add("mode-full", "active");
 
 }
 
 
 function closeFullPlayer() {
-
-    document.getElementById("fullPlayer").classList.remove("active");
-
-    // Removing the iframe stops its audio
+    musicPlayer.classList.remove("mode-full", "active", "minimized");
     document.getElementById("fullPlayerBody").innerHTML = "";
-
+    document.getElementById("fullPlayerNote").textContent = "";
+    setPlayerPlaying(false);
+    try { localStorage.setItem(PLAYER_MIN_KEY, "0"); } catch {}
 }
 
 
@@ -5186,6 +5237,29 @@ async function signOutUser() {
     try { await MFAuth.signOut(); }
     catch (error) { console.error("Sign out failed:", error); }
     clearSignedInUser();
+    refreshAdminShortcut(null);
+}
+
+let adminShortcutRequest = 0;
+async function refreshAdminShortcut(session) {
+    const link = document.getElementById("adminShortcut");
+    if (!link) return;
+    const requestId = ++adminShortcutRequest;
+    link.hidden = true;
+    if (!session || !session.access_token) return;
+    try {
+        const response = await fetch(`${API_BASE}/admin/me`, {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            cache: "no-store"
+        });
+        if (!response.ok) return;
+        const admin = await response.json();
+        if (requestId !== adminShortcutRequest) return;
+        link.hidden = !["admin", "owner"].includes(admin.role);
+    } catch (error) {
+        if (requestId === adminShortcutRequest) link.hidden = true;
+        console.debug("Admin shortcut check unavailable:", error && error.name);
+    }
 }
 
 let emailConfirmationUiHandled = false;
@@ -5195,7 +5269,6 @@ function handleEmailConfirmation(session) {
     const callbackUrl = new URL(window.location.href);
     if (callbackUrl.searchParams.get("auth") !== "confirmed") return;
     emailConfirmationUiHandled = true;
-    signInUser(session.user);
     callbackUrl.searchParams.delete("auth");
     window.history.replaceState({}, document.title,
         callbackUrl.pathname + callbackUrl.search + callbackUrl.hash);
@@ -5221,17 +5294,18 @@ async function initAccountAuth() {
         await MFAuth.init();
         MFAuth.onAuthStateChange((event, session) => {
             if (session && session.user) {
+                signInUser(session.user);
+                refreshAdminShortcut(session);
                 if (event === "SIGNED_IN") handleEmailConfirmation(session);
-                else signInUser(session.user);
             }
-            else if (currentUser) clearSignedInUser();
+            else { refreshAdminShortcut(null); if (currentUser) clearSignedInUser(); }
         });
         const session = await MFAuth.getSession();
         if (session && session.user) {
-            if (!emailConfirmationUiHandled) signInUser(session.user);
+            if (!currentUser) signInUser(session.user);
+            refreshAdminShortcut(session);
             handleEmailConfirmation(session);
-        }
-        else renderAuth();
+        } else { refreshAdminShortcut(null); renderAuth(); }
         if (new URLSearchParams(window.location.search).get("auth") === "recovery") {
             MFLoginPanel.open("recovery");
         }
@@ -6119,5 +6193,35 @@ function showTelegramPanel(query, copied) {
 })();
 </script>
 <script src="uploads-integration.js"></script>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (window.Lenis && !reduceMotion) {
+        try {
+            window.mfLenis = new Lenis({ autoRaf:true, smoothWheel:true, syncTouch:false, lerp:.09, allowNestedScroll:true,
+                prevent: node => !!(node && node.closest && node.closest(".menuDrawer,.modal,.mfPicker,[data-lenis-prevent]")) });
+        } catch (error) { console.warn("Lenis initialization skipped:", error); }
+    }
+    document.documentElement.classList.add("page-ready");
+    if (window.barba && !reduceMotion) {
+        try {
+            barba.init({ preventRunning:true,
+                requestError: (_trigger, action, url) => { if (action === "click") location.assign(url); else location.replace(url); return false; },
+                prevent: ({el}) => !el || el.hasAttribute("data-barba-prevent") || el.target === "_blank" ||
+                    new URL(el.href, location.href).origin !== location.origin ||
+                    !["/", "/admin.html"].includes(new URL(el.href, location.href).pathname),
+                transitions:[{ name:"musicfinder-liquid-route", leave:async ({next}) => {
+                    document.documentElement.classList.add("barba-leaving");
+                    await new Promise(resolve => setTimeout(resolve,150));
+                    // The legacy pages have independent inline bootstraps; reload after the transition
+                    // so each destination reinitializes auth, player, and admin state safely.
+                    location.replace(next.url.href);
+                }}]
+            });
+        } catch (error) { console.warn("Barba initialization skipped:", error); }
+    }
+});
+</script>
 </body>
 </html>

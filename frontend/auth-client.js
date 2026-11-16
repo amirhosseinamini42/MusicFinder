@@ -68,14 +68,10 @@
         if (error) throw error;
         return data;
     }
-    async function signUp(name, email, password) {
+    async function signUp(email, password) {
         const a = await auth();
         const { data, error } = await a.signUp({
-            email: email.trim().toLowerCase(), password,
-            options: {
-                data: { full_name: name.trim() },
-                emailRedirectTo: window.location.origin + "/?auth=confirmed"
-            }
+            email: email.trim().toLowerCase(), password
         });
         if (error) throw error;
         return data;

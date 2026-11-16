@@ -51,8 +51,9 @@
         host.hidden = false;
         const profile = mode === "profile";
         const recovery = mode === "recovery";
+        const forgot = mode === "forgot";
         const signup = mode === "signup";
-        const title = profile ? "Your account" : recovery ? "Choose a new password" : signup ? "Create your account" : "Welcome back";
+        const title = profile ? "Your account" : recovery ? "Choose a new password" : forgot ? "Forgot password?" : signup ? "Create your account" : "Welcome back";
         host.innerHTML = `<section class="mf-auth-dialog" role="dialog" aria-modal="true" aria-labelledby="mfAuthTitle">
             <button class="mf-auth-close" type="button" aria-label="Close">×</button>
             <div class="mf-auth-brand"><span class="mf-auth-brand-mark">M</span><span>MusicFinder</span></div>
@@ -65,12 +66,14 @@
                 <button class="mf-auth-primary" type="submit">Save changes</button></form>
                 <button class="mf-auth-secondary" id="mfAuthSignOut" type="button">Sign out</button>` : recovery ?
                 `<form id="mfRecoveryForm"><label for="mfRecoveryPassword">New password</label><div class="mf-auth-password-field"><input id="mfRecoveryPassword" name="password" type="password" minlength="8" autocomplete="new-password" required><button class="mf-auth-password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show password</button></div><button class="mf-auth-primary" type="submit">Update password</button></form>` :
+                forgot ?
+                `<div class="mf-auth-message" role="status">Password recovery is temporarily unavailable while this feature is being updated and repaired. Please try again later.</div><button class="mf-auth-secondary" id="mfBackToLogin" type="button">Back to sign in</button>` :
                 `<div class="mf-auth-tabs"><button type="button" data-mode="login" class="${!signup ? "active" : ""}">Sign in</button><button type="button" data-mode="signup" class="${signup ? "active" : ""}">Create account</button></div>
-                <form id="mfAuthForm">${signup ? `<label>Your name<input name="name" type="text" maxlength="80" autocomplete="name" required></label>` : ""}
+                <form id="mfAuthForm">
                 <label>Email<input name="email" type="email" maxlength="254" autocomplete="email" required></label>
                 <label for="mfAuthPassword">Password</label><div class="mf-auth-password-field"><input id="mfAuthPassword" name="password" type="password" minlength="8" autocomplete="${signup ? "new-password" : "current-password"}" required><button class="mf-auth-password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show password</button></div>
                 <button class="mf-auth-primary" type="submit">${signup ? "Create account" : "Sign in"}</button></form>
-                ${!signup ? `<button class="mf-auth-link" id="mfForgot" type="button">Forgot password?</button>` : `<button class="mf-auth-link" id="mfResend" type="button" hidden>Resend verification email</button>`}
+                ${!signup ? `<button class="mf-auth-link" id="mfForgot" type="button">Forgot password?</button>` : ""}
                 <div class="mf-auth-divider"><span>OR</span></div><button class="mf-auth-google" id="mfGoogle" type="button"><span class="mf-auth-google-mark" aria-hidden="true">G</span><span>Continue with Google</span></button>`}
         </section>`;
         host.querySelectorAll(".mf-auth-password-toggle").forEach(toggle => {
@@ -101,23 +104,13 @@
             try {
                 await w.MFAuth.init();
                 if (signup) {
-                    const result = await w.MFAuth.signUp(data.get("name"), data.get("email"), data.get("password"));
+                    const result = await w.MFAuth.signUp(data.get("email"), data.get("password"));
                     if (!result.session) {
-                        showMessage("Check your inbox and verify your email before signing in.", "success");
-                        const resend = host.querySelector("#mfResend"); if (resend) resend.hidden = false;
+                        showMessage("Your account request was received. You can now try signing in with your email and password.", "success");
                     } else close();
                 } else { await w.MFAuth.signIn(data.get("email"), data.get("password")); close(); }
             } catch (error) { showMessage(errorText(error), "error"); }
             finally { submit.disabled = false; }
-        };
-        const resend = host.querySelector("#mfResend");
-        if (resend) resend.onclick = async () => {
-            const email = form && form.elements.email.value.trim();
-            if (!email) { showMessage("Enter your email address first.", "error"); return; }
-            resend.disabled = true;
-            try { await w.MFAuth.resendSignup(email); showMessage("If the address can receive a verification message, a new email has been sent.", "success"); }
-            catch (error) { showMessage(errorText(error), "error"); }
-            finally { resend.disabled = false; }
         };
         const google = host.querySelector("#mfGoogle");
         if (google) {
@@ -134,13 +127,10 @@
                 finally { google.disabled = false; }
             };
         }
-        const forgot = host.querySelector("#mfForgot");
-        if (forgot) forgot.onclick = async () => {
-            const email = form.elements.email.value.trim();
-            if (!email) { showMessage("Enter your email address first.", "error"); form.elements.email.focus(); return; }
-            try { await w.MFAuth.resetPassword(email); showMessage("Password reset instructions have been sent if the account exists.", "success"); }
-            catch (error) { showMessage(errorText(error), "error"); }
-        };
+        const forgotButton = host.querySelector("#mfForgot");
+        if (forgotButton) forgotButton.onclick = () => { mode = "forgot"; render(); };
+        const backToLogin = host.querySelector("#mfBackToLogin");
+        if (backToLogin) backToLogin.onclick = () => { mode = "login"; render(); };
         const recoveryForm = host.querySelector("#mfRecoveryForm");
         if (recoveryForm) recoveryForm.onsubmit = async event => {
             event.preventDefault(); const button = recoveryForm.querySelector("button"); button.disabled = true;

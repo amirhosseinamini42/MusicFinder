@@ -6012,6 +6012,7 @@ function showTelegramPanel(query, copied) {
         query_too_short:  ["Type at least 3 characters from the lyrics.", "حداقل ۳ حرف از متن آهنگ را وارد کنید."],
         query_too_long:   ["That's too long. Use a single line (up to 200 characters).", "این متن خیلی طولانی است. یک خط (حداکثر ۲۰۰ حرف) بنویسید."],
         lyrics_not_configured: ["Lyrics search isn't set up on the server yet.", "جستجوی متن آهنگ هنوز روی سرور راه‌اندازی نشده است."],
+        lyrics_temporarily_disabled: ["Lyrics search is temporarily disabled. We'll bring it back when a new provider is ready.", "جستجوی متن آهنگ فعلاً غیرفعال است. پس از آماده‌شدن سرویس جدید دوباره فعال می‌شود."],
         lyrics_limit_reached:  ["The daily lyrics-search limit has been reached. Please try again later.", "سقف روزانه‌ی جستجوی متن آهنگ پر شده است. لطفاً بعداً دوباره تلاش کنید."],
         rate_limited:     ["Too many searches. Please wait a minute and try again.", "جستجوها زیاد بود. یک دقیقه صبر کنید و دوباره تلاش کنید."],
         lyrics_unavailable: ["The lyrics service is unavailable right now. Please try again shortly.", "سرویس متن آهنگ فعلاً در دسترس نیست. کمی بعد دوباره تلاش کنید."],
@@ -6024,7 +6025,7 @@ function showTelegramPanel(query, copied) {
     if (window.MF_FA) {
         Object.assign(window.MF_FA, {
             "Songs, artists & albums": "آهنگ، هنرمند و آلبوم",
-            "Search by lyrics": "جستجو با متن آهنگ",
+            "Search by lyrics (Temporarily disabled)": "جستجو با متن آهنگ (فعلاً غیرفعال)",
             "Type a line from the lyrics...": "یک خط از متن آهنگ را بنویسید...",
             "Search type": "نوع جستجو"
         });
@@ -6055,7 +6056,7 @@ function showTelegramPanel(query, copied) {
         wrap.setAttribute("aria-label", "Search type");
         wrap.innerHTML =
             `<button type="button" class="active" data-mode="all" aria-pressed="true">Songs, artists &amp; albums</button>` +
-            `<button type="button" data-mode="lyrics" aria-pressed="false">Search by lyrics</button>`;
+            `<button type="button" data-mode="lyrics" aria-pressed="false">Search by lyrics (Temporarily disabled)</button>`;
         wrap.addEventListener("click", e => {
             const b = e.target.closest("button[data-mode]");
             if (b) setMode(b.dataset.mode);

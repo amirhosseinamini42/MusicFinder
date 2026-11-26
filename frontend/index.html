@@ -1937,7 +1937,8 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 .mfPickItem.on { border-color: #9fb9ff; background: rgba(145,175,255,.16); }
 .mfPickCreate { display: flex; gap: 8px; margin-top: 12px; }
 .mfPickCreate input { flex: 1; min-width: 0; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,.07); color: var(--text); }
-.mfMail { direction: ltr; unicode-bidi: isolate; color: #b9ccff; text-decoration: underline; }
+.mfMail { direction: ltr; unicode-bidi: isolate; color: #e6b06a; text-decoration: underline; text-decoration-color: rgba(230,176,106,.62); text-underline-offset: 3px; transition: color .2s ease; }
+.mfMail:hover, .mfMail:focus-visible { color: #f4c27f; }
 /* MF-EXTRAS-END */
 </style>
 <link rel="stylesheet" href="/auth.css">
@@ -1959,6 +1960,15 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 .musicPlayer.minimized .playerCover { width:46px; height:46px; }
 .musicPlayer.minimized .playerInfo { min-width:0; flex:1; max-width:none; }
 .musicPlayer.minimized .playerControls,.musicPlayer.minimized .playerTimeline,.musicPlayer.minimized .playerVolume,.musicPlayer.minimized .playerFullContent { display:none !important; }
+.musicPlayer.minimized .playerControls { display:flex !important; flex:0 0 auto; gap:5px; }
+.musicPlayer.minimized .playerControls #playerPrevious { display:none; }
+.playerControls #playerStop { display:none; }
+.musicPlayer.minimized .playerControls #playerStop { display:flex; }
+.musicPlayer.minimized .playerControls .playerButton { width:30px; height:30px; }
+.musicPlayer.minimized .playerControls .playerPlay { width:32px; height:32px; }
+.musicPlayer.minimized .playerControls .playerButton svg { width:16px; height:16px; }
+.playerMinBtn svg { transition:transform .2s ease; }
+.musicPlayer.minimized .playerMinBtn svg { transform:rotate(180deg); }
 .playerCloseBtn { width:34px; height:34px; flex:0 0 34px; position:relative; z-index:2; }
 .playerMinBtn { flex-shrink:0; }
 #pageShell { min-height:100vh; opacity:1; transition:opacity .22s ease; }
@@ -2009,6 +2019,8 @@ html.barba-leaving #pageShell { opacity:0; }
             class="playerButton"
             id="playerPrevious"
             type="button"
+            title="Previous track"
+            aria-label="Previous track"
         >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M6 6h2v12H6zM9.5 12l8.5 6V6z"/></svg>
         </button>
@@ -2017,6 +2029,8 @@ html.barba-leaving #pageShell { opacity:0; }
             class="playerButton playerPlay"
             id="playerPlay"
             type="button"
+            title="Play or pause"
+            aria-label="Play"
         >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
         </button>
@@ -2025,8 +2039,20 @@ html.barba-leaving #pageShell { opacity:0; }
             class="playerButton"
             id="playerNext"
             type="button"
+            title="Next track"
+            aria-label="Next track"
         >
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg>
+        </button>
+
+        <button
+            class="playerButton"
+            id="playerStop"
+            type="button"
+            title="Stop playback"
+            aria-label="Stop playback"
+        >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M6 6h12v12H6z"/></svg>
         </button>
 
     </div>
@@ -4465,6 +4491,7 @@ const playerArtist = document.getElementById("playerArtist");
 const playerPlay = document.getElementById("playerPlay");
 const playerPrevious = document.getElementById("playerPrevious");
 const playerNext = document.getElementById("playerNext");
+const playerStop = document.getElementById("playerStop");
 
 const playerProgress = document.getElementById("playerProgress");
 const playerCurrentTime = document.getElementById("playerCurrentTime");
@@ -4860,6 +4887,15 @@ playerPlay.addEventListener("click", () => {
         musicAudio.pause();
     }
 
+});
+
+playerStop.addEventListener("click", () => {
+    musicAudio.pause();
+    try { musicAudio.currentTime = 0; } catch {}
+    playerProgress.value = 0;
+    playerMiniFill.style.width = "0%";
+    playerCurrentTime.textContent = "0:00";
+    setPlayerPlaying(false);
 });
 
 musicAudio.addEventListener("play", () => {

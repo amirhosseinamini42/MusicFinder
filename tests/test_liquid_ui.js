@@ -21,7 +21,7 @@ for (const [name, html] of [["home", home], ["admin", admin]]) {
     }
 }
 
-assert.match(home, /id="adminShortcut"[^>]*href="\/admin\.html"[^>]*hidden[^>]*><svg/);
+assert.match(home, /id="adminShortcut"[^>]*href="\/adminpanel"[^>]*hidden[^>]*><svg/);
 assert.doesNotMatch(home, /id="adminShortcut"[\s\S]{0,500}>[\s\S]*?Admin Panel<\/a>/);
 assert.match(home, /refreshAdminShortcut\(session\)/);
 assert.match(home, /\["admin", "owner"\]\.includes\(admin\.role\)/);
@@ -33,6 +33,14 @@ assert.match(home, /id="playerClose"/);
 assert.match(home, /musicPlayer\.minimized/);
 assert.match(home, /id="mf-player-layout"/);
 assert.match(home, /setPlayerMinimized\(false, false\)/);
+assert.match(home, /\.mfMail\s*\{[^}]*color:\s*#e6b06a/i, "About email uses the site's warm button accent, not blue");
+assert.match(home, /\.musicPlayer\.minimized \.playerControls\s*\{\s*display:flex !important/i, "mini player keeps playback controls visible");
+assert.match(home, /\.musicPlayer\.minimized \.playerControls #playerPrevious\s*\{\s*display:none/i, "mini player keeps the compact play and next controls");
+assert.match(home, /\.musicPlayer\.minimized \.playerControls #playerStop\s*\{\s*display:flex/i, "mini player exposes a dedicated stop control");
+assert.match(home, /\.musicPlayer\.minimized \.playerMinBtn svg\s*\{\s*transform:rotate\(180deg\)/i, "expand chevron points upward while minimized");
+assert.match(home, /id="playerNext"[\s\S]{0,120}aria-label="Next track"/);
+assert.match(home, /id="playerPlay"[\s\S]{0,120}aria-label="Play"/);
+assert.match(home, /playerStop\.addEventListener\("click",\s*\(\)\s*=>\s*\{[\s\S]*?musicAudio\.pause\(\)[\s\S]*?musicAudio\.currentTime\s*=\s*0/);
 const pageShellStyle = home.match(/#pageShell\s*\{([^}]*)\}/);
 assert.ok(pageShellStyle, "Barba page shell layout rule exists");
 assert.doesNotMatch(pageShellStyle[1], /\btransform\s*:/, "page shell must not establish a fixed-position containing block");
@@ -52,8 +60,16 @@ assert.doesNotMatch(home, /mf-liquid-glass-final|#080b13|rgba\(92,120,255/);
 assert.match(home, /--bg: #110b08/);
 assert.match(admin, /class="mf-review-player"/);
 assert.doesNotMatch(admin, /mf-liquid-glass-final|--bg:#080b13|rgba\(92,120,255/);
-assert.match(admin, /--bg:#07080d/);
+assert.match(admin, /--bg:#110b08/);
 assert.match(admin, /rgba\(224,164,90/);
+assert.match(admin, /--glass:rgba\(255,226,190,\.07\)/);
+assert.match(admin, /--dynamic-color:rgba\(135,165,255,\.26\)/);
+assert.match(admin, /MusicFinder<\/span><span class="adminPanelLabel">· adminpanel/);
+assert.match(admin, /function adminUrl\(\) \{ return tab === "dashboard" \? "\/adminpanel" : "\/adminpanel\/"/);
+assert.doesNotMatch(admin, /"#"\s*\+\s*tab/, "Admin routes must not use hash navigation");
+assert.match(admin, /id="eAf"/);
+assert.match(admin, /body: \{ audio: true, cover: false \}/);
+assert.match(admin, /Unpublish this track before replacing its audio/);
 assert.match(admin, /id="rvSeek"/);
 assert.doesNotMatch(admin, /<audio controls/);
 assert.match(admin, /audio\.pause\(\); audio\.removeAttribute\("src"\)/);
@@ -65,8 +81,24 @@ assert.match(admin, /async function optimizeCoverFile\(file\)/);
 assert.match(admin, /createImageBitmap\(file\)/);
 assert.match(admin, /image\/webp/);
 assert.match(admin, /Audio is uploaded\s+\/\/ byte-for-byte/);
-assert.match(authCss, /rgba\(110,90,255/);
-assert.match(authCss, /linear-gradient\(110deg,rgba\(110,90,255/);
+assert.match(authCss, /rgba\(135,165,255/);
+assert.match(authCss, /linear-gradient\(110deg,rgba\(214,138,58/);
+assert.match(authCss, /\.mf-auth-dialog\[dir="rtl"\] \.mf-auth-brand\{direction:rtl/);
+assert.doesNotMatch(authCss, /rgba\(110,90,255|rgba\(0,180,255|rgba\(255,0,100/);
+assert.match(authCss, /linear-gradient\(155deg,rgba\(24,14,9/);
+assert.match(admin, /--text:#f4e8d4/);
+assert.match(admin, /--border:rgba\(255,220,180,\.14\)/);
+assert.match(home, /data-mode="lyrics" aria-pressed="false" disabled aria-disabled="true"/);
+assert.match(home, /Search by lyrics · temporarily disabled/);
+assert.match(home, /#searchSection \*, #searchResults, #searchResults \*/);
+assert.match(home, /user-select:text/);
+assert.match(home, /"Temporarily disabled": "موقتاً غیرفعال"/);
+assert.match(home, /"Search by lyrics · temporarily disabled": "جستجو با متن آهنگ · موقتاً غیرفعال"/);
+assert.match(home, /name="theme-color" content="#110b08"/);
+const routes = JSON.parse(require("node:fs").readFileSync("frontend/vercel.json", "utf8"));
+assert.deepEqual(routes.rewrites.map(x => [x.source, x.destination]), [
+    ["/adminpanel", "/admin.html"], ["/adminpanel/:path*", "/admin.html"]
+]);
 assert.doesNotMatch(authCss, /Unified neutral Liquid Glass account UI|rgba\(150,175,255/);
 assert.match(confirm, /name="theme-color" content="#110b08"/);
 assert.match(confirm, /rgba\(236,148,56/);
@@ -78,7 +110,7 @@ const helperEnd = admin.indexOf("const bar =", helperStart);
 assert.ok(helperStart >= 0 && helperEnd > helperStart, "upload helper block exists");
 const helperSource = admin.slice(helperStart, helperEnd) + "\nglobalThis.testUploadWithRetry = uploadWithRetry;";
 
-async function runTransport(statuses) {
+async function runTransport(statuses, targetTrackId = "track-1", isStopped = false) {
     let refreshes = 0;
     class FakeXHR {
         constructor() { this.upload = {}; this.status = 0; }
@@ -91,12 +123,12 @@ async function runTransport(statuses) {
         XMLHttpRequest: FakeXHR,
         liveXhrs: new Set(),
         pending: { trackId: "track-1" },
-        stopped: false,
+        stopped: isStopped,
         setTimeout: callback => { callback(); return 0; },
         decl: file => ({ filename: file.name, size: file.size, content_type: file.type }),
         api: async (path, options) => {
             refreshes++;
-            assert.equal(path, "/admin/tracks/track-1/upload-urls");
+            assert.equal(path, `/admin/tracks/${targetTrackId}/upload-urls`);
             assert.equal(options.body.audio.filename, "demo.mp3");
             return { uploads: { audio: { url: "fresh-signed-url", content_type: "audio/mpeg" } } };
         }
@@ -106,7 +138,7 @@ async function runTransport(statuses) {
     const progress = [];
     const file = { name: "demo.mp3", size: 1024, type: "audio/mpeg" };
     let error = null;
-    try { await context.testUploadWithRetry("audio", file, { url: "expired-url", content_type: "audio/mpeg" }, value => progress.push(value)); }
+    try { await context.testUploadWithRetry("audio", file, { url: "expired-url", content_type: "audio/mpeg" }, value => progress.push(value), targetTrackId, !isStopped); }
     catch (caught) { error = caught; }
     return { refreshes, progress, error };
 }
@@ -152,6 +184,8 @@ async function runTransport(statuses) {
 
     const recovered = await runTransport([503, 200]);
     assert.equal(recovered.refreshes, 1, "transient storage failures renew the signed URL");
+    const replacementRecovered = await runTransport([503, 200], "existing-track", true);
+    assert.equal(replacementRecovered.refreshes, 1, "audio replacement retries against its own track and ignores a previous canceled upload state");
     const rejected = await runTransport([413]);
     assert.equal(rejected.refreshes, 0, "permanent size errors are not retried");
     assert.equal(rejected.error && rejected.error.message, "upload_http_413");

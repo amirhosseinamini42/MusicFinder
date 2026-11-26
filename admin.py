@@ -458,7 +458,10 @@ def stats(admin: dict = Depends(current_admin)):
 @admin_router.get("/tracks")
 def list_tracks(status: Optional[str] = None, q: Optional[str] = None, limit: int = 50, offset: int = 0,
                 admin: dict = Depends(current_admin)):
-    params = {"select": PUBLIC_FIELDS, "order": "created_at.desc", "limit": max(1, min(limit, 100)), "offset": max(0, offset)}
+    # Incomplete upload drafts are internal implementation records, not manageable tracks.
+    # Keep them out of Tracks until the audio object has passed server-side verification.
+    params = {"select": PUBLIC_FIELDS, "audio_path": "not.is.null", "order": "created_at.desc",
+              "limit": max(1, min(limit, 100)), "offset": max(0, offset)}
     if status:
         if status not in policy.STATUSES:
             raise err(422, "bad_status")
@@ -551,6 +554,11 @@ def finalize(tid: str, body: FinalizeIn, admin: dict = Depends(current_admin)):
         track = _rest("PATCH", "mf_tracks", {"id": f"eq.{track['id']}"}, patch)[0]
         _try_remove(AUDIO_BUCKET, old["audio"])
         _try_remove(COVER_BUCKET, old["cover"])
+    # Finalize is the upload-step boundary. It may also be called to finish a cover
+    # or retry an already-live track, but it must never report success while audio
+    # has not been verified and promoted to audio_path.
+    if not track.get("audio_path"):
+        errors.setdefault("audio", "upload_missing")
     if errors:
         raise HTTPException(status_code=422, detail={"code": "finalize_failed", "files": errors, "track": _admin_view(track)})
     return {"track": _admin_view(track)}
@@ -580,10 +588,10 @@ def set_status(tid: str, body: StatusIn, admin: dict = Depends(current_admin)):
         raise err(422, "bad_status")
     if not policy.can_transition(track["status"], new):
         raise err(409, "bad_transition")
+    if new in ("review", "published") and not track.get("audio_path"):
+        raise err(422, "audio_missing")
     patch = {"status": new, "updated_at": _now(), "updated_by": admin["email"]}
     if new == "published":
-        if not track.get("audio_path"):
-            raise err(422, "audio_missing")
         if not track.get("rights_confirmed"):
             raise err(422, "rights_not_confirmed")
         patch["published_at"] = _now()

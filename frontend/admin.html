@@ -9,8 +9,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#07080d">
-<title>MusicFinder · Admin</title>
+<meta name="theme-color" content="#110b08">
+<title>MusicFinder · adminpanel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
@@ -25,18 +25,23 @@
 <style>
 * { box-sizing: border-box; }
 :root {
-    --bg:#07080d; --glass:rgba(255,255,255,.075); --glass-strong:rgba(255,255,255,.12);
-    --border:rgba(255,255,255,.13); --text:#fff; --muted:rgba(255,255,255,.58);
-    --amber:#a99bff; --danger:#ff7a90; --ok:#8fd19e;
+    --bg:#110b08; --glass:rgba(255,226,190,.07); --glass-strong:rgba(255,226,190,.12);
+    --border:rgba(255,220,180,.14); --text:#f4e8d4; --muted:rgba(244,232,212,.58);
+    --accent:#f4e8d4; --dynamic-color:rgba(135,165,255,.26);
+    --dynamic-color-2:rgba(96,145,205,.18); --dynamic-color-3:rgba(80,180,210,.18);
+    --amber:#e6b36d; --danger:#ff7a90; --ok:#8fd19e;
 }
 html { color-scheme: dark; }
 body {
     margin:0; min-height:100vh; color:var(--text);
     font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background:
-        radial-gradient(circle at 15% 15%, rgba(110,90,255,.18), transparent 30%),
-        radial-gradient(circle at 85% 25%, rgba(0,180,255,.12), transparent 30%),
-        radial-gradient(circle at 50% 100%, rgba(255,0,100,.08), transparent 35%),
+        radial-gradient(ellipse 70% 55% at 14% -8%, rgba(236,148,56,.30), transparent 72%),
+        radial-gradient(ellipse 45% 40% at 85% 20%, rgba(110,134,156,.14), transparent 70%),
+        radial-gradient(ellipse 60% 45% at 92% 108%, rgba(160,56,56,.22), transparent 72%),
+        radial-gradient(circle at 15% 15%, var(--dynamic-color), transparent 30%),
+        radial-gradient(circle at 85% 25%, var(--dynamic-color-2), transparent 30%),
+        radial-gradient(circle at 50% 100%, var(--dynamic-color-3), transparent 35%),
         var(--bg);
     padding-bottom: env(safe-area-inset-bottom);
 }
@@ -44,8 +49,8 @@ button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 a { color: inherit; }
 .bar { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:12px;
-    padding: calc(14px + env(safe-area-inset-top)) 22px 14px; background:rgba(7,8,13,.82); backdrop-filter:blur(22px); border-bottom:1px solid var(--border); }
-.logo { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:-.5px; } .logo span { color:var(--amber); opacity:.8; }
+    padding: calc(14px + env(safe-area-inset-top)) 22px 14px; background:rgba(24,14,9,.72); backdrop-filter:blur(22px); border-bottom:1px solid var(--border); }
+.logo { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:-.5px; white-space:nowrap; } .brandName { letter-spacing:-.6px; } .adminPanelLabel { color:var(--muted); font-size:13px; font-weight:750; letter-spacing:0; }
 .siteLogoMark { display:block; width:30px; height:30px; flex:0 0 30px; object-fit:contain; filter:drop-shadow(0 2px 8px rgba(196,127,53,.22)); }
 .who { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); min-width:0; }
 .who b { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
@@ -54,34 +59,34 @@ main { width:min(1100px, calc(100% - 32px)); margin:28px auto 80px; }
 h1,h2 { font-family:"Cormorant Garamond", Georgia, serif; font-weight:600; margin:0 0 6px; }
 h1 { font-size:40px; } h2 { font-size:28px; }
 .muted { color:var(--muted); font-size:14px; }
-.glass { background:linear-gradient(160deg, rgba(255,255,255,.085), rgba(255,255,255,.04)); border:1px solid var(--border); border-radius:22px; padding:22px; backdrop-filter:blur(20px); }
-.tabs { display:flex; gap:6px; padding:4px; margin:22px 0; border-radius:14px; background:rgba(255,255,255,.06); border:1px solid var(--border); overflow-x:auto; }
+.glass { background:linear-gradient(160deg, rgba(255,226,190,.085), rgba(255,226,190,.04)); border:1px solid var(--border); border-radius:22px; padding:22px; backdrop-filter:blur(20px); box-shadow:0 25px 70px rgba(10,4,2,.35),inset 0 1px 0 rgba(255,236,210,.06); }
+.tabs { display:flex; gap:6px; padding:4px; margin:22px 0; border-radius:14px; background:rgba(255,226,190,.06); border:1px solid var(--border); overflow-x:auto; }
 .tabs button { flex:1; min-width:110px; padding:10px 14px; border:0; border-radius:10px; background:transparent; color:var(--muted); font-weight:700; }
 .tabs button.active { background:linear-gradient(135deg,#e6b06a,#c47f35); color:#1e1208; }
 .tabs button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .stat.statBtn:focus-visible { outline:2px solid rgba(224,164,90,.8); outline-offset:2px; }
 .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; }
-.stat { padding:18px; border-radius:18px; background:rgba(255,255,255,.05); border:1px solid var(--border); }
+.stat { padding:18px; border-radius:18px; background:rgba(255,226,190,.05); border:1px solid var(--border); }
 .stat b { display:block; font-size:30px; } .stat span { color:var(--muted); font-size:13px; }
 .stat.statBtn { display:block; width:100%; text-align:start; color:inherit; cursor:pointer; }
 .navRow { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 16px; }
 .crumb { color:var(--muted); font-size:13px; }
 label { display:block; font-size:13px; color:var(--muted); margin:14px 0 6px; }
 input[type=text], input[type=search], input[type=email], select, textarea {
-    width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.07); color:var(--text); }
+    width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:rgba(255,226,190,.07); color:var(--text); }
 textarea { min-height:90px; resize:vertical; }
 .row { display:grid; grid-template-columns:1fr 1fr; gap:14px; } @media (max-width:700px){ .row{grid-template-columns:1fr;} }
 .check { display:flex; align-items:flex-start; gap:10px; margin-top:14px; font-size:14px; color:var(--text); }
 .check input { margin-top:3px; accent-color:#c47f35; }
-.btn { padding:11px 18px; border-radius:13px; border:1px solid var(--border); background:rgba(255,255,255,.07); color:var(--text); font-weight:650; transition:background .2s, transform .2s; }
-.btn:hover { background:rgba(255,255,255,.16); transform:translateY(-2px); }
+.btn { padding:11px 18px; border-radius:13px; border:1px solid var(--border); background:rgba(255,226,190,.07); color:var(--text); font-weight:650; transition:background .2s, transform .2s; }
+.btn:hover { background:rgba(255,226,190,.14); transform:translateY(-2px); }
 .btn.primary { background:linear-gradient(135deg,#e6b06a,#c47f35); color:#1e1208; border-color:transparent; }
 .btn.danger { border-color:rgba(255,122,144,.6); color:var(--danger); }
 .btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
 .btn.sm { padding:7px 11px; font-size:12.5px; border-radius:10px; }
 .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:18px; }
-.progress { height:8px; border-radius:999px; background:rgba(255,255,255,.12); overflow:hidden; margin-top:6px; }
+.progress { height:8px; border-radius:999px; background:rgba(255,226,190,.12); overflow:hidden; margin-top:6px; }
 .progress i { display:block; height:100%; width:0; background:linear-gradient(90deg,#e6b06a,#c47f35); transition:width .15s; }
-.msg { padding:12px 14px; border-radius:12px; margin-top:14px; font-size:14px; border:1px solid var(--border); background:rgba(255,255,255,.06); }
+.msg { padding:12px 14px; border-radius:12px; margin-top:14px; font-size:14px; border:1px solid var(--border); background:rgba(255,226,190,.06); }
 .msg.err { border-color:rgba(255,122,144,.6); color:#ffc2cc; } .msg.ok { border-color:rgba(143,209,158,.5); color:var(--ok); }
 .tableWrap { overflow-x:auto; }
 table { width:100%; border-collapse:collapse; font-size:14px; }
@@ -91,20 +96,25 @@ th { color:var(--muted); font-weight:600; font-size:12px; text-transform:upperca
 .pill.draft { color:var(--muted); } .pill.review { color:#e6c06a; border-color:#e6c06a88; }
 .pill.published { color:var(--ok); border-color:#8fd19e88; } .pill.unpublished { color:var(--danger); border-color:#ff7a9088; }
 .toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; } .toolbar input { flex:1; min-width:180px; } .toolbar select { width:auto; }
-.cov { width:44px; height:44px; border-radius:10px; background:rgba(255,255,255,.08); object-fit:cover; }
-.overlay { position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px; }
-.dlg { width:min(560px,100%); max-height:88vh; overflow:auto; background:rgba(18,20,31,.97); border:1px solid var(--border); border-radius:22px; padding:24px; }
+.cov { width:44px; height:44px; border-radius:10px; background:rgba(255,226,190,.08); object-fit:cover; }
+.overlay { position:fixed; inset:0; z-index:50; background:rgba(10,4,2,.68); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px; }
+.dlg { width:min(560px,100%); max-height:88vh; overflow:auto; background:rgba(24,14,9,.97); border:1px solid var(--border); border-radius:22px; padding:24px; }
 .hidden { display:none !important; }
 .center { min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; }
 audio { width:100%; margin-top:12px; }
 @media (prefers-reduced-motion: reduce){ * { transition:none !important; } }
-.drop { border:2px dashed var(--border); border-radius:16px; padding:16px; text-align:center; color:var(--muted); cursor:pointer; margin-top:6px; }
+.drop { border:2px dashed var(--border); border-radius:16px; padding:16px; text-align:center; color:var(--muted); cursor:pointer; margin-top:6px; background:rgba(255,226,190,.025); }
 .drop.over, .drop:focus-visible { border-color:#e0a45a; background:rgba(224,164,90,.10); outline:none; }
 .fileInfo { font-size:12.5px; margin-top:6px; color:var(--muted); } .fileInfo.bad { color:var(--danger); }
-.pill.unreleased { color:#c9a7ff; border-color:#c9a7ff88; }
-.mf-review-player { padding:15px; border:1px solid var(--border); border-radius:18px; background:linear-gradient(160deg,rgba(255,255,255,.085),rgba(255,255,255,.04)); box-shadow:0 18px 48px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.06); backdrop-filter:blur(20px); }
+.pill.unreleased { color:#e6b36d; border-color:rgba(224,164,90,.55); }
+.drop { background:rgba(255,226,190,.025); transition:border-color .18s,background .18s; }
+.dlg h2 { margin-bottom:14px; }
+.dlg .fileInfo { overflow-wrap:anywhere; }
+.dlg .editSection { margin-top:18px; padding-top:15px; border-top:1px solid var(--border); }
+.dlg .editSection > label:first-child { margin-top:0; }
+.mf-review-player { padding:15px; border:1px solid var(--border); border-radius:18px; background:linear-gradient(160deg,rgba(255,226,190,.085),rgba(255,226,190,.04)); box-shadow:0 18px 48px rgba(10,4,2,.22),inset 0 1px 0 rgba(255,236,210,.06); backdrop-filter:blur(20px); }
 .mf-review-head { display:flex; align-items:center; gap:13px; min-width:0; }
-.mf-review-cover { width:68px; height:68px; flex:0 0 68px; border-radius:13px; object-fit:cover; background:rgba(255,255,255,.08); box-shadow:0 8px 22px rgba(0,0,0,.25); }
+.mf-review-cover { width:68px; height:68px; flex:0 0 68px; border-radius:13px; object-fit:cover; background:rgba(255,226,190,.08); box-shadow:0 8px 22px rgba(10,4,2,.25); }
 .mf-review-title { color:var(--text); font-size:14px; font-weight:750; overflow-wrap:anywhere; }
 .mf-review-artist { color:var(--muted); font-size:12px; margin-top:4px; }
 .mf-review-controls { display:grid; grid-template-columns:42px minmax(0,1fr) auto; align-items:center; gap:10px; margin-top:16px; }
@@ -115,7 +125,7 @@ audio { width:100%; margin-top:12px; }
 .mf-review-volume { max-width:130px; }
 .mf-review-player audio { display:none; }
 .barBrand { display:flex; align-items:center; gap:16px; min-width:0; }
-.backWebsite { display:inline-flex; align-items:center; gap:7px; padding:9px 13px; border-radius:13px; border:1px solid var(--border); background:rgba(255,255,255,.07); color:var(--text); font-size:12px; font-weight:750; text-decoration:none; transition:transform .25s,background .25s; }
+.backWebsite { display:inline-flex; align-items:center; gap:7px; padding:9px 13px; border-radius:13px; border:1px solid var(--border); background:rgba(255,226,190,.07); color:var(--text); font-size:12px; font-weight:750; text-decoration:none; transition:transform .25s,background .25s; }
 .backWebsite:hover { transform:translateY(-2px); background:rgba(224,164,90,.12); }
 #pageShell { min-height:100vh; opacity:1; transform:translateY(0); transition:opacity .22s ease,transform .22s ease; }
 html.page-ready #pageShell { animation:mfAdminEnter .42s cubic-bezier(.2,.8,.2,1) both; }
@@ -128,7 +138,7 @@ html.barba-leaving #pageShell { opacity:0; transform:translateY(8px); }
 <body class="mf-admin" data-barba="wrapper">
 <div id="pageShell" data-barba="container" data-barba-namespace="admin">
 <div class="bar">
-    <div class="barBrand"><div class="logo"><img class="siteLogoMark" src="/favicon-192x192.png" alt="" width="30" height="30" decoding="async">Music<span>Finder</span> · Admin</div><a class="backWebsite" href="/" aria-label="Back to MusicFinder website">← Back to Website</a></div>
+    <div class="barBrand"><div class="logo"><img class="siteLogoMark" src="/favicon.svg" alt="" width="30" height="30" decoding="async"><span class="brandName">MusicFinder</span><span class="adminPanelLabel">· adminpanel</span></div><a class="backWebsite" href="/" aria-label="Back to MusicFinder website">← Back to Website</a></div>
     <div class="who" id="who"></div>
 </div>
 
@@ -246,14 +256,22 @@ async function boot() {
         try { await MFAuth.signOut(); } catch {}
         renderSignIn();
     };
-    navStack = []; tab = "dashboard"; tracksFilter = "";
+    const route = readAdminRoute();
+    navStack = []; tab = route.tab; tracksFilter = route.filter;
     commit("replace");
 }
 
 /* ---------- navigation (Back button + browser history) ---------- */
 const snap = () => ({ tab, filter: tracksFilter, stack: navStack.map(x => ({ tab: x.tab, filter: x.filter })) });
+function readAdminRoute() {
+    const parts = location.pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+    const key = parts[1] || "dashboard";
+    const routes = { dashboard: "dashboard", upload: "upload", tracks: "tracks", administrators: "admins", admins: "admins" };
+    return { tab: routes[key] || "dashboard", filter: new URLSearchParams(location.search).get("status") || "" };
+}
+function adminUrl() { return tab === "dashboard" ? "/adminpanel" : "/adminpanel/" + (tab === "admins" ? "administrators" : tab); }
 function commit(mode) {
-    try { history[mode === "replace" ? "replaceState" : "pushState"](snap(), "", "#" + tab); } catch {}
+    try { history[mode === "replace" ? "replaceState" : "pushState"](snap(), "", adminUrl()); } catch {}
     renderShell();
 }
 function openTab(k) { navStack = []; tab = k; tracksFilter = ""; commit("push"); }                    // top-level tab: no Back button
@@ -265,11 +283,12 @@ function goBack() {
     commit("push");
 }
 window.addEventListener("popstate", e => {                         // browser / phone back button
+    if (!me) return;
     const st = e.state;
-    if (!st || !me) return;
-    tab = TAB_LABEL[st.tab] ? st.tab : "dashboard";
-    tracksFilter = st.filter || "";
-    navStack = Array.isArray(st.stack) ? st.stack.map(x => ({ tab: x.tab, filter: x.filter || "" })) : [];
+    const route = readAdminRoute();
+    tab = st && TAB_LABEL[st.tab] ? st.tab : route.tab;
+    tracksFilter = st ? (st.filter || "") : route.filter;
+    navStack = st && Array.isArray(st.stack) ? st.stack.map(x => ({ tab: x.tab, filter: x.filter || "" })) : [];
     renderShell();
 });
 
@@ -327,24 +346,25 @@ function putFile(url, file, contentType, onProgress) {
     });
 }
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-async function uploadWithRetry(kind, file, initialUpload, onProgress) {
+async function uploadWithRetry(kind, file, initialUpload, onProgress, trackId = pending && pending.trackId, checkStopped = true) {
     let signed = initialUpload;
     for (let attempt = 0; attempt < 3; attempt++) {
-        if (stopped) throw new Error("upload_cancelled");
+        if (checkStopped && stopped) throw new Error("upload_cancelled");
         try {
             await putFile(signed.url, file, signed.content_type, onProgress);
             return;
         } catch (error) {
-            if (error.message === "upload_cancelled" || stopped) throw new Error("upload_cancelled");
+            if (error.message === "upload_cancelled" || (checkStopped && stopped)) throw new Error("upload_cancelled");
             const status = /^upload_http_(\d+)$/.exec(error.message || "");
             const retryable = error.message === "upload_network" || error.message === "upload_timeout" ||
                 !!(status && ([401,403,408,429].includes(Number(status[1])) || Number(status[1]) >= 500));
             if (!retryable || attempt === 2) throw error;
             await wait(500 * (attempt + 1));
-            if (stopped) throw new Error("upload_cancelled");
+            if (checkStopped && stopped) throw new Error("upload_cancelled");
             // Renew the signed URL for this file only. This also replaces an object
             // whose upload may have completed server-side before the connection dropped.
-            const refreshed = await api(`/admin/tracks/${pending.trackId}/upload-urls`, {
+            if (!trackId) throw new Error("storage_invalid_response");
+            const refreshed = await api(`/admin/tracks/${trackId}/upload-urls`, {
                 method: "POST", body: { [kind]: decl(file) }
             });
             signed = refreshed.uploads && refreshed.uploads[kind];
@@ -604,7 +624,7 @@ async function viewTracks() {
         <button class="btn" id="tGo">Search</button></div><div id="tMsg"></div><div class="tableWrap" id="tList"><div class="muted">Loading…</div></div></div>`;
     $("#tS").value = tracksFilter;
     $("#tGo").onclick = loadTracks; $("#tQ").onkeydown = e => e.key === "Enter" && loadTracks();
-    $("#tS").onchange = () => { tracksFilter = $("#tS").value; try { history.replaceState(snap(), "", "#" + tab); } catch {} loadTracks(); };
+    $("#tS").onchange = () => { tracksFilter = $("#tS").value; try { history.replaceState(snap(), "", adminUrl()); } catch {} loadTracks(); };
     loadTracks();
 }
 async function loadTracks() {
@@ -719,11 +739,15 @@ function editDlg(t) {
         <label for="eD">Description</label><textarea id="eD" maxlength="2000">${esc(t.description)}</textarea>
         <label class="check"><input type="checkbox" id="eR" ${t.rights_confirmed ? "checked" : ""}> <span>I have the rights to distribute this track.</span></label>
         <label class="check"><input type="checkbox" id="eUn" ${t.is_unreleased ? "checked" : ""}> <span>Unreleased song (shows an Unreleased badge publicly).</span></label>
-        <label>Cover</label><div id="eCov" class="muted">Loading…</div>
+        <div class="editSection"><label>Audio file</label><div id="eAudioInfo" class="fileInfo">${t.has_audio ? `Uploaded${t.audio_size ? " · " + fmtSize(t.audio_size) : ""}` : "No verified audio file"}</div>
+        ${t.status === "published" ? `<p class="muted">Unpublish this track before replacing its audio.</p>` : `<div class="drop" id="dzEA" tabindex="0" role="button" aria-label="Choose replacement audio">Drop replacement audio here or click to choose</div><input id="eAf" type="file" class="hidden" accept=".mp3,.m4a,.wav,.ogg,.flac,audio/*"><div id="eAm"></div>`}</div>
+        <div class="editSection"><label>Cover</label><div id="eCov" class="muted">Loading…</div>
         <div class="drop" id="dzE" tabindex="0" role="button">Drop a new cover here or click to choose</div><input id="eCf" type="file" class="hidden" accept=".jpg,.jpeg,.png,.webp,image/*">
-        <div class="actions"><button class="btn sm danger ${t.has_cover ? "" : "hidden"}" id="eCrm" type="button">Remove cover</button></div><div id="eCm"></div>
+        <div class="actions"><button class="btn sm danger ${t.has_cover ? "" : "hidden"}" id="eCrm" type="button">Remove cover</button></div><div id="eCm"></div></div>
+        <div class="editSection">
         <label class="check"><input type="checkbox" id="eDl" ${t.download_enabled ? "checked" : ""}> <span>Allow public download.</span></label>
-        <div id="eM"></div><div class="actions"><button class="btn primary" id="eS">Save</button><button class="btn" id="eX">Cancel</button></div>`);
+        <div class="muted">Created: ${esc(t.created_at || "—")}<br>Last updated: ${esc(t.updated_at || "—")}<br>Status: ${esc(STATUS_LABEL[t.status] || t.status)}</div></div>
+        <div id="eM"></div><div class="actions"><button class="btn primary" id="eS">Save changes</button><button class="btn" id="eX">Cancel</button></div>`);
     h.querySelector("#eX").onclick = closeDlg;
     const showCover = async () => {
         const box = h.querySelector("#eCov");
@@ -747,6 +771,31 @@ function editDlg(t) {
         } catch (e) { note(cm, e.body?.files?.cover ? msgFor(e.body.files.cover) : (e.code ? msgFor(e.code) : (uploadFailMessage(e) || "Cover upload failed. Please retry."))); }
         inp.value = "";
     };
+    const audioInput = h.querySelector("#eAf"), audioDrop = h.querySelector("#dzEA"), audioMsg = h.querySelector("#eAm");
+    if (audioInput && audioDrop) {
+        audioDrop.onclick = () => audioInput.click();
+        audioDrop.onkeydown = event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); audioInput.click(); } };
+        audioDrop.ondragover = event => { event.preventDefault(); audioDrop.classList.add("over"); };
+        audioDrop.ondragleave = () => audioDrop.classList.remove("over");
+        audioDrop.ondrop = event => { event.preventDefault(); audioDrop.classList.remove("over"); const file = event.dataTransfer.files[0]; if (file) setFile(audioInput, file); };
+        audioInput.onchange = async () => {
+            const file = audioInput.files[0]; if (!file) return;
+            const problem = fileProblem("audio", file); if (problem) return note(audioMsg, problem);
+            if (!(await confirmDlg(`Replace the audio file for "${t.title}"? The current audio remains active until the new file is verified.`, "Replace audio"))) { audioInput.value = ""; return; }
+            note(audioMsg, "Preparing secure audio replacement…", "ok");
+            try {
+                const signed = await api(`/admin/tracks/${t.id}/upload-urls`, { method: "POST", body: { audio: decl(file) } });
+                await uploadWithRetry("audio", file, signed.uploads.audio, () => {}, t.id, false);
+                const result = await api(`/admin/tracks/${t.id}/finalize`, { method: "POST", body: { audio: true, cover: false } });
+                t.has_audio = true; t.audio_size = result.track.audio_size;
+                h.querySelector("#eAudioInfo").textContent = `Uploaded · ${fmtSize(file.size)} · verified`;
+                note(audioMsg, "Audio replaced and verified.", "ok"); loadTracks();
+            } catch (error) {
+                note(audioMsg, error.body?.files?.audio ? msgFor(error.body.files.audio) : (error.code ? msgFor(error.code) : (uploadFailMessage(error) || "Audio replacement failed. Please retry.")));
+            }
+            audioInput.value = "";
+        };
+    }
     h.querySelector("#eCrm").onclick = async () => {
         if (!(await confirmDlg("Remove this track's cover image?", "Remove", true))) return;
         try { await api(`/admin/tracks/${t.id}/cover`, { method: "DELETE" }); t.has_cover = false; h.querySelector("#eCrm").classList.add("hidden"); note(cm, "Cover removed.", "ok"); showCover(); loadTracks(); }
@@ -820,7 +869,7 @@ document.addEventListener("DOMContentLoaded", () => {
             requestError: (_trigger, action, url) => { if (action === "click") location.assign(url); else location.replace(url); return false; },
             prevent: ({el}) => !el || el.hasAttribute("data-barba-prevent") || el.target === "_blank" ||
                 new URL(el.href, location.href).origin !== location.origin ||
-                !["/", "/admin.html"].includes(new URL(el.href, location.href).pathname),
+                !(new URL(el.href, location.href).pathname === "/" || /^\/adminpanel(?:\/(?:dashboard|upload|tracks|administrators))?\/?$/.test(new URL(el.href, location.href).pathname)),
             transitions:[{ name:"musicfinder-liquid-route", leave:async ({next}) => {
                 document.documentElement.classList.add("barba-leaving");
                 await new Promise(resolve => setTimeout(resolve,150));

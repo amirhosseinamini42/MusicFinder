@@ -41,7 +41,7 @@ async function main() {
   await api.getSession();
   await api.refreshSession();
   await api.signIn("person@example.com", "password123");
-  await api.signUp("Person", "person@example.com", "password123");
+  await api.signUp("person@example.com", "password123");
   await api.signInWithGoogle();
   await api.resetPassword("person@example.com");
   await api.resendSignup("person@example.com");
@@ -52,8 +52,8 @@ async function main() {
   await api.signOut();
   assert.equal(calls.filter(call => call[0] === "createClient").length, 1, "client initializes once");
   assert.equal(calls.find(call => call[0] === "signInWithPassword")[1].email, "person@example.com");
-  assert.equal(calls.find(call => call[0] === "signUp")[1].options.data.full_name, "Person");
-  assert.equal(calls.find(call => call[0] === "signUp")[1].options.emailRedirectTo, "https://musicfinder-web-git-feat-site-auth-system-music-finder.vercel.app/?auth=confirmed", "signup confirmation returns to the active site origin");
+  assert.equal(calls.find(call => call[0] === "signUp")[1].email, "person@example.com");
+  assert.equal(calls.find(call => call[0] === "signUp")[1].password, "password123");
   assert.equal(calls.find(call => call[0] === "signInWithOAuth")[1].provider, "google");
   assert.equal(calls.find(call => call[0] === "signInWithOAuth")[1].options.redirectTo, "https://musicfinder-web-git-feat-site-auth-system-music-finder.vercel.app/admin.html", "Google sign-in returns to the page where it started");
   assert.equal(calls.find(call => call[0] === "resetPasswordForEmail")[2].redirectTo, "https://musicfinder-web-git-feat-site-auth-system-music-finder.vercel.app/?auth=recovery");
@@ -112,6 +112,15 @@ async function main() {
   assert.equal(signedInUsers.length, 3, "each successful auth event synchronizes the signed-in user");
   const css = fs.readFileSync(path.join(__dirname, "..", "frontend", "auth.css"), "utf8");
   assert.ok(css.includes("100dvh") && css.includes("env(safe-area-inset-top)"), "auth dialog supports mobile viewport and safe areas");
+  const authUi = fs.readFileSync(path.join(__dirname, "..", "frontend", "auth-ui.js"), "utf8");
+  assert.ok(authUi.includes("musicFinderLang") && authUi.includes("function localizePanel"), "shared login panel follows the saved Persian language preference");
+  assert.ok(authUi.includes('setAttribute("dir", isFa() ? "rtl" : "ltr")'), "Persian login panel switches to RTL");
+  assert.ok(authUi.includes('src="${brandLogo}"') && authUi.includes('const brandLogo = "/favicon.svg"'), "login panel uses the real MusicFinder logo");
+  assert.ok(authUi.includes("Find your next favorite sound") && authUi.includes("Sign in to the MusicFinder admin workspace"), "homepage and admin login descriptions are separate");
+  assert.ok(!authUi.includes("One account for MusicFinder and its admin panel"), "homepage login no longer advertises the admin panel");
+  const adminHtml = fs.readFileSync(path.join(__dirname, "..", "frontend", "admin.html"), "utf8");
+  assert.ok(adminHtml.includes("--bg:#07080d") && adminHtml.includes("rgba(110,90,255,.18)"), "admin background matches the homepage glass palette");
+  assert.ok(css.includes("Cormorant Garamond") && css.includes("mf-auth-brand-logo"), "login brand uses the site typography and logo styling");
   const emailTemplate = fs.readFileSync(path.join(__dirname, "..", "docs", "supabase-confirmation-email.html"), "utf8");
   assert.ok(emailTemplate.includes("{{ .TokenHash }}") && emailTemplate.includes("{{ .SiteURL }}"), "branded confirmation template uses the PKCE token-hash flow");
   assert.ok(emailTemplate.includes("https://musicfinder-web.vercel.app/favicon-192x192.png"), "confirmation email embeds the public MusicFinder logo asset");

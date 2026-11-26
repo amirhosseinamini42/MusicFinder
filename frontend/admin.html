@@ -9,11 +9,12 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#110b08">
+<meta name="theme-color" content="#07080d">
 <title>MusicFinder · Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/auth.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script src="/auth-client.js"></script>
@@ -24,17 +25,18 @@
 <style>
 * { box-sizing: border-box; }
 :root {
-    --bg:#110b08; --glass:rgba(255,226,190,.07); --glass-strong:rgba(255,226,190,.12);
-    --border:rgba(255,220,180,.14); --text:#f4e8d4; --muted:rgba(244,232,212,.58);
-    --amber:#e0a45a; --danger:#ff7a90; --ok:#8fd19e;
+    --bg:#07080d; --glass:rgba(255,255,255,.075); --glass-strong:rgba(255,255,255,.12);
+    --border:rgba(255,255,255,.13); --text:#fff; --muted:rgba(255,255,255,.58);
+    --amber:#a99bff; --danger:#ff7a90; --ok:#8fd19e;
 }
 html { color-scheme: dark; }
 body {
     margin:0; min-height:100vh; color:var(--text);
     font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background:
-        radial-gradient(ellipse 70% 55% at 14% -8%, rgba(236,148,56,.30), transparent 72%),
-        radial-gradient(ellipse 60% 45% at 92% 108%, rgba(160,56,56,.24), transparent 72%),
+        radial-gradient(circle at 15% 15%, rgba(110,90,255,.18), transparent 30%),
+        radial-gradient(circle at 85% 25%, rgba(0,180,255,.12), transparent 30%),
+        radial-gradient(circle at 50% 100%, rgba(255,0,100,.08), transparent 35%),
         var(--bg);
     padding-bottom: env(safe-area-inset-bottom);
 }
@@ -42,7 +44,7 @@ button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 a { color: inherit; }
 .bar { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:12px;
-    padding: calc(14px + env(safe-area-inset-top)) 22px 14px; background:rgba(24,14,9,.82); backdrop-filter:blur(22px); border-bottom:1px solid var(--border); }
+    padding: calc(14px + env(safe-area-inset-top)) 22px 14px; background:rgba(7,8,13,.82); backdrop-filter:blur(22px); border-bottom:1px solid var(--border); }
 .logo { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:-.5px; } .logo span { color:var(--amber); opacity:.8; }
 .siteLogoMark { display:block; width:30px; height:30px; flex:0 0 30px; object-fit:contain; filter:drop-shadow(0 2px 8px rgba(196,127,53,.22)); }
 .who { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); min-width:0; }
@@ -52,7 +54,7 @@ main { width:min(1100px, calc(100% - 32px)); margin:28px auto 80px; }
 h1,h2 { font-family:"Cormorant Garamond", Georgia, serif; font-weight:600; margin:0 0 6px; }
 h1 { font-size:40px; } h2 { font-size:28px; }
 .muted { color:var(--muted); font-size:14px; }
-.glass { background:linear-gradient(160deg, rgba(255,226,190,.085), rgba(255,226,190,.04)); border:1px solid var(--border); border-radius:22px; padding:22px; backdrop-filter:blur(20px); }
+.glass { background:linear-gradient(160deg, rgba(255,255,255,.085), rgba(255,255,255,.04)); border:1px solid var(--border); border-radius:22px; padding:22px; backdrop-filter:blur(20px); }
 .tabs { display:flex; gap:6px; padding:4px; margin:22px 0; border-radius:14px; background:rgba(255,255,255,.06); border:1px solid var(--border); overflow-x:auto; }
 .tabs button { flex:1; min-width:110px; padding:10px 14px; border:0; border-radius:10px; background:transparent; color:var(--muted); font-weight:700; }
 .tabs button.active { background:linear-gradient(135deg,#e6b06a,#c47f35); color:#1e1208; }
@@ -91,7 +93,7 @@ th { color:var(--muted); font-weight:600; font-size:12px; text-transform:upperca
 .toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; } .toolbar input { flex:1; min-width:180px; } .toolbar select { width:auto; }
 .cov { width:44px; height:44px; border-radius:10px; background:rgba(255,255,255,.08); object-fit:cover; }
 .overlay { position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px; }
-.dlg { width:min(560px,100%); max-height:88vh; overflow:auto; background:rgba(24,14,9,.97); border:1px solid var(--border); border-radius:22px; padding:24px; }
+.dlg { width:min(560px,100%); max-height:88vh; overflow:auto; background:rgba(18,20,31,.97); border:1px solid var(--border); border-radius:22px; padding:24px; }
 .hidden { display:none !important; }
 .center { min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; }
 audio { width:100%; margin-top:12px; }
@@ -100,9 +102,9 @@ audio { width:100%; margin-top:12px; }
 .drop.over, .drop:focus-visible { border-color:#e0a45a; background:rgba(224,164,90,.10); outline:none; }
 .fileInfo { font-size:12.5px; margin-top:6px; color:var(--muted); } .fileInfo.bad { color:var(--danger); }
 .pill.unreleased { color:#c9a7ff; border-color:#c9a7ff88; }
-.mf-review-player { padding:15px; border:1px solid var(--border); border-radius:18px; background:linear-gradient(160deg,rgba(255,226,190,.085),rgba(255,226,190,.04)); box-shadow:0 18px 48px rgba(10,4,2,.22),inset 0 1px 0 rgba(255,236,210,.06); backdrop-filter:blur(20px); }
+.mf-review-player { padding:15px; border:1px solid var(--border); border-radius:18px; background:linear-gradient(160deg,rgba(255,255,255,.085),rgba(255,255,255,.04)); box-shadow:0 18px 48px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.06); backdrop-filter:blur(20px); }
 .mf-review-head { display:flex; align-items:center; gap:13px; min-width:0; }
-.mf-review-cover { width:68px; height:68px; flex:0 0 68px; border-radius:13px; object-fit:cover; background:rgba(255,226,190,.08); box-shadow:0 8px 22px rgba(0,0,0,.25); }
+.mf-review-cover { width:68px; height:68px; flex:0 0 68px; border-radius:13px; object-fit:cover; background:rgba(255,255,255,.08); box-shadow:0 8px 22px rgba(0,0,0,.25); }
 .mf-review-title { color:var(--text); font-size:14px; font-weight:750; overflow-wrap:anywhere; }
 .mf-review-artist { color:var(--muted); font-size:12px; margin-top:4px; }
 .mf-review-controls { display:grid; grid-template-columns:42px minmax(0,1fr) auto; align-items:center; gap:10px; margin-top:16px; }

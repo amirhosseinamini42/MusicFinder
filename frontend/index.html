@@ -11,7 +11,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<meta name="theme-color" content="#07080d">
+<meta name="theme-color" content="#110b08">
 
 <title>MusicFinder</title>
 <meta name="description" content="Discover music, explore artists, and find your next favorite song.">
@@ -1898,6 +1898,15 @@ html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
 .searchMode button:hover { color: var(--text); }
 .searchMode button:focus-visible { outline: 2px solid rgba(224,164,90,.8); outline-offset: 2px; }
 .searchMode button.active { background: linear-gradient(135deg, #e6b06a, #c47f35); color: #1e1208; }
+.searchMode button:disabled { opacity:.48; cursor:not-allowed; filter:saturate(.55); }
+.searchMode button:disabled:hover { color:var(--muted); }
+/* Interface labels stay unselected; every editable control and actual search result stays selectable. */
+body { -webkit-user-select:none; user-select:none; }
+input, textarea, select, [contenteditable="true"],
+#searchSection, #searchSection *, #searchResults, #searchResults * {
+    -webkit-user-select:text;
+    user-select:text;
+}
 @media (max-width: 700px) { .searchMode { width: min(750px, 100%); } .searchMode button { flex: 1; padding: 10px 8px; font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .searchMode button { transition: none; } }
 </style>
@@ -2098,7 +2107,7 @@ html.barba-leaving #pageShell { opacity:0; }
     </div>
 
     <div class="navRight">
-        <a class="adminShortcut" id="adminShortcut" href="/admin.html" hidden aria-label="Open Admin Panel" title="Open Admin Panel"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></a>
+        <a class="adminShortcut" id="adminShortcut" href="/adminpanel" hidden aria-label="Open Admin Panel" title="Open Admin Panel"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></a>
         <div class="authArea" id="authArea"></div>
         <button class="menuButton" onclick="openMenu()">☰</button>
     </div>
@@ -6024,7 +6033,8 @@ function showTelegramPanel(query, copied) {
     if (window.MF_FA) {
         Object.assign(window.MF_FA, {
             "Songs, artists & albums": "آهنگ، هنرمند و آلبوم",
-            "Search by lyrics": "جستجو با متن آهنگ",
+            "Search by lyrics · temporarily disabled": "جستجو با متن آهنگ · موقتاً غیرفعال",
+            "Temporarily disabled": "موقتاً غیرفعال",
             "Type a line from the lyrics...": "یک خط از متن آهنگ را بنویسید...",
             "Search type": "نوع جستجو"
         });
@@ -6036,7 +6046,7 @@ function showTelegramPanel(query, copied) {
     window.mfSearchMode = "all";
 
     function setMode(mode) {
-        window.mfSearchMode = mode === "lyrics" ? "lyrics" : "all";
+        window.mfSearchMode = "all";
         document.querySelectorAll(".searchMode button").forEach(b => {
             const on = b.dataset.mode === window.mfSearchMode;
             b.classList.toggle("active", on);
@@ -6055,10 +6065,10 @@ function showTelegramPanel(query, copied) {
         wrap.setAttribute("aria-label", "Search type");
         wrap.innerHTML =
             `<button type="button" class="active" data-mode="all" aria-pressed="true">Songs, artists &amp; albums</button>` +
-            `<button type="button" data-mode="lyrics" aria-pressed="false">Search by lyrics</button>`;
+            `<button type="button" data-mode="lyrics" aria-pressed="false" disabled aria-disabled="true" title="Temporarily disabled" data-t="Search by lyrics · temporarily disabled">Search by lyrics · temporarily disabled</button>`;
         wrap.addEventListener("click", e => {
             const b = e.target.closest("button[data-mode]");
-            if (b) setMode(b.dataset.mode);
+            if (b && !b.disabled) setMode(b.dataset.mode);
         });
         box.after(wrap);
     }
@@ -6174,7 +6184,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 requestError: (_trigger, action, url) => { if (action === "click") location.assign(url); else location.replace(url); return false; },
                 prevent: ({el}) => !el || el.hasAttribute("data-barba-prevent") || el.target === "_blank" ||
                     new URL(el.href, location.href).origin !== location.origin ||
-                    !["/", "/admin.html"].includes(new URL(el.href, location.href).pathname),
+                    !(new URL(el.href, location.href).pathname === "/" || /^\/adminpanel(?:\/(?:dashboard|upload|tracks|administrators))?\/?$/.test(new URL(el.href, location.href).pathname)),
                 transitions:[{ name:"musicfinder-liquid-route", leave:async ({next}) => {
                     document.documentElement.classList.add("barba-leaving");
                     await new Promise(resolve => setTimeout(resolve,150));

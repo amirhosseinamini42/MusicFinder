@@ -375,9 +375,68 @@ def test_finalize_without_upload_reports_missing_and_never_goes_live(api, be):
     assert r.status_code == 422 and code(r) == "finalize_failed"
     assert r.json()["detail"]["files"] == {"audio": "upload_missing", "cover": "upload_missing"}
     assert be.row(tid)["audio_path"] is None
-    assert set_status(api, T_ADMIN, tid, "review").status_code == 200
-    r = set_status(api, T_ADMIN, tid, "published")
+    assert api("GET", "/admin/tracks", T_ADMIN).json()["tracks"] == []
+    r = set_status(api, T_ADMIN, tid, "review")
     assert r.status_code == 422 and code(r) == "audio_missing"
+    r = set_status(api, T_ADMIN, tid, "published")
+    assert r.status_code == 409 and code(r) == "bad_transition"
+
+
+def test_finalize_cannot_skip_audio_by_omitting_the_upload_url_step(api, be):
+    tid = create(api, T_ADMIN)
+    row = be.row(tid)
+    # Simulate a caller that jumps directly from draft creation to finalize,
+    # without requesting or transferring an audio object.
+    row["audio_path_new"] = None
+    row["audio_ext_new"] = None
+    r = api("POST", f"/admin/tracks/{tid}/finalize", T_ADMIN, json={"audio": False, "cover": False})
+    assert r.status_code == 422 and code(r) == "finalize_failed"
+    assert r.json()["detail"]["files"] == {"audio": "upload_missing"}
+    assert be.row(tid)["audio_path"] is None
+    assert api("GET", "/admin/tracks", T_ADMIN).json()["tracks"] == []
+
+
+def test_tracks_list_hides_upload_drafts_until_audio_is_verified(api, be):
+    incomplete = create(api, T_ADMIN, client_request_id="req-incomplete01")
+    complete = create_uploaded(api, be, T_ADMIN, title="Ready Track", client_request_id="req-complete001")
+    rows = api("GET", "/admin/tracks", T_ADMIN).json()["tracks"]
+    assert [row["id"] for row in rows] == [complete]
+    assert be.row(incomplete)["audio_path"] is None
+
+
+def test_audio_replacement_swaps_only_after_server_verification(api, be):
+    tid = create_uploaded(api, be, T_ADMIN, client_request_id="req-audiorepl01")
+    old_audio = be.row(tid)["audio_path"]
+    old_size = be.row(tid)["audio_size"]
+    r = api("POST", f"/admin/tracks/{tid}/upload-urls", T_ADMIN,
+            json={"audio": {"filename": "replacement.mp3", "size": 2000, "content_type": "audio/mpeg"}})
+    assert r.status_code == 200 and "audio" in r.json()["uploads"]
+    new_audio = be.row(tid)["audio_path_new"]
+    assert new_audio and new_audio != old_audio
+    assert be.row(tid)["audio_path"] == old_audio
+    be.put(tid, "audio", total=2000)
+    r = api("POST", f"/admin/tracks/{tid}/finalize", T_ADMIN, json={"audio": True, "cover": False})
+    assert r.status_code == 200, r.text
+    row = be.row(tid)
+    assert row["audio_path"] == new_audio and row["audio_size"] == 2000
+    assert old_audio in be.removed and row["cover_path"] is not None
+    assert old_size != row["audio_size"]
+
+
+def test_failed_audio_replacement_preserves_the_live_audio(api, be):
+    tid = create_uploaded(api, be, T_ADMIN, client_request_id="req-audiobad001")
+    old_audio = be.row(tid)["audio_path"]
+    old_cover = be.row(tid)["cover_path"]
+    api("POST", f"/admin/tracks/{tid}/upload-urls", T_ADMIN,
+        json={"audio": {"filename": "bad.mp3", "size": 2000, "content_type": "audio/mpeg"}})
+    new_audio = be.row(tid)["audio_path_new"]
+    be.put(tid, "audio", head=GARBAGE_HEAD, total=2000)
+    r = api("POST", f"/admin/tracks/{tid}/finalize", T_ADMIN, json={"audio": True, "cover": False})
+    assert r.status_code == 422 and r.json()["detail"]["files"] == {"audio": "bad_audio_file"}
+    row = be.row(tid)
+    assert row["audio_path"] == old_audio and row["cover_path"] == old_cover
+    assert row["audio_path_new"] is None and new_audio in be.removed
+    assert old_audio not in be.removed
 
 
 def test_finalize_rejects_file_whose_content_does_not_match_its_type(api, be):

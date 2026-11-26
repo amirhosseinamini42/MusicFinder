@@ -3,7 +3,7 @@
     "use strict";
     let mode = "login";
     let user = null;
-    const isAdminPage = () => /(?:^|\/)admin(?:\.html)?(?:$|[?#])/i.test(w.location.pathname + w.location.search + w.location.hash);
+    const isAdminPage = () => /(?:^|\/)(?:admin(?:\.html)?|adminpanel)(?:\/|$)/i.test(w.location.pathname);
     const isFa = () => d.documentElement.lang === "fa" || (isAdminPage() && (() => { try { return w.localStorage.getItem("musicFinderLang") === "fa"; } catch { return false; } })());
     const tr = (en, fa) => isFa() ? fa : en;
     const brandLogo = "/favicon.svg";

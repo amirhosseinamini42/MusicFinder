@@ -114,12 +114,13 @@ async function main() {
   assert.ok(css.includes("100dvh") && css.includes("env(safe-area-inset-top)"), "auth dialog supports mobile viewport and safe areas");
   const authUi = fs.readFileSync(path.join(__dirname, "..", "frontend", "auth-ui.js"), "utf8");
   assert.ok(authUi.includes("musicFinderLang") && authUi.includes("function localizePanel"), "shared login panel follows the saved Persian language preference");
+  assert.ok(authUi.includes('adminpanel)(?:\\/|$)/i.test(w.location.pathname)'), "shared login panel recognizes every slash-based adminpanel route");
   assert.ok(authUi.includes('setAttribute("dir", isFa() ? "rtl" : "ltr")'), "Persian login panel switches to RTL");
   assert.ok(authUi.includes('src="${brandLogo}"') && authUi.includes('const brandLogo = "/favicon.svg"'), "login panel uses the real MusicFinder logo");
   assert.ok(authUi.includes("Find your next favorite sound") && authUi.includes("Sign in to the MusicFinder admin workspace"), "homepage and admin login descriptions are separate");
   assert.ok(!authUi.includes("One account for MusicFinder and its admin panel"), "homepage login no longer advertises the admin panel");
   const adminHtml = fs.readFileSync(path.join(__dirname, "..", "frontend", "admin.html"), "utf8");
-  assert.ok(adminHtml.includes("--bg:#07080d") && adminHtml.includes("rgba(110,90,255,.18)"), "admin background matches the homepage glass palette");
+  assert.ok(adminHtml.includes("--bg:#110b08") && adminHtml.includes("--glass:rgba(255,226,190,.07)") && adminHtml.includes("rgba(135,165,255,.26)"), "admin background and glass tokens match the homepage palette");
   assert.ok(css.includes("Cormorant Garamond") && css.includes("mf-auth-brand-logo"), "login brand uses the site typography and logo styling");
   const emailTemplate = fs.readFileSync(path.join(__dirname, "..", "docs", "supabase-confirmation-email.html"), "utf8");
   assert.ok(emailTemplate.includes("{{ .TokenHash }}") && emailTemplate.includes("{{ .SiteURL }}"), "branded confirmation template uses the PKCE token-hash flow");

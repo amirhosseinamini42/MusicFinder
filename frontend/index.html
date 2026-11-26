@@ -5,7 +5,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#110b08">
+
 <title>MusicFinder</title>
+<meta name="description" content="Discover music, explore artists, and find your next favorite song.">
+<link rel="canonical" href="https://musicfinder-web.vercel.app/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="MusicFinder">
+<meta property="og:title" content="MusicFinder">
+<meta property="og:description" content="Discover music, explore artists, and find your next favorite song.">
+<meta property="og:url" content="https://musicfinder-web.vercel.app/">
+<meta property="og:image" content="https://musicfinder-web.vercel.app/og-image.png">
+<meta property="og:image:secure_url" content="https://musicfinder-web.vercel.app/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="MusicFinder logo">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MusicFinder">
+<meta name="twitter:description" content="Discover music, explore artists, and find your next favorite song.">
+<meta name="twitter:image" content="https://musicfinder-web.vercel.app/og-image.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -160,12 +185,24 @@ a {
 }
 
 .logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
     font-size: 21px;
     font-weight: 800;
     letter-spacing: -.5px;
 }
 
-.logo span {
+.siteLogoMark {
+    display: block;
+    width: 31px;
+    height: 31px;
+    flex: 0 0 31px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(196,127,53,.22));
+}
+
+.logoText span {
     opacity: .45;
 }
 
@@ -1394,44 +1431,20 @@ footer {
     opacity: 1;
 }
 
-/* Halloween atmosphere stays clipped to the player surface. */
+/* Glass layers (reflection and glow) live in glass.css; they stay clipped to the player surface. */
 .musicPlayer::before,
 .musicPlayer::after {
     content: "";
     position: absolute;
     inset: 0;
+    border-radius: inherit;
     pointer-events: none;
-    z-index: 0;
+    z-index: -1;
 }
 
 .musicPlayer > * {
     position: relative;
     z-index: 1;
-}
-
-.musicPlayer::before {
-    background:
-        linear-gradient(105deg, rgba(10, 7, 14, .42), rgba(10, 7, 14, .88)),
-        url("assets/player-halloween-pumpkins.png") left center / cover no-repeat,
-        linear-gradient(105deg, #2b120b, #0d0919);
-    background-blend-mode: multiply, normal, normal;
-    animation: playerHalloweenGlow 12s ease-in-out infinite alternate;
-}
-
-.musicPlayer::after {
-    opacity: .28;
-    background:
-        radial-gradient(circle at 12% 70%, rgba(255, 142, 43, .42), transparent 24%),
-        linear-gradient(90deg, transparent 0 42%, rgba(4, 3, 8, .62) 78%);
-}
-
-@keyframes playerHalloweenGlow {
-    from { filter: saturate(.92) brightness(.84); }
-    to { filter: saturate(1.08) brightness(1); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .musicPlayer::before { animation: none; }
 }
 
 .playerCover {
@@ -1512,6 +1525,10 @@ footer {
 
 .playerPlay:hover {
     background: white;
+}
+
+.playerMinBtn {
+    flex-shrink: 0;
 }
 
 .playerTimeline {
@@ -1634,10 +1651,10 @@ footer {
     --muted: rgba(244,232,212,0.58);
     --accent: #f4e8d4;
 
-    /* default light: amber lamp, burgundy dusk, rainy blue-gray (artwork colours still override these) */
-    --dynamic-color: rgba(214,138,58,.24);
-    --dynamic-color-2: rgba(96,120,140,.16);
-    --dynamic-color-3: rgba(140,52,64,.20);
+    /* neutral blue / silver glass accents; artwork may add subtle source-specific color */
+    --dynamic-color: rgba(135,165,255,.26);
+    --dynamic-color-2: rgba(96,145,205,.18);
+    --dynamic-color-3: rgba(80,180,210,.18);
 }
 
 .navbar::before { background: rgba(24,14,9,.62); }
@@ -1662,7 +1679,7 @@ body::after {
     animation: lampBreathe 14s ease-in-out infinite;
 }
 
-body::selection, ::selection { background: rgba(214,138,58,.4); }
+body::selection, ::selection { background: rgba(145,175,255,.38); }
 
 @keyframes lampBreathe {
     0%, 100% { opacity: .85; }
@@ -1694,7 +1711,7 @@ html::after {
     letter-spacing: 0;
 }
 
-.logo span { color: #e0a45a; opacity: .75; }
+.logoText span { color: #c8d8ff; opacity: .82; }
 
 @media (prefers-reduced-motion: reduce) {
     body::after { animation: none; }
@@ -1884,7 +1901,7 @@ html[dir="rtl"] .menuDrawer.open { transform: translate3d(0, 0, 0); }
 @media (max-width: 700px) { .searchMode { width: min(750px, 100%); } .searchMode button { flex: 1; padding: 10px 8px; font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .searchMode button { transition: none; } }
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+
 
 <style>
 /* MF-EXTRAS-START */
@@ -1908,15 +1925,48 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 .mfPicker { width: min(420px, 100%); max-height: 80vh; overflow: auto; padding: 22px; border-radius: 24px; background: rgba(24,14,9,.96); border: 1px solid var(--border); box-shadow: 0 30px 80px rgba(0,0,0,.6); }
 .mfPicker h4 { margin: 0 0 14px; font-size: 17px; }
 .mfPickItem { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; margin-bottom: 8px; border-radius: 14px; border: 1px solid var(--border); background: rgba(255,255,255,.05); color: var(--text); text-align: start; }
-.mfPickItem.on { border-color: #e0a45a; background: rgba(224,164,90,.16); }
+.mfPickItem.on { border-color: #9fb9ff; background: rgba(145,175,255,.16); }
 .mfPickCreate { display: flex; gap: 8px; margin-top: 12px; }
 .mfPickCreate input { flex: 1; min-width: 0; padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,.07); color: var(--text); }
-.mfMail { direction: ltr; unicode-bidi: isolate; color: #e0a45a; text-decoration: underline; }
+.mfMail { direction: ltr; unicode-bidi: isolate; color: #b9ccff; text-decoration: underline; }
 /* MF-EXTRAS-END */
 </style>
+<link rel="stylesheet" href="/auth.css">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script defer src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@barba/core@2.10.3/dist/barba.umd.js"></script>
+<style id="mf-player-layout">
+.adminShortcut { display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; padding:0; border:1px solid var(--border); border-radius:12px; background:var(--glass); color:var(--text); text-decoration:none; transition:transform .22s ease,background .22s ease,border-color .22s ease; }
+.adminShortcut svg { display:block; width:18px; height:18px; }
+.adminShortcut[hidden] { display:none !important; }
+.adminShortcut:hover { transform:translateY(-2px); border-color:rgba(224,164,90,.55); background:rgba(224,164,90,.12); }
+.musicPlayer.mode-full { width:min(460px,calc(100% - 40px)); flex-wrap:wrap; gap:12px; }
+.musicPlayer.mode-full .playerControls,.musicPlayer.mode-full .playerTimeline,.musicPlayer.mode-full .playerVolume { display:none; }
+.playerFullContent { display:none; flex:1 1 100%; min-width:0; }
+.musicPlayer.mode-full .playerFullContent { display:block; }
+.musicPlayer.mode-full .fullPlayerTop { display:none; }
+.musicPlayer.mode-full .fullPlayerBody iframe { width:100%; border:0; border-radius:14px; }
+.musicPlayer.minimized { width:min(320px,calc(100% - 24px)); min-height:66px; padding:9px 10px; gap:10px; border-radius:18px; }
+.musicPlayer.minimized .playerCover { width:46px; height:46px; }
+.musicPlayer.minimized .playerInfo { min-width:0; flex:1; max-width:none; }
+.musicPlayer.minimized .playerControls,.musicPlayer.minimized .playerTimeline,.musicPlayer.minimized .playerVolume,.musicPlayer.minimized .playerFullContent { display:none !important; }
+.playerCloseBtn { width:34px; height:34px; flex:0 0 34px; position:relative; z-index:2; }
+.playerMinBtn { flex-shrink:0; }
+#pageShell { min-height:100vh; opacity:1; transition:opacity .22s ease; }
+html.page-ready #pageShell { animation:mfPageEnter .42s cubic-bezier(.2,.8,.2,1) both; }
+html.barba-leaving #pageShell { opacity:0; }
+/* Never transform the Barba page shell: fixed UI inside it must stay viewport-anchored. */
+@keyframes mfPageEnter { from{opacity:0} to{opacity:1} }
+@media(max-width:700px) { .musicPlayer.mode-full { left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); width:auto; } .musicPlayer.minimized { left:12px; right:auto; width:min(290px,calc(100% - 24px)); } }
+@media(prefers-reduced-motion:reduce) { #pageShell { animation:none !important; transition:none !important; } :where(button,a[role="button"],.historyItem,.smallBtn) { transition:none !important; } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="/auth-client.js"></script>
+<script src="/auth-ui.js"></script>
 </head>
 
-<body>
+<body data-barba="wrapper">
+<div id="pageShell" data-barba="container" data-barba-namespace="home">
 
 <div id="backgroundArt"></div>
 <div class="backgroundOverlay"></div>
@@ -2009,13 +2059,22 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
         value="1"
     >
 
-    <audio id="musicAudio"></audio>
+    <button
+        class="playerButton playerMinBtn"
+        id="playerMin"
+        type="button"
+        title="Minimize player"
+        aria-label="Minimize player"
+        aria-expanded="true"
+    >
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
 
-</div>
+    <button class="playerButton playerCloseBtn" id="playerClose" type="button" aria-label="Close player" title="Close player">×</button>
 
-<!-- Full song player -->
+    <div class="playerMiniBar" aria-hidden="true"><i id="playerMiniFill"></i></div>
 
-<div class="fullPlayer" id="fullPlayer">
+    <div class="playerFullContent" id="fullPlayer">
 
     <div class="fullPlayerTop">
 
@@ -2024,30 +2083,22 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
             <div class="fullPlayerArtist" id="fullPlayerArtist"></div>
         </div>
 
-        <button
-            class="fullPlayerClose"
-            type="button"
-            onclick="closeFullPlayer()"
-            aria-label="Close"
-        >
-            ×
-        </button>
-
     </div>
-
     <div class="fullPlayerBody" id="fullPlayerBody"></div>
-
     <div class="fullPlayerNote" id="fullPlayerNote"></div>
-
+    </div>
+    <audio id="musicAudio"></audio>
 </div>
 
 <nav class="navbar">
 
     <div class="logo">
-        Music<span>Finder</span>
+        <img class="siteLogoMark" src="/favicon-192x192.png" alt="" width="31" height="31" decoding="async">
+        <span class="logoText">Music<span>Finder</span></span>
     </div>
 
     <div class="navRight">
+        <a class="adminShortcut" id="adminShortcut" href="/admin.html" hidden aria-label="Open Admin Panel" title="Open Admin Panel"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg></a>
         <div class="authArea" id="authArea"></div>
         <button class="menuButton" onclick="openMenu()">☰</button>
     </div>
@@ -2319,32 +2370,21 @@ html[lang="fa"] .hero h1 { font-family: "Cormorant Garamond", "Iowan Old Style",
 
 const BASE_TASTE_KEY = "musicFinderTasteV3";
 const BASE_HISTORY_KEY = "musicFinderSearchHistory";
-const USER_KEY = "musicFinderUser";
+const USER_KEY = "musicFinderUser"; // legacy cache key; never trusted for authentication
 
-/* Paste your Google OAuth Client ID here to turn on "Sign in with Google" */
-const GOOGLE_CLIENT_ID = "923068000834-e2e11vqgul2jeqipsels4vbbf5ltauo5.apps.googleusercontent.com";
 
 let TASTE_KEY = BASE_TASTE_KEY;
 let HISTORY_KEY = BASE_HISTORY_KEY;
-let currentUser = null;
-
-try {
-    currentUser = JSON.parse(localStorage.getItem(USER_KEY) || "null");
-} catch {
-    currentUser = null;
-}
-
-/* Each signed-in account keeps its own taste and history */
-if (currentUser && currentUser.sub) {
-    TASTE_KEY = `${BASE_TASTE_KEY}_${currentUser.sub}`;
-    HISTORY_KEY = `${BASE_HISTORY_KEY}_${currentUser.sub}`;
-}
+let currentUser = null; // Only a verified Supabase session can populate this value.
 
 /* =========================
    API
 ========================= */
 
-const API_BASE = "https://musicfinder-api.vercel.app";
+const currentHost = window.location.hostname;
+const API_BASE = currentHost.startsWith("musicfinder-web-git-")
+        ? "https://musicfinder-api" + currentHost.slice("musicfinder-web".length)
+        : "https://musicfinder-api.vercel.app";
 
 /* encodeURIComponent leaves ' untouched, which breaks inline onclick="f('...')" */
 function encodeSafe(text) {
@@ -2353,70 +2393,53 @@ function encodeSafe(text) {
 
 
 function getTasteData() {
-
-    const saved = localStorage.getItem(TASTE_KEY);
-
-    if (!saved) {
-
-        return {
-            searches: [],
-            artists: {},
-            tracks: {}
-        };
-
-    }
-
+    const empty = { searches: [], artists: {}, tracks: {} };
     try {
-
-        return JSON.parse(saved);
-
-    } catch {
-
+        const saved = localStorage.getItem(TASTE_KEY);
+        if (!saved) return empty;
+        const parsed = JSON.parse(saved);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return empty;
+        const isRecord = value => !!value && typeof value === "object" && !Array.isArray(value);
+        // Old/corrupt browser storage must never prevent the search, details, or player
+        // code from booting. Preserve valid records and repair only malformed containers.
         return {
-            searches: [],
-            artists: {},
-            tracks: {}
+            ...parsed,
+            searches: Array.isArray(parsed.searches) ? parsed.searches.filter(item => typeof item === "string") : [],
+            artists: isRecord(parsed.artists) ? parsed.artists : {},
+            tracks: isRecord(parsed.tracks) ? parsed.tracks : {}
         };
-
+    } catch (error) {
+        console.warn("MusicFinder taste storage is unavailable; using an empty local profile.", error);
+        return empty;
     }
-
 }
 
 
 function saveTasteData(data) {
-
-    localStorage.setItem(
-        TASTE_KEY,
-        JSON.stringify(data)
-    );
-
+    try {
+        localStorage.setItem(TASTE_KEY, JSON.stringify(data));
+        return true;
+    } catch (error) {
+        // Storage quota/privacy restrictions must not block opening Details or playback.
+        console.warn("MusicFinder could not save local taste data:", error);
+        return false;
+    }
 }
 
 
 function getHistory() {
-
     try {
-
-        return JSON.parse(
-            localStorage.getItem(HISTORY_KEY) || "[]"
-        );
-
+        const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+        return Array.isArray(parsed) ? parsed.filter(item => typeof item === "string") : [];
     } catch {
-
         return [];
-
     }
-
 }
 
 
 function saveHistory(history) {
-
-    localStorage.setItem(
-        HISTORY_KEY,
-        JSON.stringify(history)
-    );
-
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(history)); }
+    catch (error) { console.warn("MusicFinder could not save search history:", error); }
 }
 
 
@@ -2565,7 +2588,7 @@ function rememberTrack(track) {
 
     if (!id) return;
 
-    if (!data.tracks[id]) {
+    if (!data.tracks[id] || typeof data.tracks[id] !== "object" || Array.isArray(data.tracks[id])) {
 
         data.tracks[id] = {
 
@@ -2583,7 +2606,7 @@ function rememberTrack(track) {
 
     }
 
-    data.tracks[id].clicks++;
+    data.tracks[id].clicks = (Number(data.tracks[id].clicks) || 0) + 1;
 
     saveTasteData(data);
 
@@ -2602,7 +2625,7 @@ function rememberArtist(artist) {
 
     if (!id) return;
 
-    if (!data.artists[id]) {
+    if (!data.artists[id] || typeof data.artists[id] !== "object" || Array.isArray(data.artists[id])) {
 
         data.artists[id] = {
 
@@ -2619,7 +2642,7 @@ function rememberArtist(artist) {
 
     }
 
-    data.artists[id].clicks++;
+    data.artists[id].clicks = (Number(data.artists[id].clicks) || 0) + 1;
 
     data.artists[id].lastSeen =
         new Date().toISOString();
@@ -3443,7 +3466,8 @@ function openTrackFromEncoded(encoded) {
             decodeURIComponent(encoded)
         );
 
-    registerTrackClick(track);
+    try { registerTrackClick(track); }
+    catch (error) { console.warn("Could not update local track history:", error); }
 
     currentModalTrack = track;
 
@@ -4408,10 +4432,15 @@ document
     );
 
 
-renderHistory();
-renderTaste();
-renderArtists();
-renderForYou();
+function safeInitialRender(name, render) {
+    try { render(); }
+    catch (error) { console.error(`MusicFinder ${name} initialization failed:`, error); }
+}
+// A failure in optional local-history widgets must not abort player and search setup.
+safeInitialRender("history", renderHistory);
+safeInitialRender("taste", renderTaste);
+safeInitialRender("artists", renderArtists);
+safeInitialRender("For You", renderForYou);
 
 /* =========================
    Music Player
@@ -4434,6 +4463,10 @@ const playerDuration = document.getElementById("playerDuration");
 
 const playerVolume = document.getElementById("playerVolume");
 
+const playerMin = document.getElementById("playerMin");
+const playerMiniFill = document.getElementById("playerMiniFill");
+const playerClose = document.getElementById("playerClose");
+
 
 /* Play / pause icons (SVG, same look on every device) */
 
@@ -4448,6 +4481,49 @@ function setPlayerPlaying(isPlaying) {
 function isUnlockSound() {
     return musicAudio.currentSrc.startsWith("data:");
 }
+
+
+/* Minimize / expand the player (state is remembered on this device) */
+
+const PLAYER_MIN_KEY = "musicFinderPlayerMinimized";
+
+function setPlayerMinimized(minimized, remember) {
+
+    musicPlayer.classList.toggle("minimized", minimized);
+
+    const label = minimized ? "Expand player" : "Minimize player";
+
+    playerMin.setAttribute("aria-expanded", String(!minimized));
+    playerMin.setAttribute("aria-label", label);
+    playerMin.title = label;
+
+    if (remember) {
+        try {
+            localStorage.setItem(PLAYER_MIN_KEY, minimized ? "1" : "0");
+        } catch {}
+    }
+
+}
+
+playerMin.addEventListener("click", () => {
+    setPlayerMinimized(!musicPlayer.classList.contains("minimized"), true);
+});
+
+playerClose.addEventListener("click", () => {
+    if (musicPlayer.classList.contains("mode-full")) {
+        closeFullPlayer();
+        return;
+    }
+    playerLoadId++;
+    musicAudio.pause();
+    musicAudio.removeAttribute("src");
+    musicAudio.load();
+    setPlayerPlaying(false);
+    musicPlayer.classList.remove("active", "minimized");
+    try { localStorage.setItem(PLAYER_MIN_KEY, "0"); } catch {}
+});
+
+setPlayerMinimized(false, false);
 
 
 
@@ -4657,10 +4733,45 @@ async function getPreviewSources(song) {
 }
 
 
-/* Silent audio used to unlock playback on iOS Safari */
+/* Silent audio used to unlock playback on iOS Safari.
+   Built at load time: 8 kHz, 8-bit, mono WAV of 0.3 s of silence (same format as before, no embedded blob). */
 
-const SILENT_AUDIO =
-    "data:audio/wav;base64,UklGRoQJAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YWAJAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA=";
+const SILENT_AUDIO = (function () {
+
+    const samples = 2400;
+    const rate = 8000;
+    const bytes = new Uint8Array(44 + samples);
+    const view = new DataView(bytes.buffer);
+
+    const ascii = (offset, text) => {
+        for (let i = 0; i < text.length; i++) {
+            bytes[offset + i] = text.charCodeAt(i);
+        }
+    };
+
+    ascii(0, "RIFF");
+    view.setUint32(4, 36 + samples, true);
+    ascii(8, "WAVE");
+    ascii(12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);        // PCM
+    view.setUint16(22, 1, true);        // mono
+    view.setUint32(24, rate, true);
+    view.setUint32(28, rate, true);     // byte rate (8-bit mono)
+    view.setUint16(32, 1, true);        // block align
+    view.setUint16(34, 8, true);        // bits per sample
+    ascii(36, "data");
+    view.setUint32(40, samples, true);
+    bytes.fill(128, 44);                // 128 = silence for unsigned 8-bit PCM
+
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+
+    return "data:audio/wav;base64," + btoa(binary);
+
+})();
 
 let playerLoadId = 0;
 
@@ -4686,6 +4797,7 @@ async function loadPlayerSong(song, autoPlay = false) {
         song.artists?.map(a => a.name).join(", ") || "Unknown Artist";
     playerCover.src = song.album?.images?.[0]?.url || "";
     playerProgress.value = 0;
+    playerMiniFill.style.width = "0%";
     playerCurrentTime.textContent = "0:00";
     playerDuration.textContent = "0:00";
     musicPlayer.classList.add("active");
@@ -4787,6 +4899,7 @@ musicAudio.addEventListener("timeupdate", () => {
         (musicAudio.currentTime / musicAudio.duration) * 100;
 
     playerProgress.value = progress;
+    playerMiniFill.style.width = progress + "%";
 
     playerCurrentTime.textContent =
         formatPlayerTime(musicAudio.currentTime);
@@ -4837,6 +4950,7 @@ musicAudio.addEventListener("ended", () => {
     setPlayerPlaying(false);
 
     playerProgress.value = 0;
+    playerMiniFill.style.width = "0%";
 
     playerCurrentTime.textContent = "0:00";
 
@@ -4948,11 +5062,9 @@ function playFullSong(song) {
     // start playing in the background next to the Spotify embed.
     playerLoadId++;
 
-    // One player at a time: stop and hide the preview player
+    // One shared player surface; full-song provider playback remains a separate source adapter.
     musicAudio.pause();
-    musicPlayer.classList.remove("active");
 
-    const panel = document.getElementById("fullPlayer");
     const body = document.getElementById("fullPlayerBody");
     const note = document.getElementById("fullPlayerNote");
 
@@ -4963,6 +5075,10 @@ function playFullSong(song) {
 
     document.getElementById("fullPlayerArtist").textContent =
         artists.join(", ");
+    playerTitle.textContent = song.name || "Unknown Song";
+    playerArtist.textContent = artists.join(", ") || "Unknown Artist";
+    playerCover.src = song.album?.images?.[0]?.url || "";
+    setPlayerMinimized(false, true);
 
     // Google search: song name + artist + the Persian word for "download"
     const searchText =
@@ -5006,49 +5122,24 @@ function playFullSong(song) {
 
     }
 
-    panel.classList.add("active");
+    musicPlayer.classList.add("mode-full", "active");
 
 }
 
 
 function closeFullPlayer() {
-
-    document.getElementById("fullPlayer").classList.remove("active");
-
-    // Removing the iframe stops its audio
+    musicPlayer.classList.remove("mode-full", "active", "minimized");
     document.getElementById("fullPlayerBody").innerHTML = "";
-
+    document.getElementById("fullPlayerNote").textContent = "";
+    setPlayerPlaying(false);
+    try { localStorage.setItem(PLAYER_MIN_KEY, "0"); } catch {}
 }
 
 
 
 /* =========================
-   Account (Sign in with Google)
+   Shared account authentication
 ========================= */
-
-let googleInitDone = false;
-
-function googleLoginEnabled() {
-    return Boolean(GOOGLE_CLIENT_ID) && !GOOGLE_CLIENT_ID.startsWith("PASTE_");
-}
-
-function decodeJwtPayload(token) {
-
-    const base64 = token
-        .split(".")[1]
-        .replace(/-/g, "+")
-        .replace(/_/g, "/");
-
-    const json = decodeURIComponent(
-        atob(base64)
-            .split("")
-            .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-            .join("")
-    );
-
-    return JSON.parse(json);
-}
-
 function refreshAccountData() {
     renderHistory();
     renderTaste();
@@ -5056,174 +5147,140 @@ function refreshAccountData() {
     renderForYou();
 }
 
-function handleGoogleCredential(response) {
-
-    try {
-
-        const info = decodeJwtPayload(response.credential);
-
-        if (!info.sub) return;
-
-        signInUser({
-            sub: info.sub,
-            name: info.name || info.email || "User",
-            email: info.email || "",
-            picture: info.picture || ""
-        });
-
-    } catch (error) {
-
-        console.error("Google sign-in failed:", error);
-
-    }
-
+function accountProfileFromAuth(user) {
+    const metadata = user && user.user_metadata && typeof user.user_metadata === "object" ? user.user_metadata : {};
+    const identities = user && Array.isArray(user.identities) ? user.identities : [];
+    const googleIdentity = identities.find(item => item && item.provider === "google");
+    const googleData = googleIdentity && googleIdentity.identity_data ? googleIdentity.identity_data : {};
+    const legacyGoogleSub = googleData.sub || (googleIdentity && googleIdentity.id) || null;
+    return {
+        id: user.id,
+        sub: String(user.id),
+        legacyGoogleSub: legacyGoogleSub ? String(legacyGoogleSub) : null,
+        name: metadata.full_name || metadata.name || metadata.display_name || (user.email || "User").split("@")[0],
+        email: user.email || "",
+        picture: metadata.avatar_url || metadata.picture || ""
+    };
 }
 
-function signInUser(user) {
-
+function signInUser(authUser) {
+    if (!authUser || !authUser.id) return;
+    const user = accountProfileFromAuth(authUser);
     const accountTaste = `${BASE_TASTE_KEY}_${user.sub}`;
     const accountHistory = `${BASE_HISTORY_KEY}_${user.sub}`;
-
     try {
-
-        // First sign-in on this device: keep what the guest already collected
-        if (!localStorage.getItem(accountTaste) && localStorage.getItem(BASE_TASTE_KEY)) {
-            localStorage.setItem(accountTaste, localStorage.getItem(BASE_TASTE_KEY));
+        const legacyTasteKey = user.legacyGoogleSub ? `${BASE_TASTE_KEY}_${user.legacyGoogleSub}` : null;
+        const legacyHistoryKey = user.legacyGoogleSub ? `${BASE_HISTORY_KEY}_${user.legacyGoogleSub}` : null;
+        if (!localStorage.getItem(accountTaste)) {
+            const existingTaste = (legacyTasteKey && localStorage.getItem(legacyTasteKey)) || localStorage.getItem(BASE_TASTE_KEY);
+            if (existingTaste) localStorage.setItem(accountTaste, existingTaste);
         }
-
-        if (!localStorage.getItem(accountHistory) && localStorage.getItem(BASE_HISTORY_KEY)) {
-            localStorage.setItem(accountHistory, localStorage.getItem(BASE_HISTORY_KEY));
+        if (!localStorage.getItem(accountHistory)) {
+            const existingHistory = (legacyHistoryKey && localStorage.getItem(legacyHistoryKey)) || localStorage.getItem(BASE_HISTORY_KEY);
+            if (existingHistory) localStorage.setItem(accountHistory, existingHistory);
         }
-
-        localStorage.setItem(USER_KEY, JSON.stringify(user));
-
+        localStorage.removeItem(USER_KEY);
     } catch {}
-
     currentUser = user;
     TASTE_KEY = accountTaste;
     HISTORY_KEY = accountHistory;
-
     renderAuth();
     refreshAccountData();
-
 }
 
-function signOutUser() {
-
-    try {
-        localStorage.removeItem(USER_KEY);
-    } catch {}
-
-    try {
-        window.google?.accounts?.id?.disableAutoSelect();
-    } catch {}
-
+function clearSignedInUser() {
+    try { localStorage.removeItem(USER_KEY); } catch {}
     currentUser = null;
     TASTE_KEY = BASE_TASTE_KEY;
     HISTORY_KEY = BASE_HISTORY_KEY;
-
     renderAuth();
     refreshAccountData();
-
 }
 
-function renderGoogleButton() {
-
-    const area = document.getElementById("authArea");
-
-    if (!area || currentUser || !window.google?.accounts?.id) return;
-
-    const small = window.innerWidth < 700;
-
-    area.innerHTML = "";
-
-    google.accounts.id.renderButton(area, {
-        type: small ? "icon" : "standard",
-        theme: "filled_black",
-        size: "large",
-        shape: small ? "circle" : "pill",
-        text: "signin_with"
-    });
-
+async function signOutUser() {
+    try { await MFAuth.signOut(); }
+    catch (error) { console.error("Sign out failed:", error); }
+    clearSignedInUser();
+    refreshAdminShortcut(null);
 }
 
-function initGoogleLogin(attempt = 0) {
-
-    if (!googleLoginEnabled() || currentUser) return;
-
-    // The Google library loads asynchronously, so wait for it
-    if (!window.google?.accounts?.id) {
-
-        if (attempt < 20) {
-            setTimeout(() => initGoogleLogin(attempt + 1), 300);
-        }
-
-        return;
-    }
-
-    if (!googleInitDone) {
-
-        google.accounts.id.initialize({
-            client_id: GOOGLE_CLIENT_ID,
-            callback: handleGoogleCredential
+let adminShortcutRequest = 0;
+async function refreshAdminShortcut(session) {
+    const link = document.getElementById("adminShortcut");
+    if (!link) return;
+    const requestId = ++adminShortcutRequest;
+    link.hidden = true;
+    if (!session || !session.access_token) return;
+    try {
+        const response = await fetch(`${API_BASE}/admin/me`, {
+            headers: { Authorization: `Bearer ${session.access_token}` },
+            cache: "no-store"
         });
-
-        googleInitDone = true;
+        if (!response.ok) return;
+        const admin = await response.json();
+        if (requestId !== adminShortcutRequest) return;
+        link.hidden = !["admin", "owner"].includes(admin.role);
+    } catch (error) {
+        if (requestId === adminShortcutRequest) link.hidden = true;
+        console.debug("Admin shortcut check unavailable:", error && error.name);
     }
+}
 
-    renderGoogleButton();
+let emailConfirmationUiHandled = false;
 
+function handleEmailConfirmation(session) {
+    if (emailConfirmationUiHandled || !session || !session.user) return;
+    const callbackUrl = new URL(window.location.href);
+    if (callbackUrl.searchParams.get("auth") !== "confirmed") return;
+    emailConfirmationUiHandled = true;
+    callbackUrl.searchParams.delete("auth");
+    window.history.replaceState({}, document.title,
+        callbackUrl.pathname + callbackUrl.search + callbackUrl.hash);
+    MFLoginPanel.open("profile", currentUser);
 }
 
 function renderAuth() {
-
     const area = document.getElementById("authArea");
-
     if (!area) return;
-
-    if (currentUser) {
-
-        const firstName = (currentUser.name || "").split(" ")[0];
-
-        area.innerHTML = `
-            <div class="authUser">
-
-                ${
-                    currentUser.picture
-                    ? `<img
-                            class="authAvatar"
-                            src="${escapeHtml(currentUser.picture)}"
-                            alt=""
-                            referrerpolicy="no-referrer"
-                       >`
-                    : ""
-                }
-
-                <span class="authName">${escapeHtml(firstName)}</span>
-
-            </div>
-
-            <button
-                class="authSignOut"
-                type="button"
-                onclick="signOutUser()"
-            >
-                Sign out
-            </button>
-        `;
-
+    if (!currentUser) {
+        area.innerHTML = `<button class="authSignOut" type="button" onclick="MFLoginPanel.open('login')">Sign in</button>`;
         return;
     }
+    const firstName = (currentUser.name || "").split(" ")[0];
+    area.innerHTML = `<button class="authUser" type="button" onclick="MFLoginPanel.open('profile', currentUser)" aria-label="Open account profile">
+        ${currentUser.picture ? `<img class="authAvatar" src="${escapeHtml(currentUser.picture)}" alt="" referrerpolicy="no-referrer">` : ""}
+        <span class="authName">${escapeHtml(firstName)}</span></button>
+        <button class="authSignOut" type="button" onclick="signOutUser()">Sign out</button>`;
+}
 
-    area.innerHTML = "";
-
-    initGoogleLogin();
-
+async function initAccountAuth() {
+    try {
+        await MFAuth.init();
+        MFAuth.onAuthStateChange((event, session) => {
+            if (session && session.user) {
+                signInUser(session.user);
+                refreshAdminShortcut(session);
+                if (event === "SIGNED_IN") handleEmailConfirmation(session);
+            }
+            else { refreshAdminShortcut(null); if (currentUser) clearSignedInUser(); }
+        });
+        const session = await MFAuth.getSession();
+        if (session && session.user) {
+            if (!currentUser) signInUser(session.user);
+            refreshAdminShortcut(session);
+            handleEmailConfirmation(session);
+        } else { refreshAdminShortcut(null); renderAuth(); }
+        if (new URLSearchParams(window.location.search).get("auth") === "recovery") {
+            MFLoginPanel.open("recovery");
+        }
+    } catch (error) {
+        console.error("Account authentication initialization failed:", error);
+        renderAuth();
+    }
 }
 
 renderAuth();
-
-window.addEventListener("load", () => initGoogleLogin());
+window.addEventListener("load", initAccountAuth, { once: true });
 
 </script>
 
@@ -5367,19 +5424,20 @@ function showTelegramPanel(query, copied) {
         "MusicFinder remembers what you interact with.":"MusicFinder به یاد می‌سپارد با چه چیزی تعامل داشته‌اید.",
         "Clear Taste":"پاک کردن سلیقه","Clear":"پاک کردن",
         "🎵 Most Explored Songs":"🎵 پربازدیدترین آهنگ‌ها","👤 Most Explored Artists":"👤 پربازدیدترین هنرمندان",
-        "Your recent searches on MusicFinder.":"جستجوهای اخیر ش  ا در MusicFinder.",
+        "Your recent searches on MusicFinder.":"جستجوهای اخیر شما در MusicFinder.",
         "Artists you've discovered through MusicFinder.":"هنرمندانی که در MusicFinder کشف کرده‌اید.",
         "MusicFinder is a personal music discovery project, created by Amirhossein Amini.":"MusicFinder یک پروژه شخصی برای کشف موسیقی است که توسط امیرحسین امینی ساخته شده است.",
         "Music metadata and artwork are provided through Spotify.":"اطلاعات و تصاویر موسیقی از طریق Spotify تأمین می‌شود.",
         "MusicFinder · Personal Music Discovery":"MusicFinder · کشف شخصی موسیقی",
-        "About this song":"درباره این آهنگ","ARTIST":"هنرمند","SONG":"  هنگ","Artist":"هنرمند",
+        "About this song":"درباره این آهنگ","ARTIST":"هنرمند","SONG":"آهنگ","Artist":"هنرمند",
         "Check that the MusicFinder server is running.":"بررسی کنید که سرور MusicFinder در حال اجراست.",
         "Close":"بستن","Copy":"کپی","Could not load artist information.":"اطلاعات هنرمند بارگذاری نشد.",
         "Details":"جزئیات","Discography":"آثار و آلبوم‌ها","Download":"دانلود","Download Search":"جستجوی دانلود",
-        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق ت  گرا  ",
+        "Search Downloads":"جستجوی دانلود","Download via Telegram":"دانلود از طریق تلگرام",
         "Explore":"کاوش","Explore Artist":"کاوش هنرمند",
         "Loading artist information...":"در حال بارگذاری اطلاعات هنرمند...","Loading...":"در حال بارگذاری...",
         "Loading results":"در حال بارگذاری نتایج","Album cover":"جلد آلبوم",
+        "Minimize player":"کوچک کردن پخش‌کننده","Expand player":"بزرگ کردن پخش‌کننده",
         "MusicFinder Artist Library":"کتابخانه هنرمندان MusicFinder","No albums found.":"آلبومی پیدا نشد.",
         "No artists yet.":"هنوز هنرمندی نیست.","No results found for":"نتیجه‌ای پیدا نشد برای",
         "No searches yet.":"هنوز جستجویی انجام نشده.","No song playing":"آهنگی پخش نمی‌شود",
@@ -6098,5 +6156,37 @@ function showTelegramPanel(query, copied) {
     if (isFa() && typeof window.setLanguage === "function") window.setLanguage("fa");
 })();
 </script>
+<script src="uploads-integration.js"></script>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (window.Lenis && !reduceMotion) {
+        try {
+            window.mfLenis = new Lenis({ autoRaf:true, smoothWheel:true, syncTouch:false, lerp:.09, allowNestedScroll:true,
+                prevent: node => !!(node && node.closest && node.closest(".menuDrawer,.modal,.mfPicker,[data-lenis-prevent]")) });
+        } catch (error) { console.warn("Lenis initialization skipped:", error); }
+    }
+    document.documentElement.classList.add("page-ready");
+    if (window.barba && !reduceMotion) {
+        try {
+            barba.init({ preventRunning:true,
+                requestError: (_trigger, action, url) => { if (action === "click") location.assign(url); else location.replace(url); return false; },
+                prevent: ({el}) => !el || el.hasAttribute("data-barba-prevent") || el.target === "_blank" ||
+                    new URL(el.href, location.href).origin !== location.origin ||
+                    !["/", "/admin.html"].includes(new URL(el.href, location.href).pathname),
+                transitions:[{ name:"musicfinder-liquid-route", leave:async ({next}) => {
+                    document.documentElement.classList.add("barba-leaving");
+                    await new Promise(resolve => setTimeout(resolve,150));
+                    // The legacy pages have independent inline bootstraps; reload after the transition
+                    // so each destination reinitializes auth, player, and admin state safely.
+                    location.replace(next.url.href);
+                }}]
+            });
+        } catch (error) { console.warn("Barba initialization skipped:", error); }
+    }
+});
+</script>
+
 </body>
 </html>

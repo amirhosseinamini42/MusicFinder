@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#110b08">
+  <title>Confirm your MusicFinder email</title>
+  <script>
+    const confirmationUrl = new URL(window.location.href);
+    const confirmationTokenHash = confirmationUrl.searchParams.get("token_hash") || "";
+    const confirmationType = confirmationUrl.searchParams.get("type") || "";
+    window.history.replaceState({}, document.title, confirmationUrl.pathname);
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+  <script src="/auth-client.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:22px;background:radial-gradient(ellipse 70% 55% at 14% -8%,rgba(236,148,56,.30),transparent 72%),radial-gradient(ellipse 60% 45% at 92% 108%,rgba(160,56,56,.24),transparent 72%),#110b08;color:#f4e8d4;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .panel{width:min(440px,100%);padding:34px 28px;border:1px solid rgba(255,220,180,.17);border-radius:24px;background:linear-gradient(155deg,rgba(39,25,17,.94),rgba(17,11,8,.97));box-shadow:0 28px 100px rgba(10,4,2,.48),inset 0 1px 0 rgba(255,236,210,.07);backdrop-filter:blur(28px) saturate(155%);-webkit-backdrop-filter:blur(28px) saturate(155%);text-align:center}
+    .brand{display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:28px;font-size:20px;font-weight:800;letter-spacing:-.5px}
+    .brand img{width:48px;height:48px;border-radius:13px;object-fit:contain}
+    h1{margin:0 0 12px;font-size:27px;letter-spacing:-.7px}
+    p{margin:0;color:rgba(244,232,212,.68);font-size:14px;line-height:1.7}
+    button{width:100%;min-height:48px;margin-top:25px;padding:13px 18px;border:1px solid rgba(224,164,90,.3);border-radius:13px;background:linear-gradient(110deg,rgba(214,138,58,.3),rgba(96,120,140,.2),rgba(140,52,64,.24));color:#f8ead6;font:inherit;font-weight:750;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 10px 26px rgba(0,0,0,.2);backdrop-filter:blur(16px);transition:transform .25s,background .25s,border-color .25s,box-shadow .25s}
+    button:hover{transform:translateY(-2px);border-color:rgba(232,177,105,.58);background:linear-gradient(110deg,rgba(214,138,58,.42),rgba(96,120,140,.29),rgba(140,52,64,.33));box-shadow:0 14px 32px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.25)}
+    button:active{transform:scale(.98)}
+    button:disabled{opacity:.55;cursor:wait}
+    #status{margin-top:16px;min-height:24px;font-size:13px}
+    @media(max-width:480px){.panel{padding:28px 21px;border-radius:21px}h1{font-size:24px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <div class="brand"><img src="/favicon-192x192.png" alt="">MusicFinder</div>
+    <h1>Confirm your email</h1>
+    <p>Press the button below to verify your email address and finish creating your MusicFinder account.</p>
+    <button id="confirmEmail" type="button">Confirm email</button>
+    <p id="status" role="status" aria-live="polite"></p>
+  </main>
+  <script>
+    const confirmButton = document.getElementById("confirmEmail");
+    const status = document.getElementById("status");
+
+    if (!confirmationTokenHash || confirmationType !== "email") {
+      confirmButton.disabled = true;
+      status.textContent = "This confirmation link is incomplete. Request a new email from MusicFinder.";
+    }
+
+    confirmButton.addEventListener("click", async () => {
+      if (!confirmationTokenHash || confirmationType !== "email") return;
+      confirmButton.disabled = true;
+      confirmButton.textContent = "Confirming…";
+      status.textContent = "Verifying your email address…";
+      try {
+        await window.MFAuth.init();
+        const result = await window.MFAuth.verifyOtp(confirmationTokenHash, "email");
+        if (!result || !result.session) throw new Error("confirmation_session_missing");
+        status.textContent = "Email confirmed. Opening MusicFinder…";
+        window.location.replace("/?auth=confirmed");
+      } catch (error) {
+        console.error("Email confirmation failed:", error && error.message);
+        confirmButton.textContent = "Try again";
+        confirmButton.disabled = false;
+        status.textContent = "We couldn't confirm this link. It may have expired or already been used. Request a new confirmation email and try again.";
+      }
+    });
+  </script>
+</body>
+</html>

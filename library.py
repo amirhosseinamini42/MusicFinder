@@ -1,18 +1,17 @@
 """
 Favorites & playlists API for MusicFinder (additive module; existing routes are untouched).
 
-Identity: the existing site signs in with Google Identity Services, so the browser sends the
-Google ID token as `Authorization: Bearer <id_token>`. The server verifies it with Google
-(audience must equal GOOGLE_CLIENT_ID) and uses the verified `sub` as the owner. The browser
-never supplies a user id. Data lives in Supabase tables accessed ONLY from this server with
-the service-role key (env, never sent to the browser); RLS is enabled with no policies, so the
-public/anon key cannot read or write these tables.
+Identity: the site sends a Supabase Auth access token as `Authorization: Bearer <access_token>`. The server
+verifies it through the Supabase Auth user endpoint and resolves a stable owner key through `mf_auth_accounts`.
+Google provider subjects are retained as legacy aliases; Google-first accounts keep their previous owner key, while
+email-first accounts keep their Supabase UUID and merge any later-linked Google data into that stable owner. Legacy
+Google ID tokens are accepted only during staged migration. The browser never supplies a user id. Data lives in
+Supabase tables accessed ONLY from this server with the service-role key; RLS is enabled with no public policies.
 
-Env: GOOGLE_CLIENT_ID, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+Env: SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY), SUPABASE_SERVICE_ROLE_KEY; GOOGLE_CLIENT_ID is required only for legacy-token compatibility.
 """
 import os
 import re
-import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any, List, Optional
@@ -25,7 +24,6 @@ router = APIRouter(prefix="/library", tags=["library"])
 
 MAX_TRACKS = 500
 MAX_FAVORITES = 5000
-_token_cache: dict = {}
 
 
 def err(status: int, code: str):
@@ -34,28 +32,84 @@ def err(status: int, code: str):
 
 
 # ---------- identity ----------
+def _merge_legacy_google_owner(legacy_sub: str, owner_key: str) -> None:
+    """Move verified legacy Google-owned library rows to a stable Supabase owner key."""
+    if not legacy_sub or legacy_sub == owner_key:
+        return
+    # Copy in bounded pages. Keep legacy source rows: this makes the merge retry-safe and
+    # avoids data loss if an old account exceeds the configured API row limit.
+    offset = 0
+    page_size = 500
+    while True:
+        favorites = _db("GET", "mf_favorites", {
+            "user_sub": f"eq.{legacy_sub}", "select": "song_id,song,added_at",
+            "order": "song_id.asc", "limit": page_size, "offset": offset
+        })
+        if not favorites:
+            break
+        _db("POST", "mf_favorites", {"on_conflict": "user_sub,song_id"},
+            [{"user_sub": owner_key, **row} for row in favorites],
+            prefer="resolution=ignore-duplicates,return=minimal")
+        offset += len(favorites)
+        if len(favorites) < page_size:
+            break
+    _db("PATCH", "mf_playlists", {"user_sub": f"eq.{legacy_sub}"},
+        {"user_sub": owner_key}, prefer="return=minimal")
+
+
+def _resolve_library_owner(ident: dict) -> str:
+    """Resolve one immutable library owner key, even if a user later links Google."""
+    if ident.get("provider") == "google_legacy":
+        return ident["sub"]
+
+    user_id = ident["id"]
+    google_sub = ident.get("legacy_google_sub")
+    rows = _db("GET", "mf_auth_accounts", {
+        "user_id": f"eq.{user_id}", "select": "user_id,owner_key,legacy_google_sub"
+    })
+    if rows:
+        account = rows[0]
+        owner_key = account["owner_key"]
+        mapped_google = account.get("legacy_google_sub")
+        if google_sub and mapped_google != google_sub:
+            _merge_legacy_google_owner(google_sub, owner_key)
+            _db("PATCH", "mf_auth_accounts", {"user_id": f"eq.{user_id}"},
+                {"legacy_google_sub": google_sub}, prefer="return=minimal")
+        return owner_key
+
+    # A Google-first legacy account keeps its existing Google-sub owner key. An email-first
+    # account receives its immutable Supabase UUID; a later Google link is merged into it.
+    google_is_primary = ident.get("primary_provider") == "google"
+    initial_owner = google_sub if google_is_primary and google_sub else user_id
+    initial_google_alias = google_sub if google_is_primary else None
+    _db("POST", "mf_auth_accounts", {"on_conflict": "user_id"}, {
+        "user_id": user_id, "owner_key": initial_owner, "legacy_google_sub": initial_google_alias
+    }, prefer="resolution=ignore-duplicates,return=minimal")
+    rows = _db("GET", "mf_auth_accounts", {
+        "user_id": f"eq.{user_id}", "select": "user_id,owner_key,legacy_google_sub"
+    })
+    if not rows:
+        raise err(503, "auth_mapping_unavailable")
+    account = rows[0]
+    owner_key = account["owner_key"]
+    mapped_google = account.get("legacy_google_sub")
+    if google_sub and mapped_google != google_sub:
+        _merge_legacy_google_owner(google_sub, owner_key)
+        _db("PATCH", "mf_auth_accounts", {"user_id": f"eq.{user_id}"},
+            {"legacy_google_sub": google_sub}, prefer="return=minimal")
+    return owner_key
+
+
 def current_user(authorization: Optional[str] = Header(default=None)) -> str:
-    client_id = os.getenv("GOOGLE_CLIENT_ID")
-    if not client_id:
-        raise err(503, "cloud_not_configured")
+    """Resolve a Supabase session to a stable, database-mapped library owner key."""
     if not authorization or not authorization.lower().startswith("bearer "):
         raise err(401, "auth_required")
     token = authorization[7:].strip()
-    hit = _token_cache.get(token)
-    if hit and hit[1] > time.time():
-        return hit[0]
-    try:
-        r = requests.get("https://oauth2.googleapis.com/tokeninfo", params={"id_token": token}, timeout=10)
-    except requests.RequestException:
-        raise err(502, "auth_unavailable")
-    if r.status_code != 200:
-        raise err(401, "session_expired")
-    info = r.json()
-    if info.get("aud") != client_id or not info.get("sub") or int(info.get("exp", 0)) < time.time():
-        raise err(401, "session_expired")
-    _token_cache[token] = (info["sub"], min(float(info["exp"]), time.time() + 300))
-    return info["sub"]
-
+    if not token or len(token) > 8192:
+        raise err(401, "auth_required")
+    import auth_supabase
+    ident = auth_supabase.verify_access_token(token)
+    return _resolve_library_owner(ident)
 
 # ---------- storage (Supabase PostgREST, server side only) ----------
 def _db(method: str, table: str, params: Optional[dict] = None, json: Any = None, prefer: str = "return=representation"):

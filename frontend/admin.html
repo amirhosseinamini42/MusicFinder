@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#110b08">
+<title>MusicFinder · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/auth.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="/auth-client.js"></script>
+<script src="/auth-ui.js"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<script defer src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@barba/core@2.10.3/dist/barba.umd.js"></script>
+<style>
+* { box-sizing: border-box; }
+:root {
+    --bg:#110b08; --glass:rgba(255,226,190,.07); --glass-strong:rgba(255,226,190,.12);
+    --border:rgba(255,220,180,.14); --text:#f4e8d4; --muted:rgba(244,232,212,.58);
+    --amber:#e0a45a; --danger:#ff7a90; --ok:#8fd19e;
+}
+html { color-scheme: dark; }
+body {
+    margin:0; min-height:100vh; color:var(--text);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+        radial-gradient(ellipse 70% 55% at 14% -8%, rgba(236,148,56,.30), transparent 72%),
+        radial-gradient(ellipse 60% 45% at 92% 108%, rgba(160,56,56,.24), transparent 72%),
+        var(--bg);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+.bar { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding: calc(14px + env(safe-area-inset-top)) 22px 14px; background:rgba(24,14,9,.82); backdrop-filter:blur(22px); border-bottom:1px solid var(--border); }
+.logo { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:-.5px; } .logo span { color:var(--amber); opacity:.8; }
+.siteLogoMark { display:block; width:30px; height:30px; flex:0 0 30px; object-fit:contain; filter:drop-shadow(0 2px 8px rgba(196,127,53,.22)); }
+.who { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); min-width:0; }
+.who b { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
+.badge { padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; background:rgba(224,164,90,.18); border:1px solid rgba(224,164,90,.5); color:var(--amber); }
+main { width:min(1100px, calc(100% - 32px)); margin:28px auto 80px; }
+h1,h2 { font-family:"Cormorant Garamond", Georgia, serif; font-weight:600; margin:0 0 6px; }
+h1 { font-size:40px; } h2 { font-size:28px; }
+.muted { color:var(--muted); font-size:14px; }
+.glass { background:linear-gradient(160deg, rgba(255,226,190,.085), rgba(255,226,190,.04)); border:1px solid var(--border); border-radius:22px; padding:22px; backdrop-filter:blur(20px); }
+.tabs { display:flex; gap:6px; padding:4px; margin:22px 0; border-radius:14px; background:rgba(255,255,255,.06); border:1px solid var(--border); overflow-x:auto; }
+.tabs button { flex:1; min-width:110px; padding:10px 14px; border:0; border-radius:10px; background:transparent; color:var(--muted); font-weight:700; }
+.tabs button.active { background:linear-gradient(135deg,#e6b06a,#c47f35); color:#1e1208; }
+.tabs button:focus-visible, .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .stat.statBtn:focus-visible { outline:2px solid rgba(224,164,90,.8); outline-offset:2px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; }
+.stat { padding:18px; border-radius:18px; background:rgba(255,255,255,.05); border:1px solid var(--border); }
+.stat b { display:block; font-size:30px; } .stat span { color:var(--muted); font-size:13px; }
+.stat.statBtn { display:block; width:100%; text-align:start; color:inherit; cursor:pointer; }
+.navRow { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:0 0 16px; }
+.crumb { color:var(--muted); font-size:13px; }
+label { display:block; font-size:13px; color:var(--muted); margin:14px 0 6px; }
+input[type=text], input[type=search], input[type=email], select, textarea {
+    width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:rgba(255,255,255,.07); color:var(--text); }
+textarea { min-height:90px; resize:vertical; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:14px; } @media (max-width:700px){ .row{grid-template-columns:1fr;} }
+.check { display:flex; align-items:flex-start; gap:10px; margin-top:14px; font-size:14px; color:var(--text); }
+.check input { margin-top:3px; accent-color:#c47f35; }
+.btn { padding:11px 18px; border-radius:13px; border:1px solid var(--border); background:rgba(255,255,255,.07); color:var(--text); font-weight:650; transition:background .2s, transform .2s; }
+.btn:hover { background:rgba(255,255,255,.16); transform:translateY(-2px); }
+.btn.primary { background:linear-gradient(135deg,#e6b06a,#c47f35); color:#1e1208; border-color:transparent; }
+.btn.danger { border-color:rgba(255,122,144,.6); color:var(--danger); }
+.btn:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+.btn.sm { padding:7px 11px; font-size:12.5px; border-radius:10px; }
+.actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:18px; }
+.progress { height:8px; border-radius:999px; background:rgba(255,255,255,.12); overflow:hidden; margin-top:6px; }
+.progress i { display:block; height:100%; width:0; background:linear-gradient(90deg,#e6b06a,#c47f35); transition:width .15s; }
+.msg { padding:12px 14px; border-radius:12px; margin-top:14px; font-size:14px; border:1px solid var(--border); background:rgba(255,255,255,.06); }
+.msg.err { border-color:rgba(255,122,144,.6); color:#ffc2cc; } .msg.ok { border-color:rgba(143,209,158,.5); color:var(--ok); }
+.tableWrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:14px; }
+th, td { text-align:start; padding:12px 10px; border-bottom:1px solid var(--border); vertical-align:middle; }
+th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+.pill { padding:3px 9px; border-radius:999px; font-size:11.5px; font-weight:700; border:1px solid var(--border); }
+.pill.draft { color:var(--muted); } .pill.review { color:#e6c06a; border-color:#e6c06a88; }
+.pill.published { color:var(--ok); border-color:#8fd19e88; } .pill.unpublished { color:var(--danger); border-color:#ff7a9088; }
+.toolbar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; } .toolbar input { flex:1; min-width:180px; } .toolbar select { width:auto; }
+.cov { width:44px; height:44px; border-radius:10px; background:rgba(255,255,255,.08); object-fit:cover; }
+.overlay { position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.6); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:20px; }
+.dlg { width:min(560px,100%); max-height:88vh; overflow:auto; background:rgba(24,14,9,.97); border:1px solid var(--border); border-radius:22px; padding:24px; }
+.hidden { display:none !important; }
+.center { min-height:60vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; }
+audio { width:100%; margin-top:12px; }
+@media (prefers-reduced-motion: reduce){ * { transition:none !important; } }
+.drop { border:2px dashed var(--border); border-radius:16px; padding:16px; text-align:center; color:var(--muted); cursor:pointer; margin-top:6px; }
+.drop.over, .drop:focus-visible { border-color:#e0a45a; background:rgba(224,164,90,.10); outline:none; }
+.fileInfo { font-size:12.5px; margin-top:6px; color:var(--muted); } .fileInfo.bad { color:var(--danger); }
+.pill.unreleased { color:#c9a7ff; border-color:#c9a7ff88; }
+.mf-review-player { padding:15px; border:1px solid var(--border); border-radius:18px; background:linear-gradient(160deg,rgba(255,226,190,.085),rgba(255,226,190,.04)); box-shadow:0 18px 48px rgba(10,4,2,.22),inset 0 1px 0 rgba(255,236,210,.06); backdrop-filter:blur(20px); }
+.mf-review-head { display:flex; align-items:center; gap:13px; min-width:0; }
+.mf-review-cover { width:68px; height:68px; flex:0 0 68px; border-radius:13px; object-fit:cover; background:rgba(255,226,190,.08); box-shadow:0 8px 22px rgba(0,0,0,.25); }
+.mf-review-title { color:var(--text); font-size:14px; font-weight:750; overflow-wrap:anywhere; }
+.mf-review-artist { color:var(--muted); font-size:12px; margin-top:4px; }
+.mf-review-controls { display:grid; grid-template-columns:42px minmax(0,1fr) auto; align-items:center; gap:10px; margin-top:16px; }
+.mf-review-play { width:42px; height:42px; padding:0; border-radius:50%; font-size:15px; }
+.mf-review-seek,.mf-review-volume { width:100%; accent-color:#c47f35; cursor:pointer; }
+.mf-review-time { min-width:82px; color:var(--muted); font-size:11px; text-align:end; font-variant-numeric:tabular-nums; }
+.mf-review-volume-row { display:flex; align-items:center; gap:10px; margin-top:11px; color:var(--muted); font-size:11px; }
+.mf-review-volume { max-width:130px; }
+.mf-review-player audio { display:none; }
+.barBrand { display:flex; align-items:center; gap:16px; min-width:0; }
+.backWebsite { display:inline-flex; align-items:center; gap:7px; padding:9px 13px; border-radius:13px; border:1px solid var(--border); background:rgba(255,255,255,.07); color:var(--text); font-size:12px; font-weight:750; text-decoration:none; transition:transform .25s,background .25s; }
+.backWebsite:hover { transform:translateY(-2px); background:rgba(224,164,90,.12); }
+#pageShell { min-height:100vh; opacity:1; transform:translateY(0); transition:opacity .22s ease,transform .22s ease; }
+html.page-ready #pageShell { animation:mfAdminEnter .42s cubic-bezier(.2,.8,.2,1) both; }
+html.barba-leaving #pageShell { opacity:0; transform:translateY(8px); }
+@keyframes mfAdminEnter { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@media(max-width:700px) { .bar { padding-left:12px; padding-right:12px; flex-wrap:wrap; } .barBrand { gap:8px; } .logo { font-size:16px; } .backWebsite { padding:8px 9px; font-size:11px; } .who { flex-wrap:wrap; justify-content:flex-end; gap:6px; } main { width:calc(100% - 20px); margin-top:18px; } .glass { padding:16px; } }
+@media(prefers-reduced-motion:reduce) { #pageShell{animation:none!important;transition:none!important} .btn,.tabs button,.stat.statBtn{transition:none!important} }
+</style>
+</head>
+<body class="mf-admin" data-barba="wrapper">
+<div id="pageShell" data-barba="container" data-barba-namespace="admin">
+<div class="bar">
+    <div class="barBrand"><div class="logo"><img class="siteLogoMark" src="/favicon-192x192.png" alt="" width="30" height="30" decoding="async">Music<span>Finder</span> · Admin</div><a class="backWebsite" href="/" aria-label="Back to MusicFinder website">← Back to Website</a></div>
+    <div class="who" id="who"></div>
+</div>
+
+<main id="app"></main>
+<div id="dialogHost"></div>
+<div id="reauthHost"></div>
+
+<script>
+/* Public API origin only. Supabase credentials are supplied by the API, never hardcoded here. */
+const currentHost = window.location.hostname;
+const API_BASE = currentHost.startsWith("musicfinder-web-git-")
+    ? "https://musicfinder-api" + currentHost.slice("musicfinder-web".length)
+    : "https://musicfinder-api.vercel.app";
+
+let idToken = null;          // kept in memory only (never written to storage)
+let me = null;
+let tab = "dashboard";
+let tracksCache = [];
+let tracksFilter = "";       // status filter applied when opening the Tracks view
+let navStack = [];           // previous views, newest last (drives the Back button)
+let reauthWait = null;
+
+const ERR = {
+    auth_required: "Please sign in.", session_expired: "Your session expired. Please sign in again.",
+    email_not_verified: "Please verify your email before signing in.", not_authorized: "This account is not authorized for administration.",
+    forbidden: "Only the owner can do that.", owner_protected: "The owner account cannot be changed.",
+    cloud_not_configured: "The server storage is not configured yet.", storage_failed: "Storage error. Please retry.",
+    storage_unavailable: "Storage is unreachable. Please retry.", bad_audio_type: "Unsupported audio type (use MP3, M4A, WAV, OGG or FLAC).",
+    bad_cover_type: "Unsupported image type (use JPG, PNG or WebP).", audio_too_large: "Audio file is too large.",
+    cover_too_large: "Cover image is too large (max 5 MB).", empty_file: "The file is empty.",
+    bad_audio_file: "The uploaded file is not valid audio (its contents do not match its type).",
+    bad_cover_file: "The uploaded cover is not a valid image.", upload_missing: "The file did not finish uploading.",
+    title_required: "Title is required.", artist_required: "Artist is required.", bad_transition: "That status change is not allowed from the current state.",
+    audio_missing: "Upload the audio file first.", rights_not_confirmed: "Confirm you have the rights to distribute this track.",
+    unpublish_first: "Unpublish the track before changing that.", already_admin: "That account is already an administrator.",
+    bad_email: "Enter a valid email address.", rate_limited: "Too many requests. Wait a minute.", not_found: "Not found.",
+    finalize_failed: "Some files failed validation.", duplicate_request: "This submission was already received.",
+    schema_outdated: "The database is missing a required column. Apply the pending migration, then retry.",
+    network_error: "Could not reach the server. Check your connection and retry.",
+    cloud_configuration_invalid: "The server's storage configuration is invalid.",
+    storage_invalid_response: "Storage returned an unexpected response. Please retry.",
+    auth_unavailable: "The sign-in service is unavailable right now. Please retry.",
+    auth_mapping_unavailable: "Your account could not be linked to its MusicFinder data. Please retry.",
+    nothing_to_upload: "There is nothing to upload.", bad_status: "Unknown status filter."
+};
+const STATUS_LABEL = { draft: "Draft", review: "Pending Review", published: "Published", unpublished: "Unpublished" };
+const TAB_LABEL = { dashboard: "Dashboard", upload: "Upload", tracks: "Tracks", admins: "Administrators" };
+const msgFor = c => ERR[c] || "Something went wrong. Please try again.";
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const $ = s => document.querySelector(s);
+
+class ApiError extends Error { constructor(status, code, body) { super(code); this.status = status; this.code = code; this.body = body; } }
+
+/* ---------- shared Supabase session + API ---------- */
+async function rawFetch(path, { method = "GET", body } = {}) {
+    let res;
+    try {
+        res = await fetch(API_BASE + path, {
+            method,
+            headers: { Authorization: "Bearer " + idToken, ...(body ? { "Content-Type": "application/json" } : {}) },
+            body: body ? JSON.stringify(body) : undefined
+        });
+    } catch { throw new ApiError(0, "network_error"); }
+    let data = null; try { data = await res.json(); } catch {}
+    return { res, data };
+}
+
+async function api(path, opts = {}) {
+    if (!idToken) throw new ApiError(401, "auth_required");
+    let result = await rawFetch(path, opts);
+    if (result.res.status === 401) {
+        /* Supabase refreshes an expired access token from the persisted refresh token. */
+        try {
+            const session = await MFAuth.refreshSession();
+            if (session && session.access_token && session.access_token !== idToken) {
+                idToken = session.access_token;
+                result = await rawFetch(path, opts);
+            }
+        } catch {}
+    }
+    if (!result.res.ok) {
+        const d = result.data && result.data.detail;
+        const code = d && typeof d === "object" ? d.code : "server";
+        if (result.res.status === 401) {
+            idToken = null; me = null;
+            MFAuth.signOut().catch(() => {});
+            renderSignIn(msgFor(code));
+        }
+        throw new ApiError(result.res.status, code, d);
+    }
+    return result.data;
+}
+
+function renderSignIn(note_) {
+    $("#who").innerHTML = "";
+    $("#app").innerHTML = `<div class="center"><h1>Administration</h1>
+        <p class="muted">Sign in with your MusicFinder account. Administrator access is checked by the server for every action.</p>
+        ${note_ ? `<div class="msg err">${esc(note_)}</div>` : ""}
+        <button class="btn primary" id="adminSignIn" type="button">Sign in</button></div>`;
+    $("#adminSignIn").onclick = () => MFLoginPanel.open("login");
+}
+
+async function boot() {
+    try {
+        me = await api("/admin/me");
+    } catch (e) {
+        if (e.status === 401) return;                                  // api() already rendered sign-in
+        idToken = null;
+        return renderSignIn(msgFor(e.code));
+    }
+    $("#who").innerHTML = `<span class="badge">${me.role === "owner" ? "OWNER" : "ADMIN"}</span><b>${esc(me.email)}</b><button class="btn sm" id="out">Sign out</button>`;
+    $("#out").onclick = async () => {
+        idToken = null; me = null; pending = null; createRequestId = null; navStack = []; tab = "dashboard"; tracksFilter = "";
+        reauthWait = null; $("#reauthHost").innerHTML = ""; closeDlg();
+        try { await MFAuth.signOut(); } catch {}
+        renderSignIn();
+    };
+    navStack = []; tab = "dashboard"; tracksFilter = "";
+    commit("replace");
+}
+
+/* ---------- navigation (Back button + browser history) ---------- */
+const snap = () => ({ tab, filter: tracksFilter, stack: navStack.map(x => ({ tab: x.tab, filter: x.filter })) });
+function commit(mode) {
+    try { history[mode === "replace" ? "replaceState" : "pushState"](snap(), "", "#" + tab); } catch {}
+    renderShell();
+}
+function openTab(k) { navStack = []; tab = k; tracksFilter = ""; commit("push"); }                    // top-level tab: no Back button
+function drillInto(k, filter) { navStack.push({ tab, filter: tracksFilter }); tab = k; tracksFilter = filter || ""; commit("push"); }
+function goBack() {
+    const prev = navStack.pop();
+    if (!prev) return;
+    tab = prev.tab; tracksFilter = prev.filter || "";
+    commit("push");
+}
+window.addEventListener("popstate", e => {                         // browser / phone back button
+    const st = e.state;
+    if (!st || !me) return;
+    tab = TAB_LABEL[st.tab] ? st.tab : "dashboard";
+    tracksFilter = st.filter || "";
+    navStack = Array.isArray(st.stack) ? st.stack.map(x => ({ tab: x.tab, filter: x.filter || "" })) : [];
+    renderShell();
+});
+
+/* ---------- shell ---------- */
+function renderShell() {
+    if (tab === "admins" && me.role !== "owner") tab = "dashboard";
+    const tabs = [["dashboard", "Dashboard"], ["upload", "Upload"], ["tracks", "Tracks"]];
+    if (me.role === "owner") tabs.push(["admins", "Administrators"]);
+    const prev = navStack[navStack.length - 1];
+    const here = TAB_LABEL[tab] + (tab === "tracks" && tracksFilter ? " · " + (STATUS_LABEL[tracksFilter] || tracksFilter) : "");
+    const crumb = [...navStack.map(x => TAB_LABEL[x.tab] || ""), here].join(" › ");
+    const navRow = prev
+        ? `<div class="navRow"><button class="btn sm backBtn" id="navBack" type="button">← Back to ${esc(TAB_LABEL[prev.tab] || "previous view")}</button><span class="crumb">${esc(crumb)}</span></div>`
+        : "";
+    $("#app").innerHTML = `<h1>Music management</h1><p class="muted">Upload, review and publish tracks.</p>
+        <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-tab="${k}" class="${tab === k ? "active" : ""}">${l}</button>`).join("")}</div>
+        ${navRow}<div id="panel"></div>`;
+    document.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => openTab(b.dataset.tab));
+    const nb = $("#navBack"); if (nb) nb.onclick = goBack;
+    ({ dashboard: viewDashboard, upload: viewUpload, tracks: viewTracks, admins: viewAdmins }[tab] || viewDashboard)();
+}
+const note = (el, text, kind = "err") => { el.innerHTML = text ? `<div class="msg ${kind}">${esc(text)}</div>` : ""; };
+
+/* ---------- dashboard ---------- */
+async function viewDashboard() {
+    const p = $("#panel"); p.innerHTML = `<div class="glass muted">Loading…</div>`;
+    try {
+        const s = await api("/admin/stats");
+        const c = s.by_status;
+        const cards = [["Total", s.total, ""], ["Published", c.published, "published"], ["Pending Review", c.review, "review"],
+                       ["Drafts", c.draft, "draft"], ["Unpublished", c.unpublished, "unpublished"], ["Awaiting audio", s.awaiting_audio, null]];
+        p.innerHTML = `<div class="grid">${cards.map(([l, n, f]) => f === null
+            ? `<div class="stat"><b>${n}</b><span>${l}</span></div>`
+            : `<button type="button" class="stat statBtn" data-drill="${esc(f)}" aria-label="View ${esc(l)} tracks"><b>${n}</b><span>${l} →</span></button>`).join("")}</div>`;
+        p.querySelectorAll("[data-drill]").forEach(b => b.onclick = () => drillInto("tracks", b.dataset.drill));
+    } catch (e) { p.innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`; }
+}
+
+/* ---------- upload ---------- */
+const liveXhrs = new Set();
+function putFile(url, file, contentType, onProgress) {
+    return new Promise((resolve, reject) => {
+        const x = new XMLHttpRequest(); liveXhrs.add(x);
+        const done = fn => v => { liveXhrs.delete(x); fn(v); };
+        resolve = done(resolve); reject = done(reject);
+        x.onabort = () => reject(new Error("upload_cancelled"));
+        x.open("PUT", url);
+        x.timeout = 180000;
+        x.setRequestHeader("Content-Type", contentType);
+        x.upload.onprogress = e => e.lengthComputable && onProgress(e.loaded / e.total);
+        x.onload = () => (x.status >= 200 && x.status < 300 ? resolve() : reject(new Error("upload_http_" + x.status)));
+        x.onerror = () => reject(new Error("upload_network"));
+        x.ontimeout = () => reject(new Error("upload_timeout"));
+        x.send(file);
+    });
+}
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+async function uploadWithRetry(kind, file, initialUpload, onProgress) {
+    let signed = initialUpload;
+    for (let attempt = 0; attempt < 3; attempt++) {
+        if (stopped) throw new Error("upload_cancelled");
+        try {
+            await putFile(signed.url, file, signed.content_type, onProgress);
+            return;
+        } catch (error) {
+            if (error.message === "upload_cancelled" || stopped) throw new Error("upload_cancelled");
+            const status = /^upload_http_(\d+)$/.exec(error.message || "");
+            const retryable = error.message === "upload_network" || error.message === "upload_timeout" ||
+                !!(status && ([401,403,408,429].includes(Number(status[1])) || Number(status[1]) >= 500));
+            if (!retryable || attempt === 2) throw error;
+            await wait(500 * (attempt + 1));
+            if (stopped) throw new Error("upload_cancelled");
+            // Renew the signed URL for this file only. This also replaces an object
+            // whose upload may have completed server-side before the connection dropped.
+            const refreshed = await api(`/admin/tracks/${pending.trackId}/upload-urls`, {
+                method: "POST", body: { [kind]: decl(file) }
+            });
+            signed = refreshed.uploads && refreshed.uploads[kind];
+            if (!signed || !signed.url) throw new Error("storage_invalid_response");
+            onProgress(0);
+        }
+    }
+}
+const bar = sel => f => { const el = $(sel); if (el) el.style.width = (f * 100) + "%"; };
+function uploadFailMessage(e) {
+    const m = /^upload_http_(\d+)$/.exec((e && e.message) || "");
+    if (m) {
+        const n = +m[1];
+        const hint = n === 413 ? "The file exceeds the storage size limit."
+            : (n === 400 || n === 415) ? "Storage rejected the file type or size (check the bucket limits)."
+            : (n === 401 || n === 403) ? "The upload link expired or is invalid. Press retry to get a new one."
+            : "Press retry.";
+        return `Storage refused the upload (HTTP ${n}). ${hint}`;
+    }
+    if (e && e.message === "upload_network") return "Network error while uploading. Check your connection and press retry.";
+    if (e && e.message === "upload_timeout") return "The upload took too long and timed out. Your draft is kept; press Retry upload to continue.";
+    return null;
+}
+const LIM = { audio: { max: 30 * 1048576, ext: ["mp3", "m4a", "wav", "ogg", "flac"] }, cover: { max: 5 * 1048576, ext: ["jpg", "jpeg", "png", "webp"] } };
+const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB";
+function fileProblem(kind, f) {
+    const ext = (f.name.split(".").pop() || "").toLowerCase();
+    if (!f.size) return "The file is empty.";
+    if (!LIM[kind].ext.includes(ext)) return "Unsupported type: ." + ext;
+    if (f.size > LIM[kind].max) return "Too large (limit " + fmtSize(LIM[kind].max) + ").";
+    return "";
+}
+async function optimizeCoverFile(file) {
+    // Covers are the only safe client-side compression target. Audio is uploaded
+    // byte-for-byte so the recording is never re-encoded or degraded.
+    if (!file || file.size < 512 * 1024 || file.size > 20 * 1048576 ||
+        typeof createImageBitmap !== "function" || typeof File !== "function") return file;
+    let bitmap;
+    try {
+        bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, 1800 / Math.max(bitmap.width, bitmap.height));
+        const width = Math.max(1, Math.round(bitmap.width * scale));
+        const height = Math.max(1, Math.round(bitmap.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width; canvas.height = height;
+        const context = canvas.getContext("2d", { alpha: false });
+        if (!context) return file;
+        context.drawImage(bitmap, 0, 0, width, height);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", 0.84));
+        if (!blob || blob.type !== "image/webp" || blob.size >= file.size) return file;
+        const base = file.name.replace(/\.[^.]+$/, "");
+        return new File([blob], base + ".webp", { type: "image/webp", lastModified: file.lastModified });
+    } catch (error) {
+        console.warn("Cover optimization skipped; using the original image:", error);
+        return file;
+    } finally {
+        if (bitmap && typeof bitmap.close === "function") bitmap.close();
+    }
+}
+function showInfo(kind) {
+    const f = $(kind === "audio" ? "#fAudio" : "#fCover").files[0], el = $(kind === "audio" ? "#aInfo" : "#cInfo");
+    if (!f) { el.textContent = ""; return; }
+    const p = fileProblem(kind, f); el.className = "fileInfo" + (p ? " bad" : "");
+    el.textContent = f.name + " · " + fmtSize(f.size) + (p ? " · " + p : " · OK");
+}
+function setFile(input, f) { const dt = new DataTransfer(); dt.items.add(f); input.files = dt.files; input.dispatchEvent(new Event("change")); }
+function wireDrop(zone, inputSel) {
+    const z = $(zone), inp = $(inputSel);
+    z.onclick = () => inp.click();
+    z.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); inp.click(); } };
+    z.ondragover = e => { e.preventDefault(); z.classList.add("over"); };
+    z.ondragleave = () => z.classList.remove("over");
+    z.ondrop = e => { e.preventDefault(); z.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f) setFile(inp, f); };
+}
+document.addEventListener("paste", e => {                       // Ctrl+V a file while the upload form is open
+    const inp = $("#fAudio"); if (!inp) return;
+    const f = [...(e.clipboardData?.files || [])][0]; if (!f) return;
+    setFile(f.type.startsWith("image/") ? $("#fCover") : inp, f);
+});
+let stopped = false;
+async function ensureRightsAck() {
+    if (me.rights_ack) return true;
+    const ok = await confirmDlg("One-time confirmation: you will only upload recordings you own or have permission to distribute on MusicFinder. You will not be asked again on this account.", "I confirm");
+    if (!ok) return false;
+    await api("/admin/rights-ack", { method: "POST" }); me.rights_ack = true; return true;
+}
+const decl = f => ({ filename: f.name, size: f.size, content_type: f.type || null });
+const sameFile = (a, b) => !!(a && b && a.name === b.name && a.size === b.size && a.lastModified === b.lastModified);
+/* pending = { trackId, uploads, audio, cover, audioUploaded, coverUploaded, audioDone, coverDone, meta }
+   Kept across failures so a retry reuses the SAME draft (no duplicates) and only redoes what is not finished. */
+let pending = null;
+let createRequestId = null;
+
+function viewUpload() {
+    $("#panel").innerHTML = `<form class="glass" id="upForm" autocomplete="off" novalidate>
+        <h2>New track</h2><p class="muted">The file goes straight to private storage. It stays a draft until you review and publish it.</p>
+        <div class="row"><div><label for="fTitle">Title *</label><input id="fTitle" type="text" maxlength="200" required></div>
+        <div><label for="fArtist">Artist *</label><input id="fArtist" type="text" maxlength="200" required></div></div>
+        <label for="fAlbum">Album</label><input id="fAlbum" type="text" maxlength="200">
+        <label for="fDesc">Description</label><textarea id="fDesc" maxlength="2000"></textarea>
+        <div class="row"><div><label>Audio file * (MP3, M4A, WAV, OGG, FLAC · max 30 MB)</label>
+        <div class="drop" id="dzA" tabindex="0" role="button" aria-label="Choose audio file">Drop audio here, click to choose, or press Ctrl+V to paste</div>
+        <input id="fAudio" type="file" class="hidden" accept=".mp3,.m4a,.wav,.ogg,.flac,audio/*"><div class="fileInfo" id="aInfo"></div></div>
+        <div><label>Cover image (JPG, PNG, WebP · max 5 MB)</label>
+        <div class="drop" id="dzC" tabindex="0" role="button" aria-label="Choose cover image">Drop cover here or click to choose</div>
+        <input id="fCover" type="file" class="hidden" accept=".jpg,.jpeg,.png,.webp,image/*"><div class="fileInfo" id="cInfo"></div></div></div>
+        <img id="coverPrev" class="cov hidden" alt="Cover preview" style="width:110px;height:110px;margin-top:12px">
+        <label class="check"><input type="checkbox" id="fUn"> <span>Mark as an Unreleased song (shows an Unreleased badge publicly).</span></label>
+        <label class="check"><input type="checkbox" id="fDl"> <span>Allow public download of this track.</span></label>
+        <div id="upStatus" class="muted" role="status" aria-live="polite"></div>
+        <div id="upProg" class="hidden"><label>Audio upload</label><div class="progress"><i id="pA"></i></div><label>Cover upload</label><div class="progress"><i id="pC"></i></div></div>
+        <div id="upMsg"></div>
+        <div class="actions"><button class="btn primary" id="upGo" type="submit">Upload as draft</button>
+        <button class="btn danger hidden" id="upStop" type="button">Stop upload</button>
+        <button class="btn hidden" id="upDiscard" type="button">Discard unfinished draft</button></div></form>`;
+    const cover = $("#fCover");
+    cover.onchange = () => { const f = cover.files[0], img = $("#coverPrev"); if (f && f.type.startsWith("image/")) { img.src = URL.createObjectURL(f); img.classList.remove("hidden"); } else img.classList.add("hidden"); showInfo("cover"); };
+    $("#fAudio").onchange = () => showInfo("audio");
+    wireDrop("#dzA", "#fAudio"); wireDrop("#dzC", "#fCover");
+    $("#upStop").onclick = () => { stopped = true; liveXhrs.forEach(x => x.abort()); };
+    $("#upForm").onsubmit = async ev => { ev.preventDefault(); await doUpload(); };
+    $("#upDiscard").onclick = async () => {
+        if (!pending) return;
+        const title = (pending.meta && pending.meta.title) || "";
+        if (!(await confirmDlg(`Delete the unfinished draft "${title}" and its files?`, "Delete draft", true))) return;
+        try { await api(`/admin/tracks/${pending.trackId}`, { method: "DELETE" }); pending = null; viewUpload(); }
+        catch (e) { note($("#upMsg"), msgFor(e.code)); }
+    };
+    if (pending) {                                                  // an unfinished upload was kept: restore its form values
+        const m = pending.meta || {};
+        $("#fTitle").value = m.title || ""; $("#fArtist").value = m.artist || ""; $("#fAlbum").value = m.album || "";
+        $("#fDesc").value = m.description || ""; $("#fUn").checked = !!m.is_unreleased; $("#fDl").checked = !!m.download_enabled;
+        $("#upGo").textContent = "Retry upload"; $("#upDiscard").classList.remove("hidden");
+        note($("#upMsg"), `An unfinished upload of "${m.title || ""}" was kept. Press Retry upload to finish it.`, "");
+    }
+}
+
+async function doUpload() {
+    const msg = $("#upMsg"), go = $("#upGo");
+    const pickedAudio = $("#fAudio").files[0];
+    let pickedCover = $("#fCover").files[0];
+    const title = $("#fTitle").value.trim(), artist = $("#fArtist").value.trim();
+    if (!title) return note(msg, msgFor("title_required"));
+    if (!artist) return note(msg, msgFor("artist_required"));
+    if (pickedCover) {
+        const status = $("#upStatus");
+        if (status) status.textContent = "Optimizing cover image…";
+        const originalCover = pickedCover;
+        pickedCover = await optimizeCoverFile(pickedCover);
+        if (pickedCover !== originalCover) setFile($("#fCover"), pickedCover);
+    }
+    const needAudio = !pending || !pending.audioDone, needCover = !pending || !pending.coverDone;
+    const audio = needAudio ? (pickedAudio || (pending && pending.audio) || null) : null;
+    const cover = needCover ? (pickedCover || (pending && pending.cover) || null) : null;
+    if (needAudio && !audio) return note(msg, "Choose an audio file.");
+    for (const [k, f] of [["audio", audio], ["cover", cover]]) { const pr = f && fileProblem(k, f); if (pr) return note(msg, (k === "audio" ? "Audio: " : "Cover: ") + pr); }
+    try { if (!(await ensureRightsAck())) return; } catch (e) { return note(msg, msgFor(e.code)); }
+    const meta = { title, artist, album: $("#fAlbum").value, description: $("#fDesc").value, is_unreleased: $("#fUn").checked, download_enabled: $("#fDl").checked };
+    stopped = false; $("#upStop").classList.remove("hidden");
+    go.disabled = true; note(msg, ""); $("#upProg").classList.remove("hidden");
+    bar("#pA")(pending && pending.audioUploaded ? 1 : 0); bar("#pC")(pending && pending.coverUploaded ? 1 : 0);
+    const statusLine = $("#upStatus"); if (statusLine) statusLine.textContent = "Preparing a secure upload…";
+    try {
+        if (!pending) {
+            createRequestId = createRequestId || crypto.randomUUID().replace(/-/g, "");
+            const key = createRequestId;                                          // retain the same key if the create response is lost
+            const r = await api("/admin/tracks", { method: "POST", body: { ...meta, rights_confirmed: true, client_request_id: key, audio: decl(audio), cover: cover ? decl(cover) : null } });
+            pending = { trackId: r.track.id, uploads: r.uploads, audio, cover,
+                audioUploaded: false, coverUploaded: false, audioDone: false, coverDone: false, meta };
+            createRequestId = null;
+        } else {
+            if (pickedAudio && !sameFile(pickedAudio, pending.audio) && !pending.audioDone) {
+                pending.audioUploaded = false; pending.uploads = null;
+            }
+            if (pickedCover && !sameFile(pickedCover, pending.cover) && !pending.coverDone) {
+                pending.coverUploaded = false; pending.uploads = null;
+            }
+            pending.audio = audio; pending.cover = cover; pending.meta = meta;
+            await api(`/admin/tracks/${pending.trackId}`, { method: "PATCH", body: meta });   // keep edited text on the existing draft
+            if (!pending.uploads) {                                                  // retry: fresh signed URLs, only for unfinished files
+                const body = {};
+                if (!pending.audioUploaded && !pending.audioDone && pending.audio) body.audio = decl(pending.audio);
+                if (!pending.coverUploaded && !pending.coverDone && pending.cover) body.cover = decl(pending.cover);
+                pending.uploads = Object.keys(body).length ? (await api(`/admin/tracks/${pending.trackId}/upload-urls`, { method: "POST", body })).uploads : {};
+            }
+        }
+        const U = pending.uploads || {}, tasks = [];                              // parallel transfers; each successful file is retained across retries
+        if (U.audio && !pending.audioUploaded && !pending.audioDone && pending.audio) tasks.push((async () => {
+            await uploadWithRetry("audio", pending.audio, U.audio, f => { bar("#pA")(f); const s = $("#upStatus"); if (s) s.textContent = `Uploading audio · ${Math.round(f * 100)}%`; });
+            pending.audioUploaded = true;
+        })());
+        if (U.cover && !pending.coverUploaded && !pending.coverDone && pending.cover) tasks.push((async () => {
+            await uploadWithRetry("cover", pending.cover, U.cover, f => { bar("#pC")(f); const s = $("#upStatus"); if (s) s.textContent = `Uploading cover · ${Math.round(f * 100)}%`; });
+            pending.coverUploaded = true;
+        })());
+        const results = await Promise.allSettled(tasks);
+        const failed = results.find(result => result.status === "rejected");
+        if (failed) throw failed.reason;
+        if (pending.audio && !pending.audioUploaded && !pending.audioDone) throw new Error("storage_invalid_response");
+        if (pending.cover && !pending.coverUploaded && !pending.coverDone) throw new Error("storage_invalid_response");
+        const status = $("#upStatus"); if (status) status.textContent = "Verifying uploaded files…";
+        const fin = await api(`/admin/tracks/${pending.trackId}/finalize`, { method: "POST", body: {
+            audio: !!pending.audioUploaded && !pending.audioDone,
+            cover: !!pending.cover && !!pending.coverUploaded && !pending.coverDone
+        } });
+        const track = fin.track;
+        pending = null;
+        msg.innerHTML = `<div class="msg ok">Uploaded and verified. "${esc(track.title)}" is saved as a draft.
+            <div class="actions" style="margin-top:10px"><button class="btn sm" id="upPrev" type="button">Preview</button><button class="btn sm primary" id="upTracks" type="button">Open in Tracks</button></div></div>`;
+        msg.querySelector("#upPrev").onclick = () => previewDlg(track);
+        msg.querySelector("#upTracks").onclick = () => drillInto("tracks", "draft");
+        $("#upForm").reset(); $("#coverPrev").classList.add("hidden"); showInfo("audio"); showInfo("cover");
+    } catch (e) {
+        if (e.message === "upload_cancelled" || stopped) {
+            liveXhrs.forEach(x => x.abort());
+            const id = pending && pending.trackId; pending = null; createRequestId = null;
+            if (id) { try { await api(`/admin/tracks/${id}`, { method: "DELETE" }); } catch {} }   // cleanup: no half-uploaded draft is left behind
+            return note(msg, "Upload stopped and cleaned up. Choose files and start again.", "ok");
+        }
+        if (pending) pending.uploads = null;                                     // force new URLs on retry
+        const files = e.body && e.body.files;
+        let detail;
+        if (files && pending) {
+            const rejected = [];
+            for (const k of ["audio", "cover"]) {
+                const uploadedKey = k + "Uploaded";
+                const wanted = k === "audio" ? (pending.audioUploaded && !pending.audioDone) : (pending.cover && pending.coverUploaded && !pending.coverDone);
+                if (!wanted) continue;
+                if (!files[k]) { if (k === "audio") pending.audioDone = true; else pending.coverDone = true; }   // this file passed validation
+                else if (files[k] === "upload_missing") pending[uploadedKey] = false;
+                else if (files[k] !== "upload_missing") {                                                     // rejected: needs a new file
+                    pending[k] = null; pending[uploadedKey] = false; rejected.push(k);
+                    const inp = $(k === "audio" ? "#fAudio" : "#fCover"); if (inp) { inp.value = ""; showInfo(k); }
+                }
+            }
+            detail = Object.entries(files).map(([k, c]) => (k === "audio" ? "Audio: " : "Cover: ") + msgFor(c)).join(" ");
+            if (rejected.includes("audio")) detail += " The draft was kept: choose a replacement audio file and press Retry upload.";
+            else if (rejected.includes("cover")) detail += " The draft was kept: choose another cover, or press Retry upload to finish without one.";
+            else detail += " Press Retry upload.";
+        } else {
+            detail = e.code ? msgFor(e.code) : (uploadFailMessage(e) || "Upload failed. Press the button to retry.");
+        }
+        note(msg, detail);
+    } finally {
+        go.disabled = false;
+        go.textContent = pending ? "Retry upload" : "Upload as draft";
+        const stop = $("#upStop"); if (stop) stop.classList.add("hidden");
+        const dsc = $("#upDiscard"); if (dsc) dsc.classList.toggle("hidden", !pending);
+    }
+}
+
+/* ---------- tracks ---------- */
+async function viewTracks() {
+    $("#panel").innerHTML = `<div class="glass"><div class="toolbar">
+        <input type="search" id="tQ" placeholder="Search title, artist or album" aria-label="Search tracks">
+        <select id="tS" aria-label="Filter by status"><option value="">All statuses</option><option value="draft">Draft</option><option value="review">Pending Review</option><option value="published">Published</option><option value="unpublished">Unpublished</option></select>
+        <button class="btn" id="tGo">Search</button></div><div id="tMsg"></div><div class="tableWrap" id="tList"><div class="muted">Loading…</div></div></div>`;
+    $("#tS").value = tracksFilter;
+    $("#tGo").onclick = loadTracks; $("#tQ").onkeydown = e => e.key === "Enter" && loadTracks();
+    $("#tS").onchange = () => { tracksFilter = $("#tS").value; try { history.replaceState(snap(), "", "#" + tab); } catch {} loadTracks(); };
+    loadTracks();
+}
+async function loadTracks() {
+    const q = $("#tQ").value.trim(), s = $("#tS").value;
+    try {
+        const r = await api(`/admin/tracks?limit=100${s ? "&status=" + s : ""}${q ? "&q=" + encodeURIComponent(q) : ""}`);
+        tracksCache = r.tracks;
+        $("#tList").innerHTML = r.tracks.length ? `<table><thead><tr><th>Track</th><th>Status</th><th>Files</th><th>Actions</th></tr></thead><tbody>${r.tracks.map(rowHtml).join("")}</tbody></table>` : `<div class="muted">No tracks found.</div>`;
+        $("#tList").querySelectorAll("[data-act]").forEach(b => b.onclick = () => act(b.dataset.act, b.dataset.id));
+    } catch (e) { $("#tList").innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`; }
+}
+function rowHtml(t) {
+    const acts = [["preview", "Preview"], ["edit", "Edit"]];
+    if (t.status === "draft") acts.push(["review", "Send to review"]);
+    if (t.status === "review") acts.push(["published", "Publish"], ["draft", "Back to draft"]);
+    if (t.status === "published") acts.push(["unpublished", "Unpublish"]);
+    if (t.status === "unpublished") acts.push(["published", "Re-publish"]);
+    return `<tr><td><b>${esc(t.title)}</b><div class="muted">${esc(t.artist)}${t.album ? " · " + esc(t.album) : ""}</div></td>
+        <td><span class="pill ${esc(t.status)}">${esc(STATUS_LABEL[t.status] || t.status)}</span>${t.is_unreleased ? ' <span class="pill unreleased">Unreleased</span>' : ""}</td>
+        <td class="muted">${t.has_audio ? "audio ✓" : "no audio"} · ${t.has_cover ? "cover ✓" : "no cover"}${t.audio_pending ? " · pending" : ""}</td>
+        <td><div style="display:flex;gap:6px;flex-wrap:wrap">${acts.map(([a, l]) => `<button class="btn sm" data-act="${a}" data-id="${esc(t.id)}">${l}</button>`).join("")}<button class="btn sm danger" data-act="delete" data-id="${esc(t.id)}">Delete</button></div></td></tr>`;
+}
+
+/* ---------- dialogs ---------- */
+let onDlgClose = null;                                              // lets Esc / backdrop click resolve a pending confirm as "cancel"
+function dialog(html) {
+    onDlgClose = null;
+    const host = $("#dialogHost"); host.innerHTML = `<div class="overlay" role="dialog" aria-modal="true"><div class="dlg">${html}</div></div>`;
+    host.firstChild.onclick = e => { if (e.target === host.firstChild) closeDlg(); };
+    return host;
+}
+const closeDlg = () => {
+    $("#dialogHost").querySelectorAll("audio").forEach(audio => { audio.pause(); audio.removeAttribute("src"); audio.load(); });
+    $("#dialogHost").innerHTML = "";
+    const f = onDlgClose; onDlgClose = null;
+    if (f) f();
+};
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#dialogHost").firstChild) closeDlg(); });
+function confirmDlg(text, okLabel, danger) {
+    return new Promise(res => {
+        const h = dialog(`<h2>Please confirm</h2><p class="muted">${esc(text)}</p><div class="actions"><button class="btn ${danger ? "danger" : "primary"}" id="cOk">${esc(okLabel)}</button><button class="btn" id="cNo">Cancel</button></div>`);
+        onDlgClose = () => res(false);
+        h.querySelector("#cOk").onclick = () => { onDlgClose = null; closeDlg(); res(true); };
+        h.querySelector("#cNo").onclick = () => closeDlg();
+    });
+}
+async function act(a, id) {
+    const t = tracksCache.find(x => x.id === id); if (!t) return;
+    const msg = $("#tMsg"); note(msg, "");
+    try {
+        if (a === "preview") return previewDlg(t);
+        if (a === "edit") return editDlg(t);
+        if (a === "delete") { if (!(await confirmDlg(`Permanently delete "${t.title}" and its files? This cannot be undone.`, "Delete", true))) return; await api(`/admin/tracks/${id}`, { method: "DELETE" }); }
+        else {
+            if (a === "published" && !(await confirmDlg(`Publish "${t.title}"? It becomes publicly searchable and playable.`, "Publish"))) return;
+            if (a === "unpublished" && !(await confirmDlg(`Unpublish "${t.title}"? It disappears from public search and playback.`, "Unpublish", true))) return;
+            await api(`/admin/tracks/${id}/status`, { method: "POST", body: { status: a } });
+        }
+        loadTracks();
+    } catch (e) { note(msg, msgFor(e.code)); }
+}
+async function previewDlg(t) {
+    const h = dialog(`<h2>${esc(t.title)}</h2><p class="muted">${esc(t.artist)}</p><div id="pv" class="muted">Loading…</div><div class="actions"><button class="btn" id="pvX">Close</button></div>`);
+    h.querySelector("#pvX").onclick = closeDlg;
+    try {
+        const r = await api(`/admin/tracks/${t.id}/preview`);
+        const box = h.querySelector("#pv");
+        if (!box || !document.querySelector("#dialogHost .overlay")) return;
+        if (!r.audio_url) { box.innerHTML = `<div class="msg err">No audio uploaded yet.</div>`; return; }
+        box.innerHTML = `<div class="mf-review-player">
+            <div class="mf-review-head">
+                ${r.cover_url ? `<img class="mf-review-cover" alt="Cover" src="${esc(r.cover_url)}">` : `<div class="mf-review-cover"></div>`}
+                <div style="min-width:0"><div class="mf-review-title">${esc(t.title)}</div><div class="mf-review-artist">${esc(t.artist)} · Review preview</div></div>
+            </div>
+            <div class="mf-review-controls">
+                <button class="mf-review-play" id="rvPlay" type="button" aria-label="Play preview">▶</button>
+                <input class="mf-review-seek" id="rvSeek" type="range" min="0" max="1000" value="0" aria-label="Seek preview">
+                <span class="mf-review-time" id="rvTime">0:00 / 0:00</span>
+            </div>
+            <div class="mf-review-volume-row"><span>Volume</span><input class="mf-review-volume" id="rvVolume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Preview volume"></div>
+            <audio id="rvAudio" preload="none" src="${esc(r.audio_url)}"></audio>
+        </div>`;
+        const audio = box.querySelector("#rvAudio"), play = box.querySelector("#rvPlay"), seek = box.querySelector("#rvSeek"), time = box.querySelector("#rvTime");
+        const fmt = seconds => { if (!Number.isFinite(seconds) || seconds < 0) return "0:00"; const n = Math.floor(seconds); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}`; };
+        const update = () => {
+            const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+            seek.value = duration ? String(Math.round(audio.currentTime / duration * 1000)) : "0";
+            time.textContent = `${fmt(audio.currentTime)} / ${fmt(duration)}`;
+        };
+        play.onclick = async () => {
+            if (audio.paused) { try { await audio.play(); } catch { play.title = "Playback was blocked. Press Play again."; } }
+            else audio.pause();
+        };
+        audio.addEventListener("play", () => { play.textContent = "Ⅱ"; play.setAttribute("aria-label", "Pause preview"); });
+        audio.addEventListener("pause", () => { play.textContent = "▶"; play.setAttribute("aria-label", "Play preview"); });
+        audio.addEventListener("timeupdate", update);
+        audio.addEventListener("loadedmetadata", update);
+        audio.addEventListener("ended", update);
+        audio.addEventListener("error", () => { time.textContent = "Preview unavailable"; });
+        seek.addEventListener("input", () => { if (Number.isFinite(audio.duration)) audio.currentTime = audio.duration * Number(seek.value) / 1000; });
+        box.querySelector("#rvVolume").addEventListener("input", event => { audio.volume = Number(event.target.value); });
+    } catch (e) {
+        const box = h.querySelector("#pv");
+        if (box) box.innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`;
+    }
+}
+function editDlg(t) {
+    const h = dialog(`<h2>Edit track</h2>
+        <label for="eT">Title</label><input id="eT" type="text" maxlength="200" value="${esc(t.title)}">
+        <label for="eA">Artist</label><input id="eA" type="text" maxlength="200" value="${esc(t.artist)}">
+        <label for="eAl">Album</label><input id="eAl" type="text" maxlength="200" value="${esc(t.album)}">
+        <label for="eD">Description</label><textarea id="eD" maxlength="2000">${esc(t.description)}</textarea>
+        <label class="check"><input type="checkbox" id="eR" ${t.rights_confirmed ? "checked" : ""}> <span>I have the rights to distribute this track.</span></label>
+        <label class="check"><input type="checkbox" id="eUn" ${t.is_unreleased ? "checked" : ""}> <span>Unreleased song (shows an Unreleased badge publicly).</span></label>
+        <label>Cover</label><div id="eCov" class="muted">Loading…</div>
+        <div class="drop" id="dzE" tabindex="0" role="button">Drop a new cover here or click to choose</div><input id="eCf" type="file" class="hidden" accept=".jpg,.jpeg,.png,.webp,image/*">
+        <div class="actions"><button class="btn sm danger ${t.has_cover ? "" : "hidden"}" id="eCrm" type="button">Remove cover</button></div><div id="eCm"></div>
+        <label class="check"><input type="checkbox" id="eDl" ${t.download_enabled ? "checked" : ""}> <span>Allow public download.</span></label>
+        <div id="eM"></div><div class="actions"><button class="btn primary" id="eS">Save</button><button class="btn" id="eX">Cancel</button></div>`);
+    h.querySelector("#eX").onclick = closeDlg;
+    const showCover = async () => {
+        const box = h.querySelector("#eCov");
+        try { const r = await api(`/admin/tracks/${t.id}/preview`); box.innerHTML = r.cover_url ? `<img class="cov" style="width:120px;height:120px" alt="Current cover" src="${esc(r.cover_url)}">` : "No cover yet."; }
+        catch (e) { box.textContent = msgFor(e.code); }
+    };
+    showCover();
+    const cm = h.querySelector("#eCm"), inp = h.querySelector("#eCf"), dz = h.querySelector("#dzE");
+    dz.onclick = () => inp.click();
+    dz.ondragover = e => { e.preventDefault(); dz.classList.add("over"); }; dz.ondragleave = () => dz.classList.remove("over");
+    dz.ondrop = e => { e.preventDefault(); dz.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f) setFile(inp, f); };
+    inp.onchange = async () => {                                             // replace: old cover stays until the new one is verified
+        const f = inp.files[0]; if (!f) return;
+        const pr = fileProblem("cover", f); if (pr) return note(cm, pr);
+        note(cm, "Uploading cover…", "ok");
+        try {
+            const r = await api(`/admin/tracks/${t.id}/upload-urls`, { method: "POST", body: { cover: decl(f) } });
+            await putFile(r.uploads.cover.url, f, r.uploads.cover.content_type, () => {});
+            await api(`/admin/tracks/${t.id}/finalize`, { method: "POST", body: { audio: false, cover: true } });
+            t.has_cover = true; h.querySelector("#eCrm").classList.remove("hidden"); note(cm, "Cover updated.", "ok"); showCover(); loadTracks();
+        } catch (e) { note(cm, e.body?.files?.cover ? msgFor(e.body.files.cover) : (e.code ? msgFor(e.code) : (uploadFailMessage(e) || "Cover upload failed. Please retry."))); }
+        inp.value = "";
+    };
+    h.querySelector("#eCrm").onclick = async () => {
+        if (!(await confirmDlg("Remove this track's cover image?", "Remove", true))) return;
+        try { await api(`/admin/tracks/${t.id}/cover`, { method: "DELETE" }); t.has_cover = false; h.querySelector("#eCrm").classList.add("hidden"); note(cm, "Cover removed.", "ok"); showCover(); loadTracks(); }
+        catch (e) { note(cm, msgFor(e.code)); }
+    };
+    h.querySelector("#eS").onclick = async () => {
+        try {
+            await api(`/admin/tracks/${t.id}`, { method: "PATCH", body: { title: h.querySelector("#eT").value, artist: h.querySelector("#eA").value, album: h.querySelector("#eAl").value,
+                description: h.querySelector("#eD").value, rights_confirmed: h.querySelector("#eR").checked, is_unreleased: h.querySelector("#eUn").checked, download_enabled: h.querySelector("#eDl").checked } });
+            closeDlg(); loadTracks();
+        } catch (e) { note(h.querySelector("#eM"), msgFor(e.code)); }
+    };
+}
+
+/* ---------- administrators (owner only; the server enforces this independently) ---------- */
+async function viewAdmins() {
+    const p = $("#panel");
+    p.innerHTML = `<div class="glass"><h2>Administrators</h2><p class="muted">New administrators must sign in with a verified MusicFinder account using this exact email. Only the owner can manage this list; the owner account itself cannot be changed here.</p>
+        <div class="toolbar"><input type="email" id="aE" placeholder="admin@example.com" aria-label="New administrator email"><button class="btn primary" id="aAdd">Add administrator</button></div><div id="aM"></div><div class="tableWrap" id="aL">Loading…</div></div>`;
+    $("#aAdd").onclick = async () => {
+        try { await api("/admin/admins", { method: "POST", body: { email: $("#aE").value } }); $("#aE").value = ""; load(); }
+        catch (e) { note($("#aM"), msgFor(e.code)); }
+    };
+    async function load() {
+        try {
+            const r = await api("/admin/admins");
+            $("#aL").innerHTML = `<table><thead><tr><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody>${r.admins.map(a => `<tr><td>${esc(a.email)}</td><td>${esc(a.role)}</td><td>${a.revoked_at ? "revoked" : "active"}</td>
+                <td>${a.role === "admin" && !a.revoked_at ? `<button class="btn sm danger" data-rv="${esc(a.email)}">Revoke</button>` : ""}</td></tr>`).join("")}</tbody></table>`;
+            $("#aL").querySelectorAll("[data-rv]").forEach(b => b.onclick = async () => {
+                if (!(await confirmDlg(`Revoke administrator access for ${b.dataset.rv}?`, "Revoke", true))) return;
+                try { await api("/admin/admins/" + encodeURIComponent(b.dataset.rv), { method: "DELETE" }); load(); } catch (e) { note($("#aM"), msgFor(e.code)); }
+            });
+        } catch (e) { $("#aL").innerHTML = `<div class="msg err">${esc(msgFor(e.code))}</div>`; }
+    }
+    load();
+}
+
+(async function initAdminAuth() {
+    try {
+        await MFAuth.init();
+        MFAuth.onAuthStateChange((_event, session) => {
+            const previousToken = idToken;
+            idToken = session && session.access_token ? session.access_token : null;
+            if (idToken && !previousToken) boot();
+            else if (!idToken && previousToken) { me = null; renderSignIn(); }
+        });
+        const session = await MFAuth.getSession();
+        const previousToken = idToken;
+        idToken = session && session.access_token ? session.access_token : null;
+        if (idToken && !previousToken) boot();
+        else if (!idToken && !previousToken) renderSignIn();
+        if (new URLSearchParams(window.location.search).get("auth") === "recovery") MFLoginPanel.open("recovery");
+    } catch (error) {
+        console.error("Admin authentication initialization failed:", error);
+        renderSignIn(msgFor("cloud_not_configured"));
+    }
+})();
+</script>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (window.Lenis && !reduceMotion) {
+        try { window.mfLenis = new Lenis({ autoRaf:true, smoothWheel:true, syncTouch:false, lerp:.09, allowNestedScroll:true,
+            prevent: node => !!(node && node.closest && node.closest(".tableWrap,.dlg,[data-lenis-prevent]")) }); }
+        catch (error) { console.warn("Lenis initialization skipped:", error); }
+    }
+    document.documentElement.classList.add("page-ready");
+    if (window.barba && !reduceMotion) {
+        try { barba.init({ preventRunning:true,
+            requestError: (_trigger, action, url) => { if (action === "click") location.assign(url); else location.replace(url); return false; },
+            prevent: ({el}) => !el || el.hasAttribute("data-barba-prevent") || el.target === "_blank" ||
+                new URL(el.href, location.href).origin !== location.origin ||
+                !["/", "/admin.html"].includes(new URL(el.href, location.href).pathname),
+            transitions:[{ name:"musicfinder-liquid-route", leave:async ({next}) => {
+                document.documentElement.classList.add("barba-leaving");
+                await new Promise(resolve => setTimeout(resolve,150));
+                location.replace(next.url.href);
+            }}]
+        }); } catch (error) { console.warn("Barba initialization skipped:", error); }
+    }
+});
+</script>
+
+</body>
+</html>

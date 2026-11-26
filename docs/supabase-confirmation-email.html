@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MusicFinder — Confirm your email</title>
+</head>
+<body style="margin:0;padding:0;background:#100d0b;color:#f4e8d4;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#100d0b;padding:36px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background:#1c1511;border:1px solid #493323;border-radius:20px;overflow:hidden;">
+        <tr><td align="center" style="padding:34px 28px 18px;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
+            <td align="center" valign="middle" width="56" height="56" style="width:56px;height:56px;">
+              <img src="https://musicfinder-web.vercel.app/favicon-192x192.png" width="56" height="56" alt="MusicFinder logo" style="display:block;width:56px;height:56px;border:0;border-radius:14px;">
+            </td>
+            <td style="padding-left:12px;color:#f4e8d4;font-size:22px;font-weight:bold;letter-spacing:-.5px;">MusicFinder</td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="padding:18px 34px 34px;text-align:center;">
+          <p style="margin:0 0 10px;color:#d8a66a;font-size:11px;font-weight:bold;letter-spacing:2px;">WELCOME TO YOUR MUSIC SPACE</p>
+          <h1 style="margin:0 0 14px;color:#fff4e5;font-size:28px;line-height:1.25;font-weight:700;">Confirm your email</h1>
+          <p style="margin:0 0 26px;color:#c8b9a8;font-size:15px;line-height:1.7;">Thanks for creating a MusicFinder account. Confirm this email address to finish setting up your account.</p>
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center"><tr><td align="center" bgcolor="#a96e3d" style="border-radius:12px;">
+            <a href="{{ .SiteURL }}/confirm.html?token_hash={{ .TokenHash }}&amp;type=email" target="_blank" style="display:inline-block;padding:14px 26px;border:1px solid #d9a66d;border-radius:12px;color:#fff8ef;font-size:14px;font-weight:bold;text-decoration:none;">Confirm email address</a>
+          </td></tr></table>
+          <p style="margin:24px 0 0;color:#8f8174;font-size:12px;line-height:1.6;">If you didn't create this account, you can ignore this email.</p>
+        </td></tr>
+        <tr><td style="padding:18px 24px;border-top:1px solid #3b2b20;text-align:center;color:#8f8174;font-size:11px;line-height:1.6;">MusicFinder · Your music, your space<br><a href="{{ .SiteURL }}" style="color:#d8a66a;text-decoration:none;">Open MusicFinder</a></td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

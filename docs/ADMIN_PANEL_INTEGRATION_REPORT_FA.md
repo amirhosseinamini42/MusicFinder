@@ -96,3 +96,15 @@
 5. پس از تأیید موارد بالا، تغییرات برای commit و انتشار جداگانه بازبینی شوند.
 
 **نتیجه:** اصلاحات کد و تست‌های محلی این مرحله موفق‌اند؛ اما تا زمان تأیید Root Directory، بررسی مرورگر و یک Upload واقعی در Preview، نباید این مرحله را Deploy-ready یا Upload در Production را اثبات‌شده اعلام کرد.
+
+## الحاقیهٔ انتشار Preview — ۱۴۰۵/۰۹/۰۵
+
+- Branch مستقل `preview/admin-panel-integration` با Commit `a04e4c288d9c1acd29147db24383ff2648a01132` به GitHub Push شد.
+- Preview پروژهٔ Web با شناسهٔ `dpl_4mVHmh8s4G2NAd4utdLaAxef8jSV` و وضعیت `READY` ساخته شد: `https://musicfinder-822pdbws1-music-finder.vercel.app`.
+- Preview پروژهٔ API با شناسهٔ `dpl_CLG3LHKymtPMhFWdmPyQuoWbKyTj` و وضعیت `READY` ساخته شد: `https://musicfinder-9kxaago5w-music-finder.vercel.app`.
+- هر دو Build از همان Branch و Commit ساخته شدند. Build API وابستگی‌های Python را نصب و Bytecode را Compile کرد و با موفقیت Deploy شد.
+- درخواست‌های HTTP بدون نشست احراز هویت به Previewها با پاسخ `302` به لایهٔ Deployment Protection رسیدند. بنابراین محتوای صفحه، مسیرهای Rewrite در runtime و Upload واقعی از این محیط قابل بررسی نبودند.
+- هیچ درخواست آزمایشی Upload به Storage ارسال نشد؛ عملکرد واقعی Supabase همچنان تأییدنشده است.
+- Production همچنان روی Commit قبلی `1a3c05e99a462753d5083ebfcbb3145b9940fa41` است. هیچ Production Deploy، Merge به main یا Supabase migration انجام نشد.
+
+**وضعیت:** Previewهای هر دو پروژه آماده‌اند؛ تأیید نهایی رفتار مرورگر و Upload واقعی به دسترسی مجاز به Preview نیاز دارد.

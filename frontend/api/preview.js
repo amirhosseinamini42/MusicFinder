@@ -125,6 +125,15 @@ async function fromItunes(title, artist) {
 
 module.exports = async function handler(req, res) {
 
+    /* Allow the packaged apps (different origin) to call this endpoint */
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+
+    if (req.method === "OPTIONS") {
+        res.status(204).end();
+        return;
+    }
+
     const title = String(req.query.title || "").slice(0, 200).trim();
     const artist = String(req.query.artist || "").slice(0, 200).trim();
 

@@ -13,7 +13,7 @@ Env: SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY (or SUPABASE_ANON_KEY), SUPABASE_SER
 import os
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, List, Optional
 
 import requests
@@ -24,6 +24,7 @@ router = APIRouter(prefix="/library", tags=["library"])
 
 MAX_TRACKS = 500
 MAX_FAVORITES = 5000
+MAX_HISTORY = 1000
 
 
 def err(status: int, code: str):
@@ -311,3 +312,118 @@ def merge_local(body: MergeIn, user: str = Depends(current_user)):
         _db("POST", "mf_playlists", None, {"user_sub": user, "name": name, "description": _clean(str(p.get("description", "")))[:300], "tracks": tracks})
         added += 1
     return {"ok": True, "playlists_added": added}
+# ---------- listening history & music taste ----------
+class Listen(BaseModel):
+    id: str = Field(min_length=1, max_length=64)            # Spotify track id
+    name: str = Field(default="", max_length=300)
+    artists: List[dict] = Field(default_factory=list, max_length=20)
+    image: str = Field(default="", max_length=600)
+    spotify: str = Field(default="", max_length=300)
+    at: Optional[str] = None                                 # ISO time the song was played
+
+
+class HistoryMerge(BaseModel):
+    history: List[Listen] = Field(default_factory=list, max_length=300)
+
+
+def _artists(items: list) -> list:
+    out = []
+    for a in (items or [])[:20]:
+        if isinstance(a, dict):
+            out.append({"id": str(a.get("id") or "")[:64], "name": str(a.get("name") or "")[:200]})
+    return out
+
+
+def _when(value: Optional[str]) -> str:
+    """Parse the client time; fall back to now, and never accept a time in the future."""
+    now = datetime.now(timezone.utc)
+    try:
+        dt = datetime.fromisoformat((value or "").replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return now.isoformat()
+    return (now if dt > now + timedelta(minutes=5) else dt.astimezone(timezone.utc)).isoformat()
+
+
+def _listen_row(user: str, l: Listen) -> dict:
+    return {"user_sub": user, "song_id": l.id, "listened_at": _when(l.at),
+            "song": {"name": l.name[:300], "artists": _artists(l.artists), "image": l.image, "spotify": l.spotify}}
+
+
+def _listen_out(r: dict) -> dict:
+    s = r.get("song") or {}
+    return {"id": r["song_id"], "name": s.get("name", ""), "artists": s.get("artists", []),
+            "image": s.get("image", ""), "spotify": s.get("spotify", ""), "at": r["listened_at"]}
+
+
+def _trim_history(user: str):
+    """Keep only the newest MAX_HISTORY listens."""
+    rows = _db("GET", "mf_listens", {"user_sub": f"eq.{user}", "select": "listened_at", "order": "listened_at.desc", "offset": MAX_HISTORY, "limit": 1})
+    if rows:
+        _db("DELETE", "mf_listens", {"user_sub": f"eq.{user}", "listened_at": f"lte.{rows[0]['listened_at']}"}, prefer="return=minimal")
+
+
+@router.get("/history")
+def list_history(limit: int = 300, user: str = Depends(current_user)):
+    limit = max(1, min(limit, MAX_HISTORY))
+    rows = _db("GET", "mf_listens", {"user_sub": f"eq.{user}", "select": "song_id,song,listened_at", "order": "listened_at.desc", "limit": limit})
+    return {"history": [_listen_out(r) for r in rows]}
+
+
+@router.post("/history", status_code=201)
+def add_listen(body: Listen, user: str = Depends(current_user)):
+    row = _listen_row(user, body)
+    last = _db("GET", "mf_listens", {"user_sub": f"eq.{user}", "select": "song_id,listened_at", "order": "listened_at.desc", "limit": 1})
+    if last and last[0]["song_id"] == body.id:               # same song within 60 s (e.g. two devices) is one listen
+        try:
+            prev = datetime.fromisoformat(last[0]["listened_at"].replace("Z", "+00:00"))
+            if abs((datetime.fromisoformat(row["listened_at"]) - prev).total_seconds()) < 60:
+                return {"ok": True, "duplicate": True}
+        except ValueError:
+            pass
+    _db("POST", "mf_listens", {"on_conflict": "user_sub,song_id,listened_at"}, row,
+        prefer="resolution=ignore-duplicates,return=minimal")
+    _trim_history(user)
+    return {"ok": True}
+
+
+@router.post("/history/merge")
+def merge_history(body: HistoryMerge, user: str = Depends(current_user)):
+    """Only ADDS: uploads this device's local listens; existing cloud listens are never changed."""
+    if body.history:
+        _db("POST", "mf_listens", {"on_conflict": "user_sub,song_id,listened_at"},
+            [_listen_row(user, l) for l in body.history],
+            prefer="resolution=ignore-duplicates,return=minimal")
+        _trim_history(user)
+    return {"ok": True, "received": len(body.history)}
+
+
+@router.delete("/history")
+def clear_history(user: str = Depends(current_user)):
+    """'Clear Taste': removes only this user's listening history. Favorites and playlists are never touched."""
+    _db("DELETE", "mf_listens", {"user_sub": f"eq.{user}"}, prefer="return=minimal")
+    return {"ok": True}
+
+
+@router.get("/taste")
+def taste(limit: int = 10, user: str = Depends(current_user)):
+    """Top songs and artists computed from the user's real listening history."""
+    limit = max(1, min(limit, 50))
+    rows = _db("GET", "mf_listens", {"user_sub": f"eq.{user}", "select": "song_id,song,listened_at", "order": "listened_at.desc", "limit": MAX_HISTORY})
+    tracks: dict = {}
+    artists: dict = {}
+    for r in rows:
+        s = r.get("song") or {}
+        t = tracks.setdefault(r["song_id"], {"id": r["song_id"], "name": s.get("name", ""),
+                                             "artist": (s.get("artists") or [{}])[0].get("name", ""),
+                                             "image": s.get("image", ""), "spotify": s.get("spotify", ""), "n": 0})
+        t["n"] += 1
+        for a in s.get("artists") or []:
+            key = a.get("id") or a.get("name")
+            if key:
+                x = artists.setdefault(key, {"id": a.get("id", ""), "name": a.get("name", ""), "n": 0})
+                x["n"] += 1
+    top = lambda d: sorted(d.values(), key=lambda v: -v["n"])[:limit]
+    return {"total": len(rows), "last_played": rows[0]["listened_at"] if rows else None,
+            "tracks": top(tracks), "artists": top(artists)}

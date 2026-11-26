@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from dotenv import load_dotenv
 from urllib.parse import quote
 import os
@@ -8,6 +9,7 @@ import base64
 import re
 import time
 import unicodedata
+import threading
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 
@@ -31,6 +33,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(GZipMiddleware, minimum_size=800)
 
 app.include_router(admin_router)
 app.include_router(public_router)

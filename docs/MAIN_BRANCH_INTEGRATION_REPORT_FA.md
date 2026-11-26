@@ -57,5 +57,5 @@
 - تست بصری در مرورگر واقعی و بررسی screenshot نهایی انجام نشده است.
 - migration تاریخچه روی Supabase اعمال نشده است.
 - هیچ deploy روی Vercel انجام نشده است.
-- push به `origin/main` پس از commit نهایی و بررسی ancestry انجام می‌شود.
+- push به `origin/main` با fast-forward موفق انجام شد؛ SHA شاخهٔ remote اکنون `b6dd44e3f5b14209389d3c07f04b0103585a2658` است.
 - پوشهٔ اصلی MusicFinder و تغییرات ثبت‌نشدهٔ آن برای این ادغام استفاده یا پاک‌سازی نشدند.

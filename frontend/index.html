@@ -5257,11 +5257,21 @@ async function refreshAdminShortcut(session) {
     link.hidden = true;
     if (!session || !session.access_token) return;
     try {
-        const response = await fetch(`${API_BASE}/admin/me`, {
+        let response = await fetch(`${API_BASE}/admin/me`, {
             headers: { Authorization: `Bearer ${session.access_token}` },
             cache: "no-store"
         });
-        if (!response.ok) return;
+        if (response.status === 401) {
+            // A persisted session can briefly hold an expired access token while Supabase
+            // is restoring or refreshing it. Refresh once, then retry the role check.
+            const refreshedSession = await MFAuth.refreshSession();
+            if (requestId !== adminShortcutRequest || !refreshedSession || !refreshedSession.access_token) return;
+            response = await fetch(`${API_BASE}/admin/me`, {
+                headers: { Authorization: `Bearer ${refreshedSession.access_token}` },
+                cache: "no-store"
+            });
+        }
+        if (!response.ok || requestId !== adminShortcutRequest) return;
         const admin = await response.json();
         if (requestId !== adminShortcutRequest) return;
         link.hidden = !["admin", "owner"].includes(admin.role);

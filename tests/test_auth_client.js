@@ -100,6 +100,17 @@ async function main() {
   await vm.runInContext('refreshAdminShortcut({ access_token: "expired-token" })', shortcutContext);
   assert.equal(shortcutFetches, 2, "an expired session is refreshed once and the role check is retried");
   assert.equal(shortcutLink.hidden, false, "a valid refreshed owner session reveals the admin shortcut");
+  assert.ok(/<div class="navRight">[\s\S]*?<a class="adminShortcut" id="adminShortcut" href="\/adminpanel" hidden/.test(home), "icon-only admin shortcut is present in the main navigation");
+  assert.ok(home.includes('link.hidden = !["admin", "owner"].includes(admin.role)'), "the navigation shortcut remains restricted to admin and owner roles");
+  assert.ok(/if \(session && session\.user\) \{\s*refreshAdminShortcut\(session\);\s*signInUser\(session\.user\);/.test(home), "the admin shortcut role check runs before account UI rendering");
+  assert.ok(home.includes('lyricsDisabled: ["Search by lyrics \u00b7 temporarily disabled"'), "the disabled lyrics label has a translation dictionary entry");
+  assert.ok(home.includes('data-t="lyricsDisabled"'), "the disabled lyrics button uses its stable translation key");
+  const translationBlock = home.match(/const S = \{[\s\S]*?\n    \};\s*const t = \(k, \.\.\.a\) => \{[\s\S]*?\};/);
+  assert.ok(translationBlock, "the static translation dictionary and resolver can be isolated");
+  const translated = vm.runInNewContext(translationBlock[0] + '; [t("lyricsDisabled"), t("missingTranslationKey"), t("close")]', { isFa: () => true });
+  assert.equal(translated[0], String.fromCharCode(0x062c,0x0633,0x062a,0x062c,0x0648,0x0020,0x0628,0x0627,0x0020,0x0645,0x062a,0x0646,0x0020,0x0622,0x0647,0x0646,0x06af,0x0020,0x00b7,0x0020,0x0645,0x0648,0x0642,0x062a,0x0627,0x064b,0x0020,0x063a,0x06cc,0x0631,0x0641,0x0639,0x0627,0x0644), "Persian lyrics-disabled label renders correctly");
+  assert.equal(translated[1], "missingTranslationKey", "an unknown translation key safely falls back instead of crashing");
+  assert.equal(translated[2], String.fromCharCode(0x0628,0x0633,0x062a,0x0646), "existing Persian translations remain intact");
   assert.ok(home.includes('<span class="logoText">Music<span>Finder</span></span>'), "homepage brand text stays in one flex item without an internal gap");
   assert.ok(home.includes(".logoText span") && !home.includes(".logo span {"), "homepage brand accent styles target only the nested Finder word");
   assert.ok(home.includes("function handleEmailConfirmation(session)"), "email confirmation callback is handled");

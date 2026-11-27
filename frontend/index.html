@@ -5313,16 +5313,16 @@ async function initAccountAuth() {
         await MFAuth.init();
         MFAuth.onAuthStateChange((event, session) => {
             if (session && session.user) {
-                signInUser(session.user);
                 refreshAdminShortcut(session);
+                signInUser(session.user);
                 if (event === "SIGNED_IN") handleEmailConfirmation(session);
             }
             else { refreshAdminShortcut(null); if (currentUser) clearSignedInUser(); }
         });
         const session = await MFAuth.getSession();
         if (session && session.user) {
-            if (!currentUser) signInUser(session.user);
             refreshAdminShortcut(session);
+            if (!currentUser) signInUser(session.user);
             handleEmailConfirmation(session);
         } else { refreshAdminShortcut(null); renderAuth(); }
         if (new URLSearchParams(window.location.search).get("auth") === "recovery") {
@@ -5687,9 +5687,10 @@ function showTelegramPanel(query, copied) {
         addPl: ["Add to playlist", "افزودن به پلی‌لیست"],
         noPl: ["No playlists yet — create one below.", "هنوز پلی‌لیستی نیست — یکی بسازید."],
         favSearch: ["Search favorites", "جستجو در علاقه‌مندی‌ها"], sRecent: ["Recently added", "تازه‌ترین"], sTitle: ["Title", "نام آهنگ"], sArtist: ["Artist", "هنرمند"], shuffle: ["Shuffle", "پخش تصادفی"], copyList: ["Copy track list", "کپی فهرست آهنگ‌ها"], copied: ["Copied", "کپی شد"],
-        close: ["Close", "بستن"], contact: ["Contact", "ایمیل"]
+        close: ["Close", "بستن"], contact: ["Contact", "ایمیل"],
+        lyricsDisabled: ["Search by lyrics · temporarily disabled", "جستجو با متن آهنگ · موقتاً غیرفعال"]
     };
-    const t = (k, ...a) => { const v = S[k][isFa() ? 1 : 0]; return typeof v === "function" ? v(...a) : v; };
+    const t = (k, ...a) => { const entry = S[k]; if (!Array.isArray(entry) || entry.length < 2) return String(k ?? ""); const v = entry[isFa() ? 1 : 0]; return typeof v === "function" ? v(...a) : (v ?? String(k ?? "")); };
 
     /* ---------- 1. Persian dictionary fixes (extends the existing FA table) ---------- */
     if (window.MF_FA) {
@@ -6111,7 +6112,7 @@ function showTelegramPanel(query, copied) {
         wrap.setAttribute("aria-label", "Search type");
         wrap.innerHTML =
             `<button type="button" class="active" data-mode="all" aria-pressed="true">Songs, artists &amp; albums</button>` +
-            `<button type="button" data-mode="lyrics" aria-pressed="false" disabled aria-disabled="true" title="Temporarily disabled" data-t="Search by lyrics · temporarily disabled">Search by lyrics · temporarily disabled</button>`;
+            `<button type="button" data-mode="lyrics" aria-pressed="false" disabled aria-disabled="true" title="Temporarily disabled" data-t="lyricsDisabled">Search by lyrics · temporarily disabled</button>`;
         wrap.addEventListener("click", e => {
             const b = e.target.closest("button[data-mode]");
             if (b && !b.disabled) setMode(b.dataset.mode);

@@ -253,6 +253,135 @@ def _normalize(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
+# =========================
+# AUDIUS SMART PLAYBACK
+# =========================
+
+AUDIUS_API_BASE = "https://api.audius.co/v1"
+
+
+def _audius_artist_names(track):
+    names = []
+    for artist in track.get("artists") or []:
+        if isinstance(artist, dict) and artist.get("name"):
+            names.append(artist["name"])
+        elif isinstance(artist, str):
+            names.append(artist)
+
+    user = track.get("user")
+    if isinstance(user, dict) and user.get("name"):
+        names.append(user["name"])
+
+    if track.get("artist_name"):
+        names.append(track["artist_name"])
+
+    return {_audius_compare_text(name) for name in names if _audius_compare_text(name)}
+
+
+def _audius_compare_text(value):
+    value = unicodedata.normalize("NFD", value or "")
+    value = "".join(char for char in value if not unicodedata.combining(char))
+    value = re.sub(r"[^\w\s]", " ", value.lower())
+    return re.sub(r"\s+", " ", value).strip()
+
+
+def _pick_audius_match(items, title, artist, duration_ms=None):
+    wanted_title = _audius_compare_text(title)
+    wanted_artist = _audius_compare_text(artist)
+    if not wanted_title or not wanted_artist:
+        return None
+
+    wanted_duration = duration_ms / 1000 if duration_ms else None
+    candidates = []
+
+    for track in items:
+        if not isinstance(track, dict):
+            continue
+        track_id = track.get("id")
+        if not isinstance(track_id, (str, int)) or not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", str(track_id)):
+            continue
+        if track.get("is_streamable") is not True or track.get("is_stream_gated") is True:
+            continue
+        if _audius_compare_text(track.get("title")) != wanted_title:
+            continue
+        if wanted_artist not in _audius_artist_names(track):
+            continue
+
+        duration = track.get("duration")
+        if wanted_duration is not None:
+            if not isinstance(duration, (int, float)) or isinstance(duration, bool) or duration <= 0:
+                continue
+            tolerance = max(8.0, wanted_duration * 0.03)
+            duration_delta = abs(float(duration) - wanted_duration)
+            if duration_delta > tolerance:
+                continue
+        else:
+            duration_delta = 0.0
+
+        play_count = track.get("play_count")
+        play_count = play_count if isinstance(play_count, (int, float)) and not isinstance(play_count, bool) else 0
+        candidates.append((duration_delta, -play_count, track))
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda item: (item[0], item[1]))
+    track = candidates[0][2]
+    track_id = str(track["id"])
+    artwork = track.get("artwork") or {}
+    artwork_url = None
+    if isinstance(artwork, dict):
+        artwork_url = artwork.get("150x150") or artwork.get("480x480") or artwork.get("1000x1000")
+
+    return {
+        "id": track_id,
+        "title": track.get("title"),
+        "artist": artist,
+        "duration": track.get("duration"),
+        "artwork": artwork_url,
+        "stream_url": f"{AUDIUS_API_BASE}/tracks/{track_id}/stream",
+    }
+
+
+@app.get("/audius/search")
+def audius_search(title: str, artist: str, duration_ms: int | None = None):
+    title = (title or "").strip()[:200]
+    artist = (artist or "").strip()[:200]
+
+    if not title or not artist:
+        raise HTTPException(status_code=400, detail={"code": "invalid_track_metadata"})
+    if duration_ms is not None and not 0 < duration_ms <= 3_600_000:
+        raise HTTPException(status_code=400, detail={"code": "invalid_duration"})
+
+    api_key = os.getenv("AUDIUS_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=503, detail={"code": "audius_not_configured"})
+
+    try:
+        response = requests.get(
+            f"{AUDIUS_API_BASE}/tracks/search",
+            headers={"x-api-key": api_key},
+            params={
+                "query": f"{title} {artist}",
+                "limit": 10,
+                "sort_method": "relevant",
+            },
+            timeout=8,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        items = payload.get("data", []) if isinstance(payload, dict) else []
+        if not isinstance(items, list):
+            raise ValueError("Audius response data is malformed")
+    except (requests.RequestException, ValueError, TypeError) as error:
+        # Do not log exception text: provider errors can include request details.
+        print("Audius search failed:", type(error).__name__)
+        raise HTTPException(status_code=502, detail={"code": "audius_unavailable"})
+
+    match = _pick_audius_match(items, title, artist, duration_ms)
+    return {"provider": "audius", "track": match}
+
+
 def _lyrics_rate_ok(client_ip):
 
     now = time.time()

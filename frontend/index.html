@@ -924,7 +924,7 @@ main {
     box-shadow: 0 16px 36px rgba(124,92,255,.55);
 }
 
-/* Search result cards: Play Preview gets its own row */
+/* Search result cards: primary play action gets its own row */
 
 .smallBtn.full {
     flex: 1 1 100%;
@@ -1027,7 +1027,7 @@ main {
 
 }
 
-/* Details modal: Play Preview */
+/* Details modal play action */
 
 .modalButtons .previewBtn {
     display: inline-flex;
@@ -1142,6 +1142,26 @@ main {
     width: 100%;
     border: 0;
     border-radius: 14px;
+}
+
+.fullPlayerQueueControls {
+    display: flex;
+    gap: 8px;
+    margin-top: 9px;
+}
+
+.fullPlayerQueueControls button {
+    flex: 1;
+    padding: 9px 12px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 11px;
+    background: rgba(255,255,255,.07);
+    color: white;
+    cursor: pointer;
+}
+
+.fullPlayerQueueControls button:hover {
+    background: rgba(255,255,255,.14);
 }
 
 .fullPlayerBody .ytFrame {
@@ -2997,7 +3017,7 @@ function renderSearchResults(data, query) {
                     class="smallBtn primary full"
                     onclick="event.stopPropagation(); playMusicFinderSong(window.currentTracks.find(t => t.id === '${track.id}'), window.currentTracks)"
                 >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg> Play Preview
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg> Play
                 </button>
 
                 <button
@@ -3088,14 +3108,6 @@ function topResultCard(track) {
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
                         Play
-                    </button>
-
-                    <button
-                        type="button"
-                        onclick="event.stopPropagation(); playMusicFinderSong(window.currentTracks[0], window.currentTracks)"
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-                        Play Preview
                     </button>
 
                     <button
@@ -3568,11 +3580,6 @@ function openTrackFromEncoded(encoded) {
             <button class="playBtn" type="button" onclick="playFullFromModal()">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
                 Play
-            </button>
-
-            <button class="previewBtn" type="button" onclick="playFromModal()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
-                Play Preview
             </button>
 
             <a class="primary" href="${spotify}" target="_blank">
@@ -4283,7 +4290,7 @@ function renderForYou() {
                                                 type="button"
                                                 onclick="event.stopPropagation(); playMusicFinderSong(JSON.parse(decodeURIComponent('${encoded}')))"
                                             >
-                                                Play Preview
+                                                Play
                                             </button>
                                         </div>
 
@@ -4565,6 +4572,8 @@ setPlayerMinimized(false, false);
 
 let currentPlayerIndex = -1;
 let playerQueue = [];
+let currentPlaybackProvider = "preview";
+let currentPlaybackSong = null;
 
 
 /* Format time */
@@ -4769,6 +4778,28 @@ async function getPreviewSources(song) {
 }
 
 
+async function findAudiusTrack(song) {
+    const artist = song.artists?.[0]?.name || "";
+    if (!song.name || !artist) return null;
+
+    const params = new URLSearchParams({ title: song.name, artist });
+    if (Number.isFinite(song.duration_ms) && song.duration_ms > 0) {
+        params.set("duration_ms", String(Math.round(song.duration_ms)));
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/audius/search?${params.toString()}`);
+        if (!response.ok) return null;
+        const payload = await response.json();
+        const track = payload && payload.track;
+        return track && track.stream_url ? track : null;
+    } catch (error) {
+        console.warn("Audius lookup unavailable; using Spotify fallback.", error);
+        return null;
+    }
+}
+
+
 /* Silent audio used to unlock playback on iOS Safari.
    Built at load time: 8 kHz, 8-bit, mono WAV of 0.3 s of silence (same format as before, no embedded blob). */
 
@@ -4873,6 +4904,65 @@ async function loadPlayerSong(song, autoPlay = false) {
 }
 
 
+async function loadSmartPlaybackSong(song) {
+    if (!song) return;
+
+    const loadId = ++playerLoadId;
+    currentPlaybackProvider = "lookup";
+    currentPlaybackSong = song;
+
+    // Stop any Spotify iframe before starting the internal audio player.
+    const fullPlayerBody = document.getElementById("fullPlayerBody");
+    if (fullPlayerBody) fullPlayerBody.innerHTML = "";
+    const fullPlayerNote = document.getElementById("fullPlayerNote");
+    if (fullPlayerNote) fullPlayerNote.textContent = "";
+    musicPlayer.classList.remove("mode-full");
+
+    // Unlock the existing audio element synchronously from the user's click.
+    musicAudio.src = SILENT_AUDIO;
+    const unlock = musicAudio.play();
+    if (unlock) unlock.catch(() => {});
+
+    playerTitle.textContent = song.name || "Unknown Song";
+    const artists = song.artists?.map(a => a.name).filter(Boolean) || [];
+    playerArtist.textContent = artists.join(", ") || "Unknown Artist";
+    playerCover.src = song.album?.images?.[0]?.url || "";
+    playerProgress.value = 0;
+    playerMiniFill.style.width = "0%";
+    playerCurrentTime.textContent = "0:00";
+    playerDuration.textContent = "0:00";
+    musicPlayer.classList.add("active");
+
+    const audiusTrack = await findAudiusTrack(song);
+    if (loadId !== playerLoadId) return;
+
+    if (!audiusTrack) {
+        showSpotifyFallback(song);
+        return;
+    }
+
+    currentPlaybackProvider = "audius";
+    currentPreviewSources = [audiusTrack.stream_url];
+    currentPreviewIndex = 0;
+    playerArtist.textContent = `${artists.join(", ") || "Unknown Artist"} · Audius`;
+    musicAudio.src = audiusTrack.stream_url;
+    musicAudio.load();
+
+    try {
+        await musicAudio.play();
+        if (loadId === playerLoadId) setPlayerPlaying(true);
+    } catch (error) {
+        if (loadId !== playerLoadId) return;
+        if (error && error.name === "NotAllowedError") {
+            setPlayerPlaying(false);
+            return;
+        }
+        console.warn("Audius stream failed; opening Spotify fallback.", error);
+        showSpotifyFallback(song);
+    }
+}
+
+
 /* Play / Pause */
 
 playerPlay.addEventListener("click", () => {
@@ -4912,6 +5002,12 @@ musicAudio.addEventListener("pause", () => {
 musicAudio.addEventListener("error", () => {
 
     if (isUnlockSound()) return;
+
+    if (currentPlaybackProvider === "audius" && currentPlaybackSong) {
+        console.warn("Audius audio element failed; switching to Spotify.");
+        showSpotifyFallback(currentPlaybackSong);
+        return;
+    }
 
     if (currentPreviewIndex < currentPreviewSources.length - 1) {
 
@@ -5031,10 +5127,7 @@ playerPrevious.addEventListener("click", () => {
         currentPlayerIndex = playerQueue.length - 1;
     }
 
-    loadPlayerSong(
-        playerQueue[currentPlayerIndex],
-        true
-    );
+    playMusicFinderSong(playerQueue[currentPlayerIndex], playerQueue);
 
 });
 
@@ -5053,10 +5146,7 @@ playerNext.addEventListener("click", () => {
         currentPlayerIndex = 0;
     }
 
-    loadPlayerSong(
-        playerQueue[currentPlayerIndex],
-        true
-    );
+    playMusicFinderSong(playerQueue[currentPlayerIndex], playerQueue);
 
 });
 
@@ -5082,7 +5172,7 @@ window.playMusicFinderSong = function(song, queue = []) {
         currentPlayerIndex = 0;
     }
 
-    loadPlayerSong(song, true);
+    loadSmartPlaybackSong(song);
 
 };
 
@@ -5099,13 +5189,14 @@ function playTrack(track, queue) {
     playMusicFinderSong(track, Array.isArray(queue) && queue.length ? queue : [track]);
 }
 
-function playFullSong(song) {
+function showSpotifyFallback(song) {
 
     if (!song) return;
 
-    // Invalidate any preview lookup that is still running, otherwise it would
-    // start playing in the background next to the Spotify embed.
+    // Invalidate any Audius lookup/stream still in progress.
     playerLoadId++;
+    currentPlaybackProvider = "spotify";
+    currentPlaybackSong = song;
 
     // One shared player surface; full-song provider playback remains a separate source adapter.
     musicAudio.pause();
@@ -5119,9 +5210,9 @@ function playFullSong(song) {
         song.name || "Unknown Song";
 
     document.getElementById("fullPlayerArtist").textContent =
-        artists.join(", ");
+        `${artists.join(", ")} · Spotify`;
     playerTitle.textContent = song.name || "Unknown Song";
-    playerArtist.textContent = artists.join(", ") || "Unknown Artist";
+    playerArtist.textContent = `${artists.join(", ") || "Unknown Artist"} · Spotify`;
     playerCover.src = song.album?.images?.[0]?.url || "";
     setPlayerMinimized(false, true);
 
@@ -5148,6 +5239,12 @@ function playFullSong(song) {
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                 loading="lazy"
             ></iframe>
+            ${playerQueue.length > 1 ? `
+                <div class="fullPlayerQueueControls">
+                    <button type="button" onclick="playQueueRelative(-1)">Previous</button>
+                    <button type="button" onclick="playQueueRelative(1)">Next</button>
+                </div>
+            ` : ""}
             ${downloadLink}
         `;
 
@@ -5169,6 +5266,21 @@ function playFullSong(song) {
 
     musicPlayer.classList.add("mode-full", "active");
 
+}
+
+
+function playFullSong(song) {
+    if (!song) return;
+    const inResults = (window.currentTracks || []).some(track => track.id === song.id);
+    const queue = inResults ? window.currentTracks : [song];
+    playMusicFinderSong(song, queue);
+}
+
+
+function playQueueRelative(direction) {
+    if (!playerQueue.length) return;
+    currentPlayerIndex = (currentPlayerIndex + direction + playerQueue.length) % playerQueue.length;
+    playMusicFinderSong(playerQueue[currentPlayerIndex], playerQueue);
 }
 
 
@@ -5497,7 +5609,7 @@ function showTelegramPanel(query, copied) {
         "No artists yet.":"هنوز هنرمندی نیست.","No results found for":"نتیجه‌ای پیدا نشد برای",
         "No searches yet.":"هنوز جستجویی انجام نشده.","No song playing":"آهنگی پخش نمی‌شود",
         "No songs yet.":"هنوز آهنگی نیست.","Open Spotify":"باز کردن Spotify","Open bot":"باز کردن ربات",
-        "Open in Spotify":"باز کردن در Spotify","Play":"پخش","Play Preview":"پخش پیش‌نمایش",
+        "Open in Spotify":"باز کردن در Spotify","Play":"پخش",
         "Sign out":"خروج","Something went wrong while searching.":"هنگام جستجو مشکلی پیش آمد.",
         "Search failed.":"جستجو ناموفق بود.","Sorry, this song can't be played here.":"متأسفیم، این آهنگ اینجا قابل پخش نیست.",
         "Couldn't play this preview":"پخش این پیش‌نمایش ممکن نشد",
@@ -5680,7 +5792,7 @@ function showTelegramPanel(query, copied) {
         plSongs: [n => n + " songs", n => dig(n) + " آهنگ"],
         plNoSongs: ["This playlist is empty. Use the + button on a song to add it.", "این پلی‌لیست خالی است. با دکمه + روی هر آهنگ آن را اضافه کنید."],
         rename: ["Rename", "تغییر نام"], del: ["Delete", "حذف"], remove: ["Remove", "حذف"],
-        playPrev: ["Play Preview", "پخش پیش‌نمایش"], play: ["Play", "پخش"], details: ["Details", "جزئیات"],
+        playPrev: ["Play", "پخش"], play: ["Play", "پخش"], details: ["Details", "جزئیات"],
         confirmDel: ["Delete this playlist?", "این پلی‌لیست حذف شود؟"],
         renamePrompt: ["Playlist name", "نام پلی‌لیست"],
         favAdd: ["Add to favorites", "افزودن به علاقه‌مندی‌ها"], favRem: ["Remove from favorites", "حذف از علاقه‌مندی‌ها"],
@@ -6048,7 +6160,7 @@ function showTelegramPanel(query, copied) {
 /* =========================
    LYRICS SEARCH (search by a line of lyrics)
    Backend: GET /lyrics/search?q=...  (Musixmatch metadata -> Spotify tracks)
-   Results are normal Spotify track objects, so cards, Play Preview, favorites and
+    Results are normal Spotify track objects, so cards, Play, favorites and
    playlists all reuse the existing code. No lyric text is fetched or displayed.
 ========================= */
 (function () {

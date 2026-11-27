@@ -69,6 +69,37 @@ async function main() {
     assert.ok(html.includes("https://musicfinder-api.vercel.app"), `${file} retains Production API fallback`);
   }
   const home = fs.readFileSync(path.join(__dirname, "..", "frontend", "index.html"), "utf8");
+  const shortcutBlock = home.match(/let adminShortcutRequest = 0;[\s\S]*?\n\}/);
+  assert.ok(shortcutBlock, "admin shortcut role check can be isolated for regression testing");
+  const shortcutLink = { hidden: true };
+  let shortcutFetches = 0;
+  let shortcutMode = "owner";
+  const shortcutContext = vm.createContext({
+    API_BASE: "https://musicfinder-api.vercel.app",
+    document: { getElementById: id => id === "adminShortcut" ? shortcutLink : null },
+    console: { debug() {} },
+    MFAuth: { refreshSession: async () => ({ access_token: "fresh-token", user: { id: "owner-id" } }) },
+    fetch: async (_url, options) => {
+      shortcutFetches++;
+      if (shortcutMode === "expired" && shortcutFetches === 1) return { status: 401, ok: false };
+      if (shortcutMode === "forbidden") return { status: 403, ok: false };
+      assert.ok(options.headers.Authorization.startsWith("Bearer "));
+      return { status: 200, ok: true, json: async () => ({ role: shortcutMode === "admin" ? "admin" : "owner" }) };
+    }
+  });
+  vm.runInContext(shortcutBlock[0], shortcutContext);
+  await vm.runInContext('refreshAdminShortcut({ access_token: "valid-token" })', shortcutContext);
+  assert.equal(shortcutLink.hidden, false, "owner sees the admin shortcut");
+  shortcutMode = "admin"; shortcutFetches = 0; shortcutLink.hidden = true;
+  await vm.runInContext('refreshAdminShortcut({ access_token: "valid-token" })', shortcutContext);
+  assert.equal(shortcutLink.hidden, false, "administrator sees the admin shortcut");
+  shortcutMode = "forbidden"; shortcutFetches = 0; shortcutLink.hidden = true;
+  await vm.runInContext('refreshAdminShortcut({ access_token: "valid-token" })', shortcutContext);
+  assert.equal(shortcutLink.hidden, true, "non-admin accounts never see the admin shortcut");
+  shortcutMode = "expired"; shortcutFetches = 0; shortcutLink.hidden = true;
+  await vm.runInContext('refreshAdminShortcut({ access_token: "expired-token" })', shortcutContext);
+  assert.equal(shortcutFetches, 2, "an expired session is refreshed once and the role check is retried");
+  assert.equal(shortcutLink.hidden, false, "a valid refreshed owner session reveals the admin shortcut");
   assert.ok(home.includes('<span class="logoText">Music<span>Finder</span></span>'), "homepage brand text stays in one flex item without an internal gap");
   assert.ok(home.includes(".logoText span") && !home.includes(".logo span {"), "homepage brand accent styles target only the nested Finder word");
   assert.ok(home.includes("function handleEmailConfirmation(session)"), "email confirmation callback is handled");
@@ -113,6 +144,10 @@ async function main() {
   const css = fs.readFileSync(path.join(__dirname, "..", "frontend", "auth.css"), "utf8");
   assert.ok(css.includes("100dvh") && css.includes("env(safe-area-inset-top)"), "auth dialog supports mobile viewport and safe areas");
   const authUi = fs.readFileSync(path.join(__dirname, "..", "frontend", "auth-ui.js"), "utf8");
+  assert.ok(authUi.includes('autocomplete="username" value="${esc(savedLoginEmail())}"'), "login restores only the remembered email and exposes it as the username field to password managers");
+  assert.ok(authUi.includes("const result = await w.MFAuth.signIn(email, data.get(\"password\"));") && authUi.includes("session = await w.MFAuth.getSession()"), "login confirms that Supabase persisted a valid session before closing the dialog");
+  assert.ok(authUi.includes("rememberLoginEmail(email)"), "successful login remembers the email for the next visit");
+  assert.ok(!/localStorage\.(?:setItem|getItem)\([^\n]*password/i.test(authUi), "the login UI never stores or reads passwords from local storage");
   assert.ok(authUi.includes("musicFinderLang") && authUi.includes("function localizePanel"), "shared login panel follows the saved Persian language preference");
   assert.ok(authUi.includes('adminpanel)(?:\\/|$)/i.test(w.location.pathname)'), "shared login panel recognizes every slash-based adminpanel route");
   assert.ok(authUi.includes('setAttribute("dir", isFa() ? "rtl" : "ltr")'), "Persian login panel switches to RTL");

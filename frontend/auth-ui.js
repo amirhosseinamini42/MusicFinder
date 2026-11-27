@@ -3,6 +3,15 @@
     "use strict";
     let mode = "login";
     let user = null;
+    const LAST_LOGIN_EMAIL_KEY = "mfLastLoginEmail";
+    function savedLoginEmail() {
+        try { return w.localStorage.getItem(LAST_LOGIN_EMAIL_KEY) || ""; }
+        catch { return ""; }
+    }
+    function rememberLoginEmail(email) {
+        try { w.localStorage.setItem(LAST_LOGIN_EMAIL_KEY, String(email || "").trim().toLowerCase()); }
+        catch { /* Private browsing/storage restrictions must not block authentication. */ }
+    }
     const isAdminPage = () => /(?:^|\/)(?:admin(?:\.html)?|adminpanel)(?:\/|$)/i.test(w.location.pathname);
     const isFa = () => d.documentElement.lang === "fa" || (isAdminPage() && (() => { try { return w.localStorage.getItem("musicFinderLang") === "fa"; } catch { return false; } })());
     const tr = (en, fa) => isFa() ? fa : en;
@@ -134,7 +143,7 @@
                 `<div class="mf-auth-message" role="status">Password recovery is temporarily unavailable while this feature is being updated and repaired. Please try again later.</div><button class="mf-auth-secondary" id="mfBackToLogin" type="button">Back to sign in</button>` :
                 `<div class="mf-auth-tabs"><button type="button" data-mode="login" class="${!signup ? "active" : ""}">Sign in</button><button type="button" data-mode="signup" class="${signup ? "active" : ""}">Create account</button></div>
                 <form id="mfAuthForm">
-                <label>Email<input name="email" type="email" maxlength="254" autocomplete="email" required></label>
+                <label>Email<input name="email" type="email" maxlength="254" autocomplete="username" value="${esc(savedLoginEmail())}" required></label>
                 <label for="mfAuthPassword">Password</label><div class="mf-auth-password-field"><input id="mfAuthPassword" name="password" type="password" minlength="8" autocomplete="${signup ? "new-password" : "current-password"}" required><button class="mf-auth-password-toggle" type="button" aria-label="Show password" aria-pressed="false">Show password</button></div>
                 <button class="mf-auth-primary" type="submit">${signup ? "Create account" : "Sign in"}</button></form>
                 ${!signup ? `<button class="mf-auth-link" id="mfForgot" type="button">Forgot password?</button>` : ""}
@@ -175,7 +184,18 @@
                     if (!result.session) {
                         showMessage(tr("Your account request was received. You can now try signing in with your email and password.", "\u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0633\u0627\u062e\u062a \u062d\u0633\u0627\u0628 \u062b\u0628\u062a \u0634\u062f. \u0627\u06a9\u0646\u0648\u0646 \u0645\u06cc\u200c\u062a\u0648\u0627\u0646\u06cc\u062f \u0628\u0627 \u0627\u06cc\u0645\u06cc\u0644 \u0648 \u06af\u0630\u0631\u0648\u0627\u0698\u0647 \u0648\u0627\u0631\u062f \u0634\u0648\u06cc\u062f."), "success");
                     } else close();
-                } else { await w.MFAuth.signIn(data.get("email"), data.get("password")); close(); }
+                } else {
+                    const email = String(data.get("email") || "").trim().toLowerCase();
+                    const result = await w.MFAuth.signIn(email, data.get("password"));
+                    let session = result && result.session;
+                    if (!session || !session.access_token || !session.user) session = await w.MFAuth.getSession();
+                    if (!session || !session.access_token || !session.user) {
+                        showMessage(tr("Sign-in did not establish an active session. Please try again.", "ورود انجام شد اما نشست فعالی ثبت نشد. دوباره تلاش کنید."), "error");
+                        return;
+                    }
+                    rememberLoginEmail(email);
+                    close();
+                }
             } catch (error) { showMessage(errorText(error), "error"); }
             finally { submit.disabled = false; }
         };
